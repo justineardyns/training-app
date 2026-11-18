@@ -1,0 +1,10 @@
+node_modules/
+dist/
+test-results/
+playwright-report/
+*.log
+.DS_Store
+# Nooit persoonlijke data in deze publieke repo
+data/
+*.secret*
+.env*
