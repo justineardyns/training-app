@@ -13,10 +13,8 @@ test('eerste opstart → plannen → trainen → bewaren', async ({ page }) => {
   // Setup
   await page.getByRole('button', { name: 'Start' }).click();
   await page.getByRole('button', { name: 'Later koppelen' }).click();
-  await expect(page.getByRole('heading', { name: 'Je materiaal thuis' })).toBeVisible();
-  await page.getByRole('button', { name: 'plus' }).nth(5).click(); // 2× extra 2,5 kg
-  await snap(page, '01-thuis');
-  await page.getByRole('button', { name: 'Verder' }).click();
+  await expect(page.getByRole('heading', { name: 'Jims', exact: true })).toBeVisible();
+  await snap(page, '01-jims');
   await page.getByRole('button', { name: 'Verder' }).click();
   await page.getByRole('button', { name: 'Klaar' }).click();
 
@@ -50,27 +48,29 @@ test('eerste opstart → plannen → trainen → bewaren', async ({ page }) => {
   // Training: eerste oefening, alle sets afvinken
   await expect(page.locator('.item-name').first()).toContainText('Leg press');
   const checks = page.getByRole('button', { name: /^Set \d gedaan$/ });
+  await expect(page.locator('.load-banner')).toContainText('Startvoorstel');
   await checks.first().click();
   await expect(page.locator('.restbar')).toBeVisible();
   await snap(page, '05-rust');
   await page.getByRole('button', { name: 'Overslaan', exact: true }).click();
   while ((await checks.count()) > 0) await checks.first().click();
-  await page.getByRole('button', { name: 'Goed', exact: true }).click();
+  await snap(page, '05b-gelukt');
+  await page.getByRole('button', { name: /Gelukt/ }).click();
 
-  // Tweede oefening (beginner: eerst het toestel): gewicht kiezen met het draaiwiel
+  // Tweede oefening (beginner: eerst het toestel): ik nam meer
   await expect(page.locator('.item-name').first()).toContainText('Chest press');
   await expect(page.locator('.demo').first()).toBeVisible();
-  await page.getByRole('button', { name: 'Gewicht set 1' }).click();
-  await snap(page, '06-draaiwiel');
-  await page.getByRole('button', { name: /^20 kg$/ }).click();
-  await expect(page.getByRole('button', { name: 'Gewicht set 1' })).toHaveText('20 kg');
-  await page.getByRole('button', { name: 'plus' }).first().click();
+  while ((await checks.count()) > 0) await checks.first().click();
+  await page.getByRole('button', { name: /Ik nam meer/ }).click();
+  await snap(page, '06-meer');
+  await page.locator('.feel .chip').first().click();
+  await expect(page.locator('.item-name').first()).toContainText('Lat pulldown');
 
   // Toestel bezet → alternatief
   await page.getByRole('button', { name: 'Toestel bezet' }).click();
   await snap(page, '07-bezet');
   await page.locator('.sheet .btn.alt').first().click();
-  await expect(page.locator('.item-name').first()).not.toContainText('Chest press');
+  await expect(page.locator('.item-name').first()).not.toContainText('Lat pulldown');
   await snap(page, '08-training');
 
   // Stoppen en bewaren

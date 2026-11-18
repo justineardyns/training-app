@@ -6,6 +6,7 @@ import {
   adjustReps,
   completeSet,
   currentGroup,
+  finishItem,
   groupDone,
   isFinished,
   nextGroup,
@@ -83,6 +84,17 @@ describe('lopende training', () => {
     expect(s.items[1]!.exerciseId).toBe('hack-squat');
     expect(s.items[1]!.sets).toHaveLength(2);
     expect(s.index).toBe(1);
+  });
+
+  it('na de oefening: gelukt / ik nam meer / ik nam minder', () => {
+    let w = start();
+    for (let k = 0; k < w.items[0]!.sets.length; k++) w = completeSet(w, 0, k, k);
+    const ok = finishItem(w, 0, 'good');
+    expect(ok.items[0]!.feel).toBe('good');
+    expect(ok.index).toBe(1);
+    const more = finishItem(w, 0, 'good', 45);
+    expect(more.items[0]!.sets.every((s) => s.load === 45)).toBe(true);
+    expect(more.index).toBe(1);
   });
 
   it('wordt een sessielog met enkel gedane oefeningen', () => {

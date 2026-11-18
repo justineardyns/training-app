@@ -116,7 +116,7 @@ export function Availability() {
   return (
     <>
       <h1>Wanneer kan je?</h1>
-      <p class="muted">Vink aan wat past de komende 7 dagen. Jims is in het weekend open tot 17u: een weekendavond wordt thuis.</p>
+      <p class="muted">Vink aan wat past de komende 7 dagen: weekdagen 's avonds, in het weekend overdag (Jims sluit dan om 17u).</p>
       <div class="card">
         <h3>Tijd per training</h3>
         <Chips<Minutes>
@@ -137,14 +137,14 @@ export function Availability() {
             <div key={d.date} class="avail-day">
               <div class="avail-head">
                 <strong>{i === 0 ? `Vandaag (${dayLabel(d.date)})` : dayLabel(d.date)}</strong>
-                {d.slots.length > 0 && !playing && (
+                {prefs.trainAtHome && d.slots.length > 0 && !playing && (
                   <button class={`chip mini ${d.home ? 'on' : ''}`} aria-pressed={!!d.home} onClick={() => set(i, { home: !d.home })}>
                     🏠 thuis
                   </button>
                 )}
               </div>
               <div class="chips" role="group" aria-label={`Momenten op ${dayLabel(d.date)}`}>
-                {slotOptions(d.date).map((slot) => {
+                {slotOptions(d.date, prefs.trainAtHome).map((slot) => {
                   const on = d.slots.includes(slot) && !playing;
                   const label = slot === 'day' ? 'Overdag' : isWeekend(d.date) && !gymOpen(d.date, 'evening') ? 'Avond · thuis' : 'Avond';
                   return (

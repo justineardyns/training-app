@@ -50,9 +50,11 @@ export function More(props: { sub?: string }) {
     <>
       <h1>Meer</h1>
       <div class="stack">
-        <button class="btn" onClick={() => go('meer/thuis')}>
-          Thuismateriaal
-        </button>
+        {s.prefs().trainAtHome && (
+          <button class="btn" onClick={() => go('meer/thuis')}>
+            Thuismateriaal
+          </button>
+        )}
         <button class="btn" onClick={() => go('meer/jims')}>
           Gewichtsstappen in Jims
         </button>

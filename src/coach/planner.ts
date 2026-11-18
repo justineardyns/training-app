@@ -87,6 +87,7 @@ export const DEFAULT_PREFS: Prefs = {
   classSlots: DEFAULT_CLASS_SLOTS,
   tennisDays: [3],
   minutes: 45,
+  trainAtHome: false,
 };
 
 /** Oude of onvolledige voorkeuren aanvullen. */
@@ -166,7 +167,7 @@ export function planWeek(input: PlanInput): WeekPlan {
   const want = Math.max(0, target - tennis.length - doneTodayCount);
 
   const candidates = days.filter((d) => {
-    const r = resolveDay(av.get(d)!);
+    const r = resolveDay(av.get(d)!, prefs.trainAtHome);
     return (
       r.available &&
       !fixedDates.has(d) &&
@@ -220,7 +221,7 @@ export function planWeek(input: PlanInput): WeekPlan {
     return kinds;
   };
   const classFit = (kinds: Map<ISODate, Kind>) =>
-    [...kinds].reduce((n, [d, k]) => n + (k === 'cardio' ? (classSlotOn(av.get(d)!, prefs.classSlots) ? 1 : -1) : 0), 0);
+    [...kinds].reduce((n, [d, k]) => n + (k === 'cardio' ? (classSlotOn(av.get(d)!, prefs.classSlots, prefs.trainAtHome) ? 1 : -1) : 0), 0);
   const assign = (set: ISODate[]) => {
     const a = assignWith(set, 'strength');
     const b = assignWith(set, 'cardio');
@@ -235,9 +236,9 @@ export function planWeek(input: PlanInput): WeekPlan {
     return (
       set.reduce((s, d) => {
         const a = av.get(d)!;
-        const r = resolveDay(a);
+        const r = resolveDay(a, prefs.trainAtHome);
         const k = kinds.get(d)!;
-        const cls = classSlotOn(a, prefs.classSlots);
+        const cls = classSlotOn(a, prefs.classSlots, prefs.trainAtHome);
         return (
           s +
           a.minutes / 15 +
@@ -300,7 +301,7 @@ export function planWeek(input: PlanInput): WeekPlan {
       continue;
     }
     if (chosen.includes(d)) {
-      const r = resolveDay(a);
+      const r = resolveDay(a, prefs.trainAtHome);
       const lighter = d === today && input.readinessToday === 'orange';
       if (kinds.get(d) === 'strength') {
         const t: Template = lastTemplate === 'A' ? 'B' : 'A';
@@ -310,7 +311,7 @@ export function planWeek(input: PlanInput): WeekPlan {
           title: `Full body ${t} · ${LOC[r.location]} · ${a.minutes} min${deload.deload ? ' · deload' : ''}`, lighter, deload: deload.deload,
         });
       } else {
-        const cls = classSlotOn(a, prefs.classSlots);
+        const cls = classSlotOn(a, prefs.classSlots, prefs.trainAtHome);
         const location: Location = cls ? 'gym' : r.location;
         result.push({
           date: d, type: 'cardio', sweat: true, status: 'planned', location, minutes: a.minutes, slot: cls ?? r.slot, groupClass: !!cls && !lighter,
@@ -354,7 +355,7 @@ export function planWeek(input: PlanInput): WeekPlan {
       ...tennis.map((date) => ({ date, planned: false })),
       ...chosen.map((date) => ({ date, planned: true })),
     ],
-    available: (d) => resolveDay(av.get(d) ?? defaultDay(d, prefs.minutes)).available,
+    available: (d) => resolveDay(av.get(d) ?? defaultDay(d, prefs.minutes), prefs.trainAtHome).available,
   });
 
   return { start, days: result, target, done: doneTodayCount, planned: chosen.length + tennis.length, deload, messages, violations };

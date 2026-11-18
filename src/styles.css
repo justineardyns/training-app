@@ -392,3 +392,10 @@ p { margin: 0 0 12px; }
 .chip:disabled { opacity: 0.35; }
 
 .energy-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 0; }
+
+/* Gewicht per oefening; per set enkel reps + ✓ */
+.load-banner { font-size: 26px; font-weight: 750; margin: 4px 0 8px; }
+.load-banner .muted { font-weight: 600; margin-right: 6px; }
+.set.noload { grid-template-columns: 22px 1fr 58px; }
+.set.noload .stepper { justify-content: flex-start; }
+.set.noload .set-reps { text-align: left; min-width: 0; padding-left: 8px; }

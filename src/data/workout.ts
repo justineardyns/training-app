@@ -90,6 +90,22 @@ export function setLoad(w: WorkoutState, i: number, setIdx: number, load: number
   }));
 }
 
+/** Hetzelfde gewicht voor alle sets van deze oefening (ook de gedane: je zegt achteraf wat je nam). */
+export function setItemLoad(w: WorkoutState, i: number, load: number): WorkoutState {
+  return update(w, i, (it) => ({ ...it, sets: it.sets.map((s) => ({ ...s, load })) }));
+}
+
+/**
+ * Oefening afsluiten met één tik: "gelukt" (voorgesteld gewicht), of je nam meer/minder (gewicht erbij).
+ * Bij een ander gewicht telt dat als "goed" op dat gewicht: de volgende keer start je daar.
+ */
+export function finishItem(w: WorkoutState, i: number, feel: Feel, load?: number): WorkoutState {
+  let next = load === undefined ? w : setItemLoad(w, i, load);
+  next = setFeel(next, i, feel);
+  const ready = groupDone(next) && currentGroup(next).every((g) => next.items[g]!.feel);
+  return ready ? nextGroup(next) : next;
+}
+
 export function adjustReps(w: WorkoutState, i: number, setIdx: number, delta: number): WorkoutState {
   return update(w, i, (it) => ({
     ...it,

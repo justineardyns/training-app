@@ -146,6 +146,8 @@ export interface Prefs {
   tennisDays: number[];
   /** Standaardduur van een training. */
   minutes: Minutes;
+  /** Ook thuis trainen? Standaard uit: alles in Jims. */
+  trainAtHome: boolean;
 }
 
 export type ProgressionChange =

@@ -7,7 +7,6 @@ export async function quickSetup(page: Page, when = '2026-11-23T08:00:00') {
   await page.getByRole('button', { name: 'Start' }).click();
   await page.getByRole('button', { name: 'Later koppelen' }).click();
   await page.getByRole('button', { name: 'Verder' }).click();
-  await page.getByRole('button', { name: 'Verder' }).click();
   await page.getByRole('button', { name: 'Klaar' }).click();
   await expect(page.getByRole('heading', { name: 'Wanneer kan je?' })).toBeVisible();
   await page.getByRole('button', { name: 'Bewaar en plan' }).click();

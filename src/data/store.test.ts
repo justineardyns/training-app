@@ -70,13 +70,13 @@ describe('store: rollend plannen', () => {
     expect(s.todayPlan()).toMatchObject({ status: 'moved', sweat: false });
   });
 
-  it('flexibel: vandaag toch thuis en 30 min', async () => {
+  it('flexibel: vandaag minder tijd (30 min), altijd in Jims', async () => {
     const s = await fresh();
     await s.saveAvailability(week(MON));
-    await s.updateDay(MON, { home: true, minutes: 30 });
-    expect(s.todayPlan()).toMatchObject({ type: 'strength', location: 'home', minutes: 30 });
+    await s.updateDay(MON, { minutes: 30 });
+    expect(s.todayPlan()).toMatchObject({ type: 'strength', location: 'gym', minutes: 30 });
     const session = s.sessionFor(s.todayPlan());
-    expect(session && 'exercises' in session && session.exercises.every((e) => e.exercise.locations.includes('home'))).toBe(true);
+    expect(session && 'exercises' in session && session.exercises.every((e) => e.exercise.locations.includes('gym'))).toBe(true);
   });
 
   it('tennis die niet doorgaat → het plan past zich aan', async () => {

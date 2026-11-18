@@ -170,7 +170,7 @@ export function Today() {
         <div class="card today-card">
           <h2>{day.title}</h2>
           <div class="stack">
-            {!day.groupClass && (
+            {!day.groupClass && s.prefs().trainAtHome && (
               <Chips<Location>
                 label="Waar"
                 options={[{ value: 'gym', label: 'Jims' }, { value: 'home', label: 'Thuis' }]}

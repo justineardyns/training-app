@@ -1,7 +1,7 @@
 import { useState } from 'preact/hooks';
 import { alternativesFor, getExercise, videoUrl } from '../../coach/catalog.ts';
 import { acceptableFor } from '../../coach/injury.ts';
-import { formatLoad, isAvailable, kg, platesPerSide } from '../../coach/loads.ts';
+import { formatLoad, isAvailable } from '../../coach/loads.ts';
 import { activeAdjustments } from '../../coach/planner.ts';
 import { buildPrescription, type SessionContext } from '../../coach/session.ts';
 import type { Feel } from '../../coach/types.ts';
@@ -13,12 +13,11 @@ import {
   completeSet,
   currentGroup,
   extendRest,
+  finishItem,
   groupDone,
   isFinished,
   nextGroup,
   prevGroup,
-  setFeel,
-  setLoad,
   skipRest,
   summary,
   swapItem,
@@ -32,12 +31,6 @@ import { ExerciseDemo, Thumb } from '../Demo.tsx';
 import { useNow, useStore, useWakeLock } from '../hooks.ts';
 import { go } from '../router.ts';
 import { cancelBeep, scheduleBeep } from '../sound.ts';
-
-const FEELS: { value: Feel; label: string }[] = [
-  { value: 'light', label: 'Te licht' },
-  { value: 'good', label: 'Goed' },
-  { value: 'hard', label: 'Zwaar' },
-];
 
 function ctxFor(w: WorkoutState): SessionContext {
   const p = store.profile() ?? defaultProfile();
@@ -104,10 +97,17 @@ function ItemCard(props: { w: WorkoutState; i: number }) {
   const p = it.prescription;
   const [tips, setTips] = useState(false);
   const [showDemo, setShowDemo] = useState(true);
-  const [wheelFor, setWheelFor] = useState<number | null>(null);
+  const [other, setOther] = useState<'more' | 'less' | null>(null);
+  const [wheel, setWheel] = useState(false);
   const [busy, setBusy] = useState(false);
   const profile = store.profile() ?? defaultProfile();
   const allDone = it.sets.every((s) => s.done);
+  const current = it.sets[0]?.load ?? p.load;
+  /** Gewichten net boven of onder het voorstel (enkel wat in Jims bestaat). */
+  const nearby = (dir: 'more' | 'less') => {
+    const opts = it.options;
+    return dir === 'more' ? opts.filter((o) => o > current + 1e-9).slice(0, 4) : opts.filter((o) => o < current - 1e-9).slice(-4).reverse();
+  };
 
   const tick = (k: number) =>
     act((cur) => {
@@ -144,17 +144,18 @@ function ItemCard(props: { w: WorkoutState; i: number }) {
       <p class="note">{p.note}</p>
       {it.injuryNote && <p class="note warn">{it.injuryNote}</p>}
 
+      {ex.load === 'bodyweight' ? (
+        <p class="load-banner">Lichaamsgewicht</p>
+      ) : (
+        <p class="load-banner">
+          <span class="muted small">{p.change === 'new' ? 'Startvoorstel' : 'Gewicht'}</span> {formatLoad(ex, it.sets[0]?.load ?? p.load)}
+        </p>
+      )}
+
       <div class="sets">
         {it.sets.map((s, k) => (
-          <div key={k} class={`set ${s.done ? 'done' : ''}`}>
+          <div key={k} class={`set noload ${s.done ? 'done' : ''}`}>
             <span class="set-n">{k + 1}</span>
-            {ex.load === 'bodyweight' ? (
-              <span class="set-load muted">lichaamsgewicht</span>
-            ) : (
-              <button class="set-load" onClick={() => setWheelFor(k)} disabled={s.done} aria-label={`Gewicht set ${k + 1}`}>
-                {formatLoad(ex, s.load)}
-              </button>
-            )}
             {s.done ? (
               <span class="set-reps">{s.reps}</span>
             ) : (
@@ -167,31 +168,49 @@ function ItemCard(props: { w: WorkoutState; i: number }) {
         ))}
       </div>
 
-      {allDone && !it.feel && (
+      {allDone && !it.feel && ex.load === 'bodyweight' && (
         <div class="feel">
-          <h3>Hoe voelde het?</h3>
+          <h3>Hoe ging het?</h3>
           <div class="row">
-            {FEELS.map((f) => (
-              <button
-                key={f.value}
-                class={`btn ${f.value === 'good' ? 'primary' : ''}`}
-                onClick={() => {
-                  cancelBeep();
-                  act((cur) => {
-                    let next = setFeel(cur, i, f.value);
-                    const ready = groupDone(next) && currentGroup(next).every((g) => next.items[g]!.feel);
-                    if (ready) next = nextGroup(next);
-                    return next;
-                  });
-                }}
-              >
-                {f.label}
+            {([['good', '✓ Gelukt'], ['light', 'Te makkelijk'], ['hard', 'Te zwaar']] as [Feel, string][]).map(([f, label]) => (
+              <button key={f} class={`btn ${f === 'good' ? 'primary' : ''}`} onClick={() => { cancelBeep(); act((cur) => finishItem(cur, i, f)); }}>
+                {label}
               </button>
             ))}
           </div>
         </div>
       )}
-      {it.feel && <p class="muted small">Gevoel: {FEELS.find((f) => f.value === it.feel)?.label}</p>}
+
+      {allDone && !it.feel && ex.load !== 'bodyweight' && (
+        <div class="feel">
+          <h3>Hoe ging het met {formatLoad(ex, it.sets[0]?.load ?? p.load)}?</h3>
+          {other === null ? (
+            <div class="stack">
+              <button class="btn primary" onClick={() => { cancelBeep(); act((cur) => finishItem(cur, i, 'good')); }}>
+                ✓ Gelukt
+              </button>
+              <div class="row">
+                <button class="btn" onClick={() => setOther('more')}>⬆ Ik nam meer</button>
+                <button class="btn" onClick={() => setOther('less')}>⬇ Ik nam minder</button>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <p class="muted small">Hoeveel nam je?</p>
+              <div class="chips wrap">
+                {nearby(other).map((v) => (
+                  <button key={v} class="chip" onClick={() => { cancelBeep(); setOther(null); act((cur) => finishItem(cur, i, 'good', v)); }}>
+                    {formatLoad(ex, v)}
+                  </button>
+                ))}
+                <button class="chip" onClick={() => setWheel(true)}>Ander…</button>
+              </div>
+              <button class="btn ghost small" onClick={() => setOther(null)}>Terug</button>
+            </div>
+          )}
+        </div>
+      )}
+      {it.feel && <p class="muted small">✓ Bewaard{it.sets[0] && ex.load !== 'bodyweight' ? `: ${formatLoad(ex, it.sets[0].load)}` : ''}</p>}
 
       <div class="row tools">
         <button class="btn small" onClick={() => setTips(!tips)} aria-expanded={tips}>
@@ -228,17 +247,16 @@ function ItemCard(props: { w: WorkoutState; i: number }) {
       )}
 
       <WeightWheel
-        open={wheelFor !== null}
+        open={wheel}
         options={it.options}
-        value={wheelFor !== null ? it.sets[wheelFor]!.load : p.load}
+        value={it.sets[0]?.load ?? p.load}
         format={(v) => formatLoad(ex, v)}
-        detail={(v) => {
-          if (w.location !== 'home') return undefined;
-          const plates = platesPerSide(ex, v, profile.equipment);
-          return plates && plates.length ? `per kant: ${plates.map((x) => kg(x)).join(' + ')}` : undefined;
+        onPick={(v) => {
+          cancelBeep();
+          setOther(null);
+          act((cur) => finishItem(cur, i, 'good', v));
         }}
-        onPick={(v) => act((cur) => setLoad(cur, i, wheelFor ?? 0, v))}
-        onClose={() => setWheelFor(null)}
+        onClose={() => setWheel(false)}
       />
 
       <Sheet open={busy} onClose={() => setBusy(false)} title="Kies een alternatief">

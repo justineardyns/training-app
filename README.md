@@ -4,15 +4,16 @@ Een app op je beginscherm die je trainingen plant, elke set vooraf invult en zel
 Werkt offline in de gym, draait puur op jouw tikken en kost **€ 0**.
 
 - **Vandaag:** wat je doet, één knop **Start**. Dagvorm met één tik: top / oké / moe / ziek of op.
-- **Trainen:** gewicht en reps staan klaar, per set één tik ✓, rusttimer start vanzelf, draaiwiel met
-  enkel geldige gewichten (thuis: enkel wat je met je eigen schijven kan maken), "Toestel bezet",
+- **Trainen (in Jims):** de app stelt per oefening een startgewicht en reps voor, per set één tik ✓,
+  rusttimer start vanzelf. Na de oefening één tik: *Gelukt*, *Ik nam meer* of *Ik nam minder*
+  (met het gewicht dat je nam). Daarmee bepaalt de app je volgende gewicht. "Toestel bezet",
   **foto's van elke oefening en elk toestel** (start- en eindpositie, ook offline), techniektips en uitlegvideo.
 - **Absolute beginner:** lichte start, de eerste 2 keer per oefening max 2 sets om de beweging te leren,
   in Jims eerst de toestellen.
-- **Slimme coach:** dubbele progressie, thuisladder als zwaarder niet kan, deloads, blessures
-  ("Ik heb last van…"), flexibel herplannen bij een gemiste training, minder tijd of thuis i.p.v. Jims.
+- **Slimme coach:** dubbele progressie, deloads, blessures ("Ik heb last van…"), flexibel herplannen
+  bij een gemiste training of minder tijd.
 - **Rollend plannen:** altijd de komende 7 dagen. Je vinkt aan welke avonden passen (in het weekend
-  ook overdag; Jims sluit dan om 17u, dus een weekendavond is thuis), en of je tennist.
+  overdag, want Jims sluit dan om 17u), en of je tennist. Alles gebeurt in Jims: geen thuistrainingen.
 - **Harde regels:** max 4 zweetsessies per 7 dagen (groepslessen en tennis inbegrepen), nooit twee dagen
   na elkaar. Bij 4: 2× kracht + 2× conditie, met indoor cycling op de lesmomenten. Zweetvrije suggesties
   op de tussendagen.
@@ -82,11 +83,9 @@ Open [github.com/settings/personal-access-tokens/new](https://github.com/setting
 2. Tik op **Deel** (vierkant met pijl) → **Zet op beginscherm** → **Voeg toe**.
 3. Open **Coach** vanaf je beginscherm → **Start**.
 4. Plak je token → **Koppel**. Je gebruikersnaam en `training` staan al ingevuld.
-5. Tik je thuismateriaal aan: gewicht van een lege dumbbell, je schijven (per paar), het
-   verbindingsstuk van de stang en je kettlebell. Je ziet meteen wat je ermee kan maken.
-6. Kies de gewichtsstappen in Jims (weet je het niet: laat staan) en je voorkeuren (ervaring,
+5. Kies de gewichtsstappen in Jims (weet je het niet: laat staan) en je voorkeuren (ervaring,
    trainingen per 7 dagen, lesmomenten van indoor cycling, tennisdag) → **Klaar**.
-7. Vink aan welke momenten de komende 7 dagen passen → **Bewaar en plan**.
+6. Vink aan welke momenten de komende 7 dagen passen → **Bewaar en plan**.
 
 ### 5. Meldingen
 
@@ -110,7 +109,8 @@ stuurt volgende week bij en pusht. Dat kan ook automatisch als geplande taak elk
 | **'s Ochtends** | Melding met je plan. Open de app → tik hoe je je voelt → groen/oranje/rood advies. |
 | **Nieuwe oefening** | Tik op de naam: foto's van de beweging en het toestel, hoe je het instelt, techniektips. |
 | **In de gym** | **Start** → per set ✓ → na elke oefening *te licht / goed / zwaar*. Toestel bezet? Eén tik. |
-| **Thuis i.p.v. Jims, of minder tijd** | Op **Vandaag** tik je *Thuis* of *30*: de training past zich aan. |
+| **Minder tijd** | Op **Vandaag** tik je *30*: de training past zich aan. |
+| **Gewicht** | De app stelt het voor. Na de oefening: *Gelukt*, of *Ik nam meer/minder* + welk gewicht. |
 | **Lukt vandaag niet** | **Vandaag lukt niet**: het plan schuift op, zonder sessies op te stapelen. |
 | **Pijntje** | **Ik heb last van…** → zone + ernst. Oefeningen worden vervangen of lichter, daarna rustig opbouwen. |
 | **Groepsles of tennis** | Tik na afloop op *Gedaan* (of *Groepsles of cardio gedaan?* als het niet gepland was). |

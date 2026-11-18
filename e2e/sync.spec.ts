@@ -31,8 +31,7 @@ test('koppelen, training bewaren en naar de privé-repo pushen; herstellen op ee
   await page.getByPlaceholder('github_pat_…').fill('good');
   await page.getByLabel('Gebruiker').fill('jij');
   await page.getByRole('button', { name: 'Koppel', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Je materiaal thuis' })).toBeVisible();
-  await page.getByRole('button', { name: 'Verder' }).click();
+  await expect(page.getByRole('heading', { name: 'Jims', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Verder' }).click();
   await page.getByRole('button', { name: 'Klaar' }).click();
   await page.getByRole('button', { name: 'Bewaar en plan' }).click();

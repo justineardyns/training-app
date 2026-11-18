@@ -124,10 +124,10 @@ export function nextPrescription(input: ProgressionInput): ProgressionResult {
       note: input.beginner
         ? ex.load === 'bodyweight'
           ? `Kennismaking: leer de beweging rustig. ${lo + 2}${unit}, hou ${keep} reps over. Bekijk eerst de foto's.`
-          : `Kennismaking: start licht met ${formatLoad(ex, load)}. Leer de beweging, hou ${keep} reps over. Te licht? Dan gaat het volgende keer omhoog.`
+          : `Kennismaking: startvoorstel ${formatLoad(ex, load)}. Leer de beweging en hou ${keep} reps over. Na de oefening zeg je of het lukte, of dat je meer of minder nam.`
         : ex.load === 'bodyweight'
           ? `Eerste keer: ${lo + 2}${unit} met goede techniek. Hou 2 reps over.`
-          : `Eerste keer: start met ${formatLoad(ex, load)}. Kies een gewicht waarmee je ${lo + 2}${unit} haalt met 2 reps over.`,
+          : `Startvoorstel ${formatLoad(ex, load)}: ${lo + 2}${unit} met 2 reps over. Na de oefening zeg je of het lukte, of dat je meer of minder nam.`,
     });
   }
 

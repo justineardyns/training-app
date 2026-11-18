@@ -50,23 +50,27 @@ describe('rollend plannen: 4 per 7 dagen, 2 kracht + 2 conditie', () => {
     expect(p.violations).toEqual([]);
   });
 
-  it('weekendavond = thuis (Jims sluit om 17u), weekdagavond en weekend overdag = Jims', () => {
-    expect(resolveDay({ date: D(5), slots: ['evening'], minutes: 45 })).toMatchObject({ location: 'home', slot: 'evening' });
+  it('enkel Jims: weekdagavond en weekend overdag; weekendavond kan niet (Jims sluit om 17u)', () => {
+    expect(resolveDay({ date: D(5), slots: ['evening'], minutes: 45 }).available).toBe(false);
     expect(resolveDay({ date: D(1), slots: ['evening'], minutes: 45 })).toMatchObject({ location: 'gym', slot: 'evening' });
     expect(resolveDay({ date: D(6), slots: ['day', 'evening'], minutes: 45 })).toMatchObject({ location: 'gym', slot: 'day' });
-    expect(resolveDay({ date: D(1), slots: ['evening'], minutes: 45, home: true })).toMatchObject({ location: 'home' });
+    expect(resolveDay({ date: D(1), slots: ['evening'], minutes: 45, home: true })).toMatchObject({ location: 'gym' });
+    // Met thuistraining aan (verborgen optie): weekendavond en "thuis" kunnen wel.
+    expect(resolveDay({ date: D(5), slots: ['evening'], minutes: 45 }, true)).toMatchObject({ location: 'home', slot: 'evening' });
+    expect(resolveDay({ date: D(1), slots: ['evening'], minutes: 45, home: true }, true)).toMatchObject({ location: 'home' });
     // Overdag op een weekdag kan je niet aanvinken.
     expect(resolveDay({ date: D(1), slots: ['day'], minutes: 45 }).available).toBe(false);
   });
 
-  it('cycling enkel op lesmomenten; zaterdagavond wordt thuis', () => {
+  it('cycling enkel op lesmomenten; zaterdagavond wordt niet gepland (enkel Jims)', () => {
     const av = (date: string): DayAvailability => {
       if (date === D(5)) return { date, slots: ['evening'] as Slot[], minutes: 45 };
       return date === D(1) || date === D(3) ? std(date) : { date, slots: [], minutes: 45 };
     };
     const p = planWeek(base({ availability: av }));
     expect(p.days.filter((d) => d.type === 'cardio').every((d) => !d.groupClass)).toBe(true);
-    expect(p.days[5]!.location).toBe('home');
+    expect(p.days[5]!.sweat).toBe(false);
+    expect(p.days.filter((d) => d.sweat).every((d) => d.location === 'gym')).toBe(true);
     expect(p.violations).toEqual([]);
   });
 
@@ -80,8 +84,9 @@ describe('rollend plannen: 4 per 7 dagen, 2 kracht + 2 conditie', () => {
     expect(p.violations).toEqual([]);
   });
 
-  it('thuis aangevinkt: kracht en conditie thuis, nooit een groepsles', () => {
-    const p = planWeek(base({ availability: (d) => ({ ...std(d), home: true }) }));
+  it('thuis aangevinkt (enkel als thuistraining aan staat): kracht en conditie thuis, nooit een groepsles', () => {
+    expect(planWeek(base({ availability: (d) => ({ ...std(d), home: true }) })).days.filter((d) => d.sweat).every((d) => d.location === 'gym')).toBe(true);
+    const p = planWeek(base({ availability: (d) => ({ ...std(d), home: true }), prefs: { ...DEFAULT_PREFS, trainAtHome: true } }));
     expect(p.days.filter((d) => d.sweat).every((d) => d.location === 'home' && !d.groupClass)).toBe(true);
   });
 
@@ -107,9 +112,9 @@ describe('rollend plannen: 4 per 7 dagen, 2 kracht + 2 conditie', () => {
   });
 
   it('stabiel: wat gepland stond blijft liefst staan', () => {
-    const p = planWeek(base({ availability: (d) => (d === D(0) ? { ...std(d), home: true, minutes: 30 } : std(d)), originalPlan: [D(0), D(2), D(4), D(6)] }));
+    const p = planWeek(base({ availability: (d) => (d === D(0) ? { ...std(d), minutes: 30 } : std(d)), originalPlan: [D(0), D(2), D(4), D(6)] }));
     expect(sweatDates(p)).toEqual([D(0), D(2), D(4), D(6)]);
-    expect(p.days[0]).toMatchObject({ location: 'home', minutes: 30 });
+    expect(p.days[0]).toMatchObject({ location: 'gym', minutes: 30 });
   });
 
   it('tussendagen krijgen een zweetvrije suggestie, na kracht mobiliteit', () => {
@@ -161,16 +166,18 @@ describe('harde regels (fuzz, rollend)', () => {
         const d = addDays(today, i);
         if (rnd() < 0.45 && !history.some((h) => h.date === addDays(d, -1))) history.push(done(d, pick(['strength', 'class', 'cardio'] as const), pick(['A', 'B'] as const)));
       }
+      const trainAtHome = rnd() < 0.3;
       const p = planWeek({
         today, availability: (d) => avMap.get(d)!, history,
-        prefs: { ...DEFAULT_PREFS, targetPerWeek: pick([2, 3, 4]), strengthPerWeek: pick([1, 2, 3]) },
+        prefs: { ...DEFAULT_PREFS, targetPerWeek: pick([2, 3, 4]), strengthPerWeek: pick([1, 2, 3]), trainAtHome },
         readinessToday: pick(['green', 'orange', 'red', undefined] as const),
       });
       const ctx = JSON.stringify({ today, history: history.map((h) => h.date), av: [...avMap.values()] });
       expect(p.violations, ctx).toEqual([]);
       const planned = p.days.filter((d) => d.status === 'planned' && d.type !== 'tennis').map((d) => d.date);
       const tennis = p.days.filter((d) => d.type === 'tennis').map((d) => d.date);
-      for (const d of planned) expect(resolveDay(avMap.get(d)!).available, ctx).toBe(true);
+      for (const d of planned) expect(resolveDay(avMap.get(d)!, trainAtHome).available, ctx).toBe(true);
+      if (!trainAtHome) for (const d of p.days.filter((x) => x.status === 'planned' && x.type !== 'tennis')) expect(d.location, ctx).toBe('gym');
       // Onafhankelijke hercontrole.
       const all = [...history.map((h) => h.date), ...tennis, ...planned].sort();
       for (const d of planned) {
