@@ -304,3 +304,9 @@ p { margin: 0 0 12px; }
 .field .row { align-items: stretch; }
 .field .row .btn { flex: 0 0 auto; }
 .card a { color: var(--blue); }
+
+/* Blessures */
+.zone-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 8px 0 16px; }
+.btn.alt.selected { border-color: var(--accent); background: rgba(74, 222, 128, 0.12); }
+.injury + .injury { border-top: 1px solid var(--border); padding-top: 12px; margin-top: 12px; }
+.injury p { margin-bottom: 4px; }

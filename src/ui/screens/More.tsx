@@ -6,6 +6,8 @@ import { useStore } from '../hooks.ts';
 import { go } from '../router.ts';
 import { GymEditor, HomeEquipmentEditor } from './Equipment.tsx';
 import { SyncSettings } from './Connect.tsx';
+import { InjuryCard } from './Injury.tsx';
+import { HealthSettings } from './Health.tsx';
 
 export function More(props: { sub?: string }) {
   const s = useStore();
@@ -54,6 +56,15 @@ export function More(props: { sub?: string }) {
           Gewichtsstappen in Jims
         </button>
       </div>
+
+      <h2>Klachten</h2>
+      <InjuryCard />
+      <button class="btn" onClick={() => go('blessure')}>
+        Ik heb last van…
+      </button>
+
+      <h2>Apple Health</h2>
+      <HealthSettings />
 
       <h2>Privé-repo</h2>
       <SyncSettings />

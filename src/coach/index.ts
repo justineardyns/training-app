@@ -12,3 +12,5 @@ export * from './light.ts';
 export * from './planner.ts';
 export * from './session.ts';
 export * from './report.ts';
+
+export * from './health.ts';

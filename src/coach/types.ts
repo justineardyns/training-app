@@ -194,6 +194,8 @@ export interface SessionLog {
   maxHr?: number;
   /** Ruwe Watch-workouttype (bv. "Indoor Cycling"). */
   workoutType?: string;
+  /** Gekoppelde Watch-workout (voorkomt dubbel tellen). */
+  workoutId?: string;
 }
 
 export interface DayAvailability {

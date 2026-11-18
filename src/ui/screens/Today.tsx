@@ -11,6 +11,8 @@ import { useStore } from '../hooks.ts';
 import { go } from '../router.ts';
 import { dayLabel, needsNextWeek } from './Week.tsx';
 import { SyncWarning } from './Connect.tsx';
+import { InjuryCard } from './Injury.tsx';
+import { HealthButton } from './Health.tsx';
 
 const ENERGY: { value: Energy; label: string }[] = [
   { value: 'low', label: '😴 Laag' },
@@ -70,6 +72,7 @@ function ReadinessCard() {
             ? `Watch: ${health.sleepHours !== undefined ? `${health.sleepHours.toFixed(1).replace('.', ',')} u slaap` : ''}${health.hrvMs !== undefined ? ` · HRV ${Math.round(health.hrvMs)}` : ''}${health.restingHr !== undefined ? ` · rust ${Math.round(health.restingHr)}` : ''}`
             : 'Nog geen Watch-data van vannacht: je energie telt dan alleen.'}
         </p>
+        {!health && <HealthButton />}
       </div>
     );
   }
@@ -157,6 +160,8 @@ export function Today() {
 
       {day.sweat && day.status === 'planned' && <ReadinessCard />}
 
+      <InjuryCard />
+
       {day.status === 'done' && (
         <div class="card done">
           <h2>✓ {day.title}</h2>
@@ -238,9 +243,14 @@ export function Today() {
         </p>
       )}
 
-      <button class="btn ghost small" onClick={() => setQuick(true)}>
-        Groepsles of cardio gedaan?
-      </button>
+      <div class="row">
+        <button class="btn ghost small" onClick={() => setQuick(true)}>
+          Groepsles of cardio gedaan?
+        </button>
+        <button class="btn ghost small" onClick={() => go('blessure')}>
+          Ik heb last van…
+        </button>
+      </div>
       <QuickLogSheet open={quick} onClose={() => setQuick(false)} date={today} />
     </>
   );

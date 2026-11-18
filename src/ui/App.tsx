@@ -8,6 +8,7 @@ import { Workout } from './screens/Workout.tsx';
 import { Cardio } from './screens/Cardio.tsx';
 import { More } from './screens/More.tsx';
 import { Report } from './screens/Report.tsx';
+import { InjuryReport } from './screens/Injury.tsx';
 
 const TABS = [
   { route: 'vandaag', label: 'Vandaag', ico: '◉' },
@@ -41,6 +42,9 @@ export function App() {
       break;
     case 'cardio':
       page = <Cardio />;
+      break;
+    case 'blessure':
+      page = <InjuryReport />;
       break;
     case 'rapport':
       page = <Report />;
