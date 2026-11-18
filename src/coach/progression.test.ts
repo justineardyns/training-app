@@ -38,7 +38,7 @@ describe('eerste keer', () => {
     expect(p.change).toBe('new');
     expect(p.load).toBe(10);
     expect(p.targetReps).toBe(10);
-    expect(p.note).toMatch(/Eerste keer/);
+    expect(p.note).toMatch(/Startvoorstel/);
   });
   it('lichaamsgewicht start op 0 kg', () => {
     expect(run('push-up', [0], []).load).toBe(0);
