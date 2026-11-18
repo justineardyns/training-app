@@ -42,6 +42,8 @@ export interface WeeklyReport {
   recovery: { hrv: RecoveryMetric; rhr: RecoveryMetric; sleep: RecoveryMetric };
   streak: number;
   nextWeek?: { date: ISODate; title: string; sweat: boolean }[];
+  /** De week loopt nog (rapport vóór zondagavond). */
+  inProgress: boolean;
   message: string;
 }
 
@@ -52,6 +54,8 @@ export interface ReportInput {
   /** Aantal geplande sessies (momentopname bij de start van de week). */
   planned: number;
   nextWeek?: WeekPlan;
+  /** Vandaag: als die in deze week valt (vóór zondag), is het een tussenstand. */
+  today?: ISODate;
 }
 
 const inRange = (d: ISODate, from: ISODate, to: ISODate) => d >= from && d <= to;
@@ -175,6 +179,7 @@ export function buildReport(input: ReportInput): WeeklyReport {
     },
     streak: streakWeeks(history, monday),
     nextWeek: input.nextWeek?.days.map((d) => ({ date: d.date, title: d.title, sweat: d.sweat })),
+    inProgress: !!input.today && input.today >= monday && input.today < sunday,
     message: '',
   };
   report.message = coachMessage(report, input.nextWeek);
@@ -184,7 +189,14 @@ export function buildReport(input: ReportInput): WeeklyReport {
 /** Kort, direct, eerlijk en positief. */
 export function coachMessage(r: WeeklyReport, next?: WeekPlan): string {
   const parts: string[] = [];
-  if (r.planned === 0 && r.done === 0) {
+  if (r.inProgress) {
+    const left = Math.max(0, r.planned - r.done);
+    parts.push(
+      left === 0
+        ? `Weekdoel al gehaald: ${r.done}/${r.planned}. Sterk.`
+        : `Tussenstand: ${r.done}/${r.planned}. Nog ${left} ${left === 1 ? 'sessie' : 'sessies'} te gaan deze week.`,
+    );
+  } else if (r.planned === 0 && r.done === 0) {
     parts.push('Geen sessies deze week. Vul zondag je beschikbaarheid in, dan plan ik voor je. Volgende week starten we gewoon opnieuw.');
   } else if (r.done >= r.planned) {
     parts.push(`Sterk: ${r.done}/${r.planned} sessies gedaan. Zo bouw je het op.`);

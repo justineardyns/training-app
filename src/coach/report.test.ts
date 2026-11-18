@@ -90,6 +90,14 @@ describe('weekrapport', () => {
 });
 
 describe('coachboodschap', () => {
+  it('tussenstand tijdens de week, geen oordeel', () => {
+    const r = buildReport({ monday: MON, history, health, planned: 3, today: addDays(MON, 4) });
+    expect(r.inProgress).toBe(true);
+    expect(r.message).toMatch(/^Weekdoel al gehaald|^Tussenstand/);
+    const early = buildReport({ monday: MON, history: [], health: [], planned: 3, today: addDays(MON, 1) });
+    expect(early.message).toMatch(/Tussenstand: 0\/3\. Nog 3 sessies/);
+  });
+
   const base = buildReport({ monday: MON, history: [], health: [], planned: 3 });
   it('eerlijk bij te weinig', () => {
     expect(coachMessage({ ...base, done: 1, planned: 3 })).toMatch(/te weinig/);

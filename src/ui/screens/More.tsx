@@ -8,6 +8,7 @@ import { GymEditor, HomeEquipmentEditor } from './Equipment.tsx';
 import { SyncSettings } from './Connect.tsx';
 import { InjuryCard } from './Injury.tsx';
 import { HealthSettings } from './Health.tsx';
+import { NotificationSettings } from './Notifications.tsx';
 
 export function More(props: { sub?: string }) {
   const s = useStore();
@@ -62,6 +63,9 @@ export function More(props: { sub?: string }) {
       <button class="btn" onClick={() => go('blessure')}>
         Ik heb last van…
       </button>
+
+      <h2>Meldingen</h2>
+      <NotificationSettings />
 
       <h2>Apple Health</h2>
       <HealthSettings />

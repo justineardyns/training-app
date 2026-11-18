@@ -310,3 +310,54 @@ p { margin: 0 0 12px; }
 .btn.alt.selected { border-color: var(--accent); background: rgba(74, 222, 128, 0.12); }
 .injury + .injury { border-top: 1px solid var(--border); padding-top: 12px; margin-top: 12px; }
 .injury p { margin-bottom: 4px; }
+
+/* ── Rapport & grafieken ─────────────────────────────────── */
+:root {
+  --viz-accent: #3987e5;      /* gevalideerd: L-band, chroma, ≥3:1 op kaartoppervlak */
+  --viz-deemph: #6b7280;      /* ≥3:1 op kaartoppervlak */
+  --viz-grid: #2a313b;
+  --viz-surface: var(--surface);
+}
+.tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
+.tile {
+  display: flex; flex-direction: column; gap: 2px; min-width: 0;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px;
+}
+.tile-label { font-size: 13px; color: var(--muted); }
+.tile-value { font-size: 26px; font-weight: 650; line-height: 1.15; }
+.tile-sub { font-size: 12px; color: var(--muted); }
+.trend.beter { color: var(--text); }
+.trend.slechter { color: var(--text); }
+.multiples { display: grid; gap: 8px; }
+.card.chart h3 { margin: 0 0 4px; font-size: 16px; }
+.viz { width: 100%; height: auto; display: block; touch-action: pan-y; }
+.viz.spark { margin-top: 6px; height: 32px; }
+.viz-grid { stroke: var(--viz-grid); stroke-width: 1; }
+.viz-cross { stroke: var(--muted); stroke-width: 1; }
+.viz-line { fill: none; stroke: var(--viz-accent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.viz-line.deemph { stroke: var(--viz-deemph); }
+.viz-area { fill: var(--viz-accent); opacity: 0.1; }
+.viz-dot { fill: var(--viz-accent); stroke: var(--viz-surface); stroke-width: 2; }
+.viz-tick { fill: var(--muted); font-size: 10px; font-variant-numeric: tabular-nums; }
+.viz-label { fill: var(--text); font-size: 11px; font-weight: 600; }
+.viz-tipbox { fill: var(--surface-2); stroke: var(--border); }
+.viz-tipval { fill: var(--text); font-size: 11px; font-weight: 700; }
+.viz-tiplab { fill: var(--muted); font-size: 10px; }
+.barlist { display: grid; gap: 8px; margin-top: 8px; }
+.barrow { display: grid; grid-template-columns: 96px 1fr; align-items: center; gap: 8px; font-size: 15px; }
+.barlabel { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bartrack { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.bar { height: 14px; min-width: 2px; background: var(--viz-accent); border-radius: 0 4px 4px 0; }
+.barval { font-weight: 600; font-size: 14px; white-space: nowrap; }
+.prs, .plain { list-style: none; padding: 0; margin: 0 0 12px; }
+.prs li, .plain li { padding: 6px 0; border-bottom: 1px solid var(--border); }
+.datatable { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; background: var(--surface); border-radius: 12px; overflow: hidden; }
+.datatable th, .datatable td { padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: left; }
+.datatable th { color: var(--muted); font-weight: 600; }
+.md h2 { font-size: 20px; margin: 16px 0 8px; }
+.md h2:first-child { margin-top: 0; }
+.md h3 { font-size: 17px; margin: 14px 0 6px; }
+.md ul, .md ol { padding-left: 20px; margin: 0 0 10px; }
+.md blockquote { margin: 0 0 12px; padding: 4px 12px; border-left: 3px solid var(--accent); color: var(--text); }
+.md code { background: var(--surface-2); padding: 1px 5px; border-radius: 6px; font-size: 15px; }
+.md a { color: var(--blue); }

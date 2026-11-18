@@ -1,6 +1,6 @@
 import { render } from 'preact';
 import { App } from './ui/App.tsx';
-import { processInbox, store, sync } from './data/app.ts';
+import { processInbox, refreshPushSubscription, store, sync } from './data/app.ts';
 import './styles.css';
 
 render(<App />, document.getElementById('app')!);
@@ -8,6 +8,7 @@ render(<App />, document.getElementById('app')!);
 void store.init().then(() => {
   void processInbox();
   sync.start();
+  if (import.meta.env.PROD) refreshPushSubscription();
 });
 
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
