@@ -6,6 +6,7 @@ import type { ISODate, Minutes } from '../../coach/types.ts';
 import { Chips } from '../components.tsx';
 import { useStore } from '../hooks.ts';
 import { go } from '../router.ts';
+import { BookingCard } from './Week.tsx';
 
 // Agenda: een maandkalender. Eén tik = groen (kan) of rood (kan niet). Je ziet meteen wat er gepland staat.
 
@@ -85,7 +86,7 @@ export function Agenda() {
           const past = d < today;
           const st = state(d);
           const p = planned.get(d);
-          const cls = past ? 'past' : st.can ? 'can' : 'cannot';
+          const cls = `${past ? 'past' : st.can ? 'can' : 'cannot'}${p?.provisional ? ' provisional' : ''}`;
           return (
             <button
               key={d}
@@ -106,7 +107,7 @@ export function Agenda() {
       </div>
       <p class="muted small cal-legend">
         <span class="dot can" /> kan · <span class="dot cannot" /> kan niet · gestreept = nog niet aangevinkt (je vaste patroon) · 🏋️ kracht · 🚴 les ·
-        🎟️ gereserveerd · 🎾 tennis
+        🎟️ gereserveerd · 🎾 tennis · iconen vanaf dag 8 zijn voorlopig
       </p>
 
       {selected >= today && (
@@ -164,6 +165,8 @@ export function Agenda() {
           {sel.source !== 'saved' && <p class="muted small">Nog niet aangevinkt: dit volgt je vaste patroon van vorige weken.</p>}
         </div>
       )}
+
+      <BookingCard />
 
       <div class="stack">
         {open14.length > 0 && (

@@ -25,15 +25,15 @@ Werkt offline in de gym, draait puur op jouw tikken en kost **€ 0**.
     - *Full body* als de dag ervoor geen indoor cycling was.
     - *Bovenlichaam* de dag na indoor cycling.
     - *Benen & romp* en *Bovenlichaam* om de beurt als je twee dagen na elkaar kracht doet.
-- **14 dagen vooruit:** de komende 7 dagen vast gepland, dag 8–14 voorlopig (zelfde regels, bouwt verder op de
-  eerste week). Je vinkt aan welke avonden passen (in het weekend overdag, want Jims sluit dan om 17u), en of je
+- **Planning (Week):** de komende 7 dagen. De week erna zie je al voorlopig in de **Agenda** (zelfde regels, bouwt
+  verder op de eerste week). Je vinkt aan welke avonden passen (in het weekend overdag, want Jims sluit dan om 17u), en of je
   tennist. Alles gebeurt in Jims: geen thuistrainingen.
 - **Agenda** (eigen tab onderaan, de enige plek waar je je vrije dagen aanduidt): een maandkalender. Eén tik per dag:
   groen = kan, rood = kan niet, tot 2 maanden
   vooruit. Je ziet meteen wat er gepland staat (🏋️ 🚴 🎾 🎟️). Tik op een dag voor tennis of om een les als gereserveerd
   aan te duiden, of om de duur te kiezen (30/45/60 min). Met één knop bevestig je dat de komende 14 dagen kloppen.
   Een oranje bolletje op de tab = nog aan te duiden.
-- **Lessen reserveren:** indoor cycling zit snel vol. Bovenaan **Week** zie je de lessen van de komende 14 dagen;
+- **Lessen reserveren:** indoor cycling zit snel vol. In de **Agenda** zie je de lessen van de komende 14 dagen;
   reserveer in de Jims-app en tik aan wat lukte (🎟️). Een gereserveerde les blijft vast staan. Zondag krijg je
   een herinnering voor de lessen die nog niet gereserveerd zijn.
 - **Harde regels:**
@@ -145,7 +145,7 @@ stuurt volgende week bij en pusht. Dat kan ook automatisch als geplande taak elk
 |---|---|
 | **Zondag** (of wanneer je wil) | Melding "Vink je komende dagen aan" → tab **Agenda**: tik rood wat niet kan, tennis aanduiden, *De komende 14 dagen kloppen*. 20 seconden. |
 | **'s Ochtends** | Melding met je plan. Open de app → tik hoe je je voelt (en optioneel: spierpijn in benen of bovenlijf) → groen/oranje/rood advies, training past zich aan je herstel aan. |
-| **Les gereserveerd** | **Week** → tik op de les bovenaan (of op de dag → *Les gereserveerd*). |
+| **Les gereserveerd** | **Agenda** → tik de les aan in *Reserveer je indoor cycling* (of in **Week** op de dag → *Les gereserveerd*). |
 | **Liever cycling dan kracht** (of omgekeerd) | **Week** → tik op de dag → *Liever indoor cycling* / *Liever kracht*. Past het niet binnen de regels, dan zegt de coach waarom. |
 | **Haar wassen plannen** | 🚿 in **Week** = conditiedag (nooit 2 dagen na elkaar). Krachtdagen zijn zonder haarwas. |
 | **Nieuwe oefening** | Tik op de naam: foto's van de beweging en het toestel, hoe je het instelt, techniektips. |

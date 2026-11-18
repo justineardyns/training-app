@@ -63,7 +63,7 @@ describe('zondagherinnering', () => {
     expect(sundayMessage(s)).toMatchObject({ title: 'Vink je komende dagen aan', url: '#/agenda' });
     await s.saveAvailability(days7('2026-11-29').concat([defaultDay('2026-12-06', 45)]));
     const book = sundayMessage(s)!;
-    expect(book).toMatchObject({ title: 'Reserveer je indoor cycling 🎟️', url: '#/week' });
+    expect(book).toMatchObject({ title: 'Reserveer je indoor cycling 🎟️', url: '#/agenda' });
     expect(book.body).toMatch(/Lessen zitten snel vol: /);
     for (const d of s.upcomingClasses()) await s.updateDay(d.date, { booked: true });
     expect(sundayMessage(s)).toBeNull();

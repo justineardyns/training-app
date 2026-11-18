@@ -138,9 +138,7 @@ export function Week() {
 
   return (
     <>
-      <h1>Komende 14 dagen</h1>
-      <BookingCard />
-      <h2 class="week-head">Komende 7 dagen</h2>
+      <h1>Komende 7 dagen</h1>
       <p class="muted small">
         <strong>
           {plan.planned + plan.done}/{plan.target} trainingen: {plan.strength}× kracht + {plan.cardio}× conditie
@@ -152,15 +150,7 @@ export function Week() {
       <PlanList plan={plan} today={today} className={s.prefs().className} onChange={(date, patch) => s.updateDay(date, patch)} />
       <p class="muted small">Tik op een dag om te wisselen tussen kracht en {s.prefs().className.toLowerCase()}. Wanneer je kan, duid je aan in de Agenda.</p>
       <Messages messages={plan.messages} />
-      <h2 class="week-head">
-        Dag 8 tot 14 <span class="pill">voorlopig</span>
-      </h2>
-      <p class="muted small">
-        Zo ziet het eruit als je de komende 7 dagen volgt: {ahead.second.strength}× kracht + {ahead.second.cardio}× conditie
-        {ahead.second.deload.deload ? ' · deloadweek' : ''}. Reserveer je lessen al, dan blijven ze vast staan.
-      </p>
-      <PlanList plan={ahead.second} today={today} className={s.prefs().className} onChange={(date, patch) => s.updateDay(date, patch)} />
-      <Messages messages={ahead.second.messages} />
+      <p class="muted small">De week erna (voorlopig) en je lessen reserveren: zie de Agenda.</p>
       {past.length > 0 && (
         <>
           <h2>Afgelopen 7 dagen</h2>

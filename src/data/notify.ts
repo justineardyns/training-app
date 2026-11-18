@@ -84,8 +84,8 @@ export function sundayMessage(store: Store): PushMessage | null {
   if (toBook.length === 0) return null;
   return {
     title: `Reserveer je ${cls} 🎟️`,
-    body: `Lessen zitten snel vol: ${when}. Reserveer in de Jims-app en tik in Week aan wat lukte.`,
-    url: '#/week',
+    body: `Lessen zitten snel vol: ${when}. Reserveer in de Jims-app en tik in de Agenda aan wat lukte.`,
+    url: '#/agenda',
     tag: 'plan',
   };
 }

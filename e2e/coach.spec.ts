@@ -46,7 +46,10 @@ test('de coach kiest de mix, wisselt spieren af, laat je kiezen en kijkt naar he
   await page.getByRole('link', { name: /Week/ }).click();
 
   // Beginner: 4 trainingen (opbouw): ma full body A, wo full body B, do tennis, zo indoor cycling om 10u.
-  await expect(page.getByRole('heading', { name: 'Komende 14 dagen' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Komende 7 dagen' })).toBeVisible();
+  // Week toont enkel 7 dagen; de week erna staat (voorlopig) in de Agenda.
+  await expect(page.locator('.plan')).toHaveCount(1);
+  await expect(page.locator('.plan-day')).toHaveCount(7);
   await expect(page.getByText(/4\/4 trainingen: 2× kracht \+ 2× conditie/)).toBeVisible();
   const row = (i: number) => page.locator('.plan').first().locator('.plan-day').nth(i);
   await expect(row(0)).toContainText('Full body A');
@@ -60,12 +63,6 @@ test('de coach kiest de mix, wisselt spieren af, laat je kiezen en kijkt naar he
   // Rustdag met droog weer: wandelen.
   await expect(row(1)).toContainText('Wandeling');
   await expect(row(1).locator('.wx')).toContainText('11°');
-  // Dag 8–14: voorlopig, bouwt verder (ma 30/11 bovenlichaam: de dag na cycling rusten je benen).
-  await expect(page.getByRole('heading', { name: /Dag 8 tot 14/ })).toBeVisible();
-  const week2 = page.locator('.plan').nth(1);
-  await expect(week2.locator('.plan-day').first()).toContainText('Bovenlichaam');
-  await expect(week2.locator('.plan-day').first()).toContainText('gisteren indoor cycling, je benen krijgen een rustdag');
-  await expect(week2.locator('.plan-day', { hasText: 'Indoor cycling (groepsles)' })).toHaveCount(2);
   await snap(page, '10-week-waarom');
 
   // Jij kiest: woensdag liever indoor cycling → kan niet (donderdag tennis: nooit 2 haarwasdagen na elkaar), de coach zegt het.
@@ -78,15 +75,29 @@ test('de coach kiest de mix, wisselt spieren af, laat je kiezen en kijkt naar he
   await page.getByRole('button', { name: /Terug naar het voorstel/ }).click();
   await expect(row(2)).not.toContainText('keuze past niet');
 
-  // Lessen reserveren: zondag 10u gereserveerd → blijft vast staan.
+  // Agenda: dag 8–14 als voorbeschouwing (ma 30/11 bovenlichaam, de dag na cycling: voorlopig) en lessen reserveren.
+  await page.getByRole('link', { name: /Agenda/ }).click();
+  const mon30 = page.getByRole('gridcell', { name: /^maandag 30 november/ });
+  await expect(mon30).toHaveClass(/provisional/);
+  await expect(mon30).toContainText('🏋️');
+  // Eén tik = rood (en het plan schuift mee), het detail eronder zet het met één tik terug op groen.
+  await mon30.click();
+  await expect(mon30).toHaveClass(/cannot/);
+  await expect(mon30).not.toContainText('🏋️');
+  await page.locator('.agenda-detail').getByRole('button', { name: /Kan 's avonds/ }).click();
+  await expect(mon30).toHaveClass(/can/);
+  await expect(page.locator('.agenda-detail')).toContainText(/Gepland: .*\(voorlopig\)|Rustdag in het plan/);
   const booking = page.locator('.card.booking');
   await expect(booking).toContainText('Reserveer je indoor cycling');
   await expect(booking.getByRole('button')).toHaveCount(3);
   await booking.getByRole('button', { name: /zo 29\/11 · 10u/ }).click();
+  await expect(booking.getByRole('button', { name: /✓ zo 29\/11/ })).toBeVisible();
+  await expect(page.getByRole('gridcell', { name: /^zondag 29 november/ })).toContainText('🎟️');
+  await snap(page, '14-reserveren');
+  // Gelinkt: in Week staat zondag nu als gereserveerd.
+  await page.getByRole('link', { name: /Week/ }).click();
   await expect(row(6)).toContainText('gereserveerd');
   await expect(row(6)).toContainText('Gereserveerd: indoor cycling om 10u');
-  await expect(booking.getByRole('button', { name: /✓ zo 29\/11/ })).toBeVisible();
-  await snap(page, '14-reserveren');
 
   // Vandaag (full body): dagvorm + spierpijn in de benen → benen lichter, bovenlichaam eerst.
   await page.getByRole('link', { name: /Vandaag/ }).click();
