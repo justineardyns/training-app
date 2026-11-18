@@ -110,13 +110,20 @@ describe('weekplanning', () => {
     expect(p.days[2]).toMatchObject({ type: 'strength', location: 'gym', minutes: 45 });
   });
 
-  it('kracht krijgt voorrang op Jims-dagen en langere slots', () => {
+  it('eerst kracht, conditie later in de week (ook als je van locatie wisselt)', () => {
     const a = avail('x.x.x..');
     a[0] = { ...a[0]!, location: 'home', minutes: 30 };
     const p = planWeek(base({ availability: a }));
-    expect(p.days[0]!.type).toBe('cardio');
+    expect(p.days[0]!.type).toBe('strength');
     expect(p.days[2]!.type).toBe('strength');
-    expect(p.days[4]!.type).toBe('strength');
+    expect(p.days[4]!.type).toBe('cardio');
+  });
+
+  it('stabiel: een al geplande dag blijft gepland bij een kleine wijziging', () => {
+    const a = avail('xxxxxxx');
+    a[0] = { ...a[0]!, location: 'home', minutes: 30 };
+    const p = planWeek(base({ availability: a, originalPlan: [days[0]!, days[2]!, days[4]!] }));
+    expect(sweatDates(p)).toEqual([days[0], days[2], days[4]]);
   });
 
   it('weekdoel gehaald → rest van de week zweetvrij', () => {

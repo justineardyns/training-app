@@ -5,6 +5,7 @@ import { build as esbuild } from 'esbuild';
 import { readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { createHash } from 'node:crypto';
+import { execSync } from 'node:child_process';
 
 // De app draait op https://<gebruiker>.github.io/training-app/
 const base = process.env.BASE_PATH ?? '/training-app/';
@@ -48,8 +49,17 @@ function serviceWorker(): Plugin {
   };
 }
 
+const appVersion = (() => {
+  try {
+    return execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+  } catch {
+    return 'dev';
+  }
+})();
+
 export default defineConfig({
   base,
+  define: { __APP_VERSION__: JSON.stringify(appVersion) },
   plugins: [preact(), serviceWorker()],
   build: {
     target: 'es2020',

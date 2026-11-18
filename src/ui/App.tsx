@@ -1,4 +1,13 @@
+import { useEffect } from 'preact/hooks';
 import { useRoute } from './router.ts';
+import { useStore } from './hooks.ts';
+import { Setup } from './screens/Setup.tsx';
+import { Today } from './screens/Today.tsx';
+import { Availability, Week } from './screens/Week.tsx';
+import { Workout } from './screens/Workout.tsx';
+import { Cardio } from './screens/Cardio.tsx';
+import { More } from './screens/More.tsx';
+import { Report } from './screens/Report.tsx';
 
 const TABS = [
   { route: 'vandaag', label: 'Vandaag', ico: '◉' },
@@ -8,24 +17,60 @@ const TABS = [
 ] as const;
 
 export function App() {
-  const { route } = useRoute();
+  const s = useStore();
+  const { route, params } = useRoute();
+
+  useEffect(() => {
+    void s.init();
+  }, []);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [route, params.join('/')]);
+
+  if (!s.ready) return <div class="app splash" aria-busy="true" />;
+  if (!s.profile()?.setupDone) return <Setup />;
+
+  const focus = route === 'training' || route === 'cardio';
+  let page;
+  switch (route) {
+    case 'week':
+      page = <Week />;
+      break;
+    case 'beschikbaarheid':
+      page = <Availability key={params[0]} monday={params[0] ?? ''} />;
+      break;
+    case 'training':
+      page = <Workout />;
+      break;
+    case 'cardio':
+      page = <Cardio />;
+      break;
+    case 'rapport':
+      page = <Report />;
+      break;
+    case 'meer':
+      page = <More key={params[0] ?? 'root'} sub={params[0]} />;
+      break;
+    default:
+      page = <Today />;
+  }
+
   return (
-    <div class="app">
-      <main class="page">
-        <h1>{TABS.find((t) => t.route === route)?.label ?? 'Coach'}</h1>
-        <div class="card">
-          <p>Je coach wordt gebouwd. Deze lege versie werkt al offline en kan op je beginscherm.</p>
-          <p class="muted small">Tik in Safari op Deel → Zet op beginscherm.</p>
-        </div>
-      </main>
-      <nav class="tabbar">
-        {TABS.map((t) => (
-          <a key={t.route} href={`#/${t.route}`} class={route === t.route ? 'on' : ''}>
-            <span class="ico" aria-hidden="true">{t.ico}</span>
-            {t.label}
-          </a>
-        ))}
-      </nav>
+    <div class={`app ${focus ? 'focus' : ''}`}>
+      <main class="page">{page}</main>
+      {!focus && (
+        <nav class="tabbar">
+          {TABS.map((t) => (
+            <a key={t.route} href={`#/${t.route}`} class={route === t.route || (t.route === 'week' && route === 'beschikbaarheid') ? 'on' : ''}>
+              <span class="ico" aria-hidden="true">
+                {t.ico}
+              </span>
+              {t.label}
+            </a>
+          ))}
+        </nav>
+      )}
     </div>
   );
 }

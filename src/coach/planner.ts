@@ -142,13 +142,15 @@ export function planWeek(input: PlanInput): WeekPlan {
       ok(d),
   );
 
+  const original = new Set(input.originalPlan ?? []);
   const score = (set: ISODate[]) => {
     const all = [...new Set([...doneByDate.keys(), ...set])].sort();
     let minGap = 7;
     for (let i = 1; i < all.length; i++) minGap = Math.min(minGap, diffDays(all[i]!, all[i - 1]!));
     return set.reduce((s, d) => {
       const a = availOf(d)!;
-      return s + a.minutes / 15 + (a.location === 'gym' ? 1 : 0) - (dayIndex(d) === 6 ? 3 : 0) - 0.1 * dayIndex(d);
+      // Stabiliteit: een al gepland dag blijft liefst gepland (bv. "vandaag toch thuis").
+      return s + a.minutes / 15 + (a.location === 'gym' ? 1 : 0) - (dayIndex(d) === 6 ? 3 : 0) - 0.1 * dayIndex(d) + (original.has(d) ? 4 : 0);
     }, 0) + 2 * minGap;
   };
 
@@ -169,12 +171,8 @@ export function planWeek(input: PlanInput): WeekPlan {
   const doneSessions = [...doneByDate.values()].flat();
   const strengthDone = doneSessions.filter((s) => s.kind === 'strength').length;
   const strengthNeeded = Math.max(0, desiredStrength - strengthDone);
-  const byPreference = [...chosen].sort((a, b) => {
-    const A = availOf(a)!;
-    const B = availOf(b)!;
-    return (B.location === 'gym' ? 1 : 0) - (A.location === 'gym' ? 1 : 0) || B.minutes - A.minutes || (a < b ? -1 : 1);
-  });
-  const strengthDays = new Set(byPreference.slice(0, strengthNeeded));
+  // Eerst kracht, conditie later in de week: voorspelbaar en stabiel als je iets wijzigt.
+  const strengthDays = new Set([...chosen].sort().slice(0, strengthNeeded));
 
   const deload = decideDeload({
     monday,
@@ -188,7 +186,6 @@ export function planWeek(input: PlanInput): WeekPlan {
   const strengthHistory = input.history.filter((s) => s.kind === 'strength' && s.template).sort((a, b) => (a.date < b.date ? -1 : 1));
   let lastTemplate: Template | undefined = strengthHistory.filter((s) => s.date < monday).at(-1)?.template;
 
-  const original = new Set(input.originalPlan ?? []);
   const messages: string[] = [];
   const result: PlannedDay[] = [];
   let missed = 0;
