@@ -2,7 +2,7 @@ import { useState } from 'preact/hooks';
 import { isWeekend, resolveDay } from '../../coach/availability.ts';
 import { addDays, DAY_SHORT, dayIndex, dayName } from '../../coach/dates.ts';
 import { hourText, type PlannedDay } from '../../coach/planner.ts';
-import type { ISODate } from '../../coach/types.ts';
+import type { ISODate, Minutes } from '../../coach/types.ts';
 import { Chips } from '../components.tsx';
 import { useStore } from '../hooks.ts';
 import { go } from '../router.ts';
@@ -122,6 +122,18 @@ export function Agenda() {
               ✕ Kan niet
             </button>
           </div>
+          {sel.can && !(sel.day.tennis ?? 0) && (
+            <Chips<Minutes>
+              label={`Tijd op ${label(selected)}`}
+              options={[
+                { value: 30, label: '30 min' },
+                { value: 45, label: '45 min' },
+                { value: 60, label: '60 min' },
+              ]}
+              value={sel.day.minutes}
+              onChange={(v) => s.updateDay(selected, { minutes: v })}
+            />
+          )}
           {tennisDay && (
             <Chips<number>
               label={`Tennis op ${label(selected)}`}

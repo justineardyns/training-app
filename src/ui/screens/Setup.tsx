@@ -19,7 +19,7 @@ export function Setup() {
 
   const finish = async () => {
     await store.saveProfile({ ...profile, prefs: normalizePrefs(profile.prefs), setupDone: true });
-    go('beschikbaarheid');
+    go('agenda');
   };
 
   return (

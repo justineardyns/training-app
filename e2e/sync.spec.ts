@@ -34,7 +34,7 @@ test('koppelen, training bewaren en naar de privé-repo pushen; herstellen op ee
   await expect(page.getByRole('heading', { name: 'Jims', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Verder' }).click();
   await page.getByRole('button', { name: 'Klaar' }).click();
-  await page.getByRole('button', { name: 'Bewaar en plan' }).click();
+  await page.getByRole('button', { name: /De komende 14 dagen kloppen/ }).click();
 
   // Snelle groepsles loggen → wordt gesynct
   await page.getByRole('link', { name: /Vandaag/ }).click();

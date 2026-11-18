@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { preferStrengthToday } from './helpers.ts';
+import { agendaDay, preferStrengthToday } from './helpers.ts';
 
 const shots = process.env.SHOTS_DIR;
 const snap = async (page: import('@playwright/test').Page, name: string) => {
@@ -19,12 +19,15 @@ test('eerste opstart → plannen → trainen → bewaren', async ({ page }) => {
   await page.getByRole('button', { name: 'Verder' }).click();
   await page.getByRole('button', { name: 'Klaar' }).click();
 
-  // Meteen: dagen aanvinken (komende 7 dagen)
-  await expect(page.getByRole('heading', { name: 'Wanneer kan je?' })).toBeVisible();
-  await page.getByRole('group', { name: 'Momenten op di 24/11' }).getByRole('button', { name: /Avond/ }).click();
+  // Meteen: de Agenda. Dinsdag kan niet (rood), donderdag tennis 1u, de rest klopt.
+  await expect(page.getByRole('heading', { name: 'Agenda' })).toBeVisible();
+  await agendaDay(page, /^dinsdag 24 november/).click();
+  await expect(agendaDay(page, /^dinsdag 24 november/)).toHaveClass(/cannot/);
+  await agendaDay(page, /^donderdag 26 november/).click();
   await page.getByRole('group', { name: 'Tennis op do 26/11' }).getByRole('button', { name: /1u/ }).click();
-  await snap(page, '02-beschikbaarheid');
-  await page.getByRole('button', { name: 'Bewaar en plan' }).click();
+  await snap(page, '02-agenda');
+  await page.getByRole('button', { name: /De komende 14 dagen kloppen/ }).click();
+  await page.getByRole('link', { name: /Week/ }).click();
   await expect(page.getByRole('heading', { name: 'Komende 7 dagen' })).toBeVisible();
   // Beginner: 4 trainingen (opbouw). Tennis op do, indoor cycling op zondag om 10u, de rest kracht.
   await expect(page.locator('.plan').first().locator('.plan-day.sweat')).toHaveCount(4);

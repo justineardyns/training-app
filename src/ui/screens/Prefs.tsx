@@ -1,5 +1,5 @@
 import { DAY_SHORT } from '../../coach/dates.ts';
-import type { ClassSlot, Prefs } from '../../coach/types.ts';
+import type { ClassSlot, Minutes, Prefs } from '../../coach/types.ts';
 import { Chips } from '../components.tsx';
 
 const CLASS_OPTIONS: ClassSlot[] = [
@@ -31,6 +31,17 @@ export function PrefsEditor(props: { value: Prefs; onChange: (p: Prefs) => void;
         </p>
       </div>
       <div class="card">
+        <h3>Standaard tijd per training</h3>
+        <Chips<Minutes>
+          options={[
+            { value: 30, label: '30 min' },
+            { value: 45, label: '45 min' },
+            { value: 60, label: '60 min' },
+          ]}
+          value={p.minutes}
+          onChange={(v) => set({ minutes: v })}
+        />
+        <p class="muted small">Per dag aanpassen kan in de Agenda (tik op de dag) of op Vandaag.</p>
         <h3>Maximum trainingen per 7 dagen</h3>
         <Chips
           options={[3, 4, 5, 6].map((n) => ({ value: n, label: n === 6 ? '6 (max)' : String(n) }))}
@@ -78,7 +89,7 @@ export function PrefsEditor(props: { value: Prefs; onChange: (p: Prefs) => void;
               );
             })}
           </div>
-          <p class="muted small">Op die dagen kan je bij "Dagen aanvinken" tennis (1u of 2u) aanduiden.</p>
+          <p class="muted small">Op die dagen kan je in de Agenda tennis (1u of 2u) aanduiden: tik op de dag.</p>
         </div>
       )}
     </div>

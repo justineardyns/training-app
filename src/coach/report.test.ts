@@ -109,6 +109,6 @@ describe('coachboodschap', () => {
     expect(coachMessage({ ...base, done: 3, planned: 3 })).toMatch(/^Sterk/);
   });
   it('zonder plan', () => {
-    expect(coachMessage({ ...base, done: 0, planned: 0 })).toMatch(/beschikbaarheid/);
+    expect(coachMessage({ ...base, done: 0, planned: 0 })).toMatch(/Agenda/);
   });
 });

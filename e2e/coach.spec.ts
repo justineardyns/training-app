@@ -39,11 +39,11 @@ test('de coach kiest de mix, wisselt spieren af, laat je kiezen en kijkt naar he
   await page.getByRole('button', { name: 'Verder' }).click();
   await page.getByRole('button', { name: 'Klaar' }).click();
 
-  // Lesmomenten zichtbaar bij het aanvinken (ook donderdagavond); tennis op donderdag.
-  await expect(page.getByRole('group', { name: 'Momenten op za 28/11' }).getByRole('button', { name: /Overdag · 🚴/ })).toBeVisible();
-  await expect(page.getByRole('group', { name: 'Momenten op do 26/11' }).getByRole('button', { name: /Avond · 🚴/ })).toBeVisible();
+  // Agenda: donderdag tennis 1u, de rest klopt.
+  await page.getByRole('gridcell', { name: /^donderdag 26 november/ }).click();
   await page.getByRole('group', { name: 'Tennis op do 26/11' }).getByRole('button', { name: /1u/ }).click();
-  await page.getByRole('button', { name: 'Bewaar en plan' }).click();
+  await page.getByRole('button', { name: /De komende 14 dagen kloppen/ }).click();
+  await page.getByRole('link', { name: /Week/ }).click();
 
   // Beginner: 4 trainingen (opbouw): ma full body A, wo full body B, do tennis, zo indoor cycling om 10u.
   await expect(page.getByRole('heading', { name: 'Komende 14 dagen' })).toBeVisible();

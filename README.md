@@ -28,9 +28,11 @@ Werkt offline in de gym, draait puur op jouw tikken en kost **€ 0**.
 - **14 dagen vooruit:** de komende 7 dagen vast gepland, dag 8–14 voorlopig (zelfde regels, bouwt verder op de
   eerste week). Je vinkt aan welke avonden passen (in het weekend overdag, want Jims sluit dan om 17u), en of je
   tennist. Alles gebeurt in Jims: geen thuistrainingen.
-- **Agenda:** een maandkalender (**Week → 📅 Agenda**). Eén tik per dag: groen = kan, rood = kan niet, tot 2 maanden
+- **Agenda** (eigen tab onderaan, de enige plek waar je je vrije dagen aanduidt): een maandkalender. Eén tik per dag:
+  groen = kan, rood = kan niet, tot 2 maanden
   vooruit. Je ziet meteen wat er gepland staat (🏋️ 🚴 🎾 🎟️). Tik op een dag voor tennis of om een les als gereserveerd
-  aan te duiden. Met één knop bevestig je dat de komende 14 dagen kloppen.
+  aan te duiden, of om de duur te kiezen (30/45/60 min). Met één knop bevestig je dat de komende 14 dagen kloppen.
+  Een oranje bolletje op de tab = nog aan te duiden.
 - **Lessen reserveren:** indoor cycling zit snel vol. Bovenaan **Week** zie je de lessen van de komende 14 dagen;
   reserveer in de Jims-app en tik aan wat lukte (🎟️). Een gereserveerde les blijft vast staan. Zondag krijg je
   een herinnering voor de lessen die nog niet gereserveerd zijn.
@@ -43,7 +45,7 @@ Werkt offline in de gym, draait puur op jouw tikken en kost **€ 0**.
   - Twee krachtdagen na elkaar wisselen bovenlichaam en benen & romp af.
   - Tennis speel je ontspannen: de dag erna mag je gewoon kracht doen.
 - **Mix:** minstens 1×, liefst 2× indoor cycling per week, op de lesmomenten: maandag-, woensdag- en
-  donderdagavond, en zaterdag en zondag om 10u (🚴 bij het aanvinken).
+  donderdagavond, en zaterdag en zondag om 10u (🚴 in de Agenda).
   - Tennis telt als conditie. De andere trainingen zijn kracht.
   - Je kan per dag zelf kiezen voor kracht of cycling. Breekt dat een regel, dan zegt de coach het en kan je
     het met één tik terugdraaien.
@@ -121,7 +123,7 @@ Open [github.com/settings/personal-access-tokens/new](https://github.com/setting
 4. Plak je token → **Koppel**. Je gebruikersnaam en `training` staan al ingevuld.
 5. Kies de gewichtsstappen in Jims (weet je het niet: laat staan) en je voorkeuren (ervaring,
    maximum trainingen per 7 dagen, lesmomenten van indoor cycling, tennisdag) → **Klaar**.
-6. Vink aan welke momenten de komende 7 dagen passen → **Bewaar en plan**.
+6. Je komt in de **Agenda**: tik rood wat niet kan (en tennis op donderdag) → **De komende 14 dagen kloppen**.
 
 ### 5. Meldingen
 
@@ -141,7 +143,7 @@ stuurt volgende week bij en pusht. Dat kan ook automatisch als geplande taak elk
 
 | Wanneer | Wat |
 |---|---|
-| **Zondag** (of wanneer je wil) | Melding "Vink je komende dagen aan" → **Agenda**: tik rood wat niet kan, tennis aanduiden, *De komende 14 dagen kloppen*. 20 seconden. Of de lijst via *Dagen aanvinken*. |
+| **Zondag** (of wanneer je wil) | Melding "Vink je komende dagen aan" → tab **Agenda**: tik rood wat niet kan, tennis aanduiden, *De komende 14 dagen kloppen*. 20 seconden. |
 | **'s Ochtends** | Melding met je plan. Open de app → tik hoe je je voelt (en optioneel: spierpijn in benen of bovenlijf) → groen/oranje/rood advies, training past zich aan je herstel aan. |
 | **Les gereserveerd** | **Week** → tik op de les bovenaan (of op de dag → *Les gereserveerd*). |
 | **Liever cycling dan kracht** (of omgekeerd) | **Week** → tik op de dag → *Liever indoor cycling* / *Liever kracht*. Past het niet binnen de regels, dan zegt de coach waarom. |

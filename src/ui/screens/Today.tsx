@@ -10,7 +10,7 @@ import { Chips, Messages, Pill, Sheet } from '../components.tsx';
 import { Thumb } from '../Demo.tsx';
 import { useStore } from '../hooks.ts';
 import { go } from '../router.ts';
-import { dayLabel, untickedDays } from './Week.tsx';
+import { dayLabel } from './Week.tsx';
 import { SyncWarning } from './Connect.tsx';
 import { InjuryCard } from './Injury.tsx';
 import { InsightsCard, RecoveryCard, SoreChips, WeatherBadge } from './CoachCards.tsx';
@@ -125,7 +125,6 @@ export function Today() {
   const plan = s.plan();
   const session = s.sessionFor(day) as StrengthSession | CardioSession | undefined;
   const [quick, setQuick] = useState(false);
-  const unticked = untickedDays(today, (d) => !!s.explicitDay(d));
   const nextSweat = plan.days.find((d) => d.date > today && d.status === 'planned');
   const w = s.workout;
 
@@ -155,12 +154,6 @@ export function Today() {
         </button>
       )}
 
-      {unticked >= 3 && (
-        <button class="card cta" onClick={() => go('agenda')}>
-          <strong>Vink je komende dagen aan</strong>
-          <span class="muted small">Welke avonden (en weekenddagen) passen? 20 seconden.</span>
-        </button>
-      )}
 
       {day.sweat && day.status === 'planned' && <ReadinessCard />}
 

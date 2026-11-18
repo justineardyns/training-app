@@ -192,7 +192,7 @@ export function coachMessage(r: WeeklyReport, next?: WeekPlan): string {
         : `Tussenstand: ${r.done}/${r.planned}. Nog ${left} ${left === 1 ? 'sessie' : 'sessies'} te gaan deze week.`,
     );
   } else if (r.planned === 0 && r.done === 0) {
-    parts.push('Geen sessies deze week. Vul zondag je beschikbaarheid in, dan plan ik voor je. Volgende week starten we gewoon opnieuw.');
+    parts.push('Geen sessies deze week. Duid zondag in de Agenda aan wanneer je kan, dan plan ik voor je. Volgende week starten we gewoon opnieuw.');
   } else if (r.done >= r.planned) {
     parts.push(`Sterk: ${r.done}/${r.planned} sessies gedaan. Zo bouw je het op.`);
   } else if (r.done === r.planned - 1) {

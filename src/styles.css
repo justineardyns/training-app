@@ -125,7 +125,7 @@ p { margin: 0 0 12px; }
   position: fixed;
   left: 0; right: 0; bottom: 0;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   background: rgba(11, 13, 16, 0.94);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -458,3 +458,6 @@ p.why { font-size: 15px; margin: 4px 0 10px; }
 .dot.can { background: rgba(74, 222, 128, 0.7); }
 .dot.cannot { background: rgba(248, 113, 113, 0.7); }
 .agenda-detail h3 { margin-top: 0; text-transform: capitalize; }
+
+.tabbar a .ico { position: relative; }
+.tabbar .badge { position: absolute; top: -2px; right: -8px; width: 10px; height: 10px; border-radius: 50%; background: var(--orange); }

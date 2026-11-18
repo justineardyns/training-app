@@ -163,7 +163,7 @@ describe('de coach kiest: max 6 per 7 dagen, conditie en kracht elk max 4', () =
   it('indoor cycling: minstens 1×, liefst 2×; geen lesmoment → de coach zegt hoe je er een krijgt', () => {
     const none = planWeek(base({ prefs: { ...PRO, classSlots: [] } }));
     expect(none.days.some((d) => d.groupClass)).toBe(false);
-    expect(none.messages.join(' ')).toMatch(/Geen indoor cycling deze 7 dagen.*Vink een lesmoment/);
+    expect(none.messages.join(' ')).toMatch(/Geen indoor cycling deze 7 dagen.*Maak een lesmoment groen in de Agenda/);
     // Enkel zaterdag een les: 1×, met een duw naar een tweede.
     const one = planWeek(base({ prefs: { ...PRO, classSlots: [{ day: 5, slot: 'day', time: '10:00' }] } }));
     expect(one.days.filter((d) => d.groupClass)).toHaveLength(1);

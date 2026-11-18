@@ -687,7 +687,7 @@ export function planWeek(input: PlanInput): WeekPlan {
   const cycling = result.filter((r) => r.groupClass || (r.status === 'done' && r.sessions?.some((x) => x.kind === 'class'))).length;
   if (prefs.className && cycling < WANT_CYCLING) {
     const swap = result.find((r) => r.status === 'planned' && r.type === 'strength' && r.classSlot && !r.want && r.date !== today);
-    const how = swap ? `Tik op ${dayName(swap.date)} in Week voor een les` : 'Vink een lesmoment (🚴) aan bij Dagen aanvinken';
+    const how = swap ? `Tik op ${dayName(swap.date)} in Week voor een les` : 'Maak een lesmoment groen in de Agenda';
     messages.push(
       cycling === 0
         ? `Geen ${prefs.className.toLowerCase()} deze 7 dagen: er valt geen lesmoment op een dag die past. ${how}.`
