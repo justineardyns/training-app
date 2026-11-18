@@ -241,6 +241,7 @@ export function reportMarkdown(r: WeeklyReport): string {
   lines.push('', '## Kracht', '');
   if (r.prs.length) for (const p of r.prs) lines.push(`- 🏆 ${p.name}: ${p.kind === 'kg' ? `${kg(p.load)} × ${p.reps} → geschatte 1RM ${kg(Math.round(p.value))} (was ${kg(Math.round(p.previous))})` : `${p.reps} reps (was ${p.previous})`}`);
   else lines.push('- Geen nieuwe records deze week.');
+  if (r.trend.length) lines.push('', 'Geschatte 1RM per week (kg):', '');
   for (const t of r.trend) lines.push(`- ${t.name}: ${t.points.map((p) => nf.format(Math.round(p.e1rm))).join(' → ')}`);
   lines.push('', '## Volume (harde sets)', '');
   const vol = Object.entries(r.volume).sort((a, b) => b[1] - a[1]);
