@@ -54,6 +54,7 @@ function report(store: Store, monday: string) {
     checks: store.checks().map((c) => ({ date: c.date, level: c.level })),
     planned: store.plannedCount(monday),
     nextWeek: store.plan(addDays(monday, 7)),
+    insights: store.insights(),
   });
 }
 
@@ -130,7 +131,10 @@ export function context(store: Store, monday: string) {
     nextWeek: {
       target: next.target,
       deload: next.deload,
-      days: next.days.map((d) => ({ date: d.date, type: d.type, title: d.title, slot: d.slot, location: d.location })),
+      days: next.days.map((d) => ({
+        date: d.date, type: d.type, title: d.title, slot: d.slot, location: d.location, groupClass: d.groupClass, why: d.why,
+        focus: d.focus && (d.focus.reduce.length || d.focus.later.length || d.focus.first) ? d.focus : undefined,
+      })),
       messages: next.messages,
       violations: next.violations,
     },
@@ -151,6 +155,10 @@ export function context(store: Store, monday: string) {
       };
     }),
     readiness: store.checks().filter((c) => c.date >= addDays(monday, -7)),
+    /** Wat gaat goed, wat minder (dezelfde analyse als in de app; stuurt ook de planner). */
+    insights: store.insights(),
+    /** Herstel per spiergroep vandaag. */
+    recovery: store.recovery(),
     injuries: store.injuries().map((i) => ({ ...i, referral: referral(i, today) })),
     adjustments: adjRaw ? sanitizeAdjustments(adjRaw) : null,
     /** Hoeveel van de 7 dagen na deze week nog niet aangevinkt zijn (patroon of standaard gebruikt). */

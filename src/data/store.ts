@@ -6,6 +6,11 @@ import { assessReadiness } from '../coach/readiness.ts';
 import { sanitizeAdjustments } from '../coach/rules.ts';
 import { buildCardioSession, buildStrengthSession, type CardioSession, type StrengthSession } from '../coach/session.ts';
 import type { LightId } from '../coach/light.ts';
+import { buildInsights, type Insights } from '../coach/insights.ts';
+import { eventFromSession, recoveryAt, type Group, type GroupRecovery } from '../coach/recovery.ts';
+import { SWEAT_KINDS } from '../coach/planner.ts';
+import { isWeekend } from '../coach/availability.ts';
+import type { DayWeather } from '../coach/weather.ts';
 import type {
   CoachAdjustments,
   DayAvailability,
@@ -56,7 +61,24 @@ export interface LocalSettings {
   lastHealth?: string;
   /** Korte samenvatting van de laatste import (om de Opdracht te controleren). */
   lastImport?: string;
+  /** Plaats voor het weerbericht. Blijft op je iPhone (nooit in de repo). */
+  weatherPlace?: WeatherPlace;
 }
+
+export interface WeatherPlace {
+  name: string;
+  lat: number;
+  lon: number;
+}
+
+/** Laatste weerbericht, enkel lokaal bewaard. */
+export interface WeatherCache {
+  fetchedAt: string;
+  place: WeatherPlace;
+  days: DayWeather[];
+}
+
+export const DEFAULT_PLACE: WeatherPlace = { name: 'Brussel', lat: 50.85, lon: 4.35 };
 
 export type AvailabilitySource = 'saved' | 'pattern' | 'default';
 
@@ -76,6 +98,7 @@ export class Store {
   files = new Map<string, FileRecord>();
   local: LocalSettings = {};
   workout?: WorkoutState;
+  weather?: WeatherCache;
   version = 0;
   ready = false;
   /** Klok, vervangbaar in tests. */
@@ -87,14 +110,16 @@ export class Store {
   private listeners = new Set<() => void>();
 
   async init(): Promise<void> {
-    const [files, local, workout] = await Promise.all([
+    const [files, local, workout, weather] = await Promise.all([
       idb.getAll<FileRecord>('files'),
       idb.get<LocalSettings>('local', 'settings'),
       idb.get<WorkoutState>('local', 'workout'),
+      idb.get<WeatherCache>('local', 'weather').catch(() => undefined),
     ]);
     this.files = new Map(files.map((f) => [f.path, f]));
     this.local = local ?? {};
     this.workout = workout;
+    this.weather = weather;
     this.ready = true;
     this.emit();
   }
@@ -181,6 +206,19 @@ export class Store {
     this.emit();
     this.workoutWrite = this.workoutWrite.then(() => (w ? idb.put('local', w, 'workout') : idb.delete('local', 'workout'))).catch(() => undefined);
     await this.workoutWrite;
+  }
+
+  async setWeather(w: WeatherCache): Promise<void> {
+    this.weather = w;
+    this.emit();
+    await idb.put('local', w, 'weather').catch(() => undefined);
+  }
+
+  /** Weer voor een dag, als het bericht vers genoeg is (≤ 36 uur oud). */
+  weatherFor(date: ISODate): DayWeather | undefined {
+    const w = this.weather;
+    if (!w || this.now().getTime() - Date.parse(w.fetchedAt) > 36 * 3600_000) return undefined;
+    return w.days.find((d) => d.date === date);
   }
 
   /** Atomaire update op de laatste stand (snel tikken mag nooit een tik verliezen). */
@@ -281,6 +319,40 @@ export class Store {
     return this.cached('postponed', () => this.logs().flatMap((l) => l.postponed ?? []));
   }
 
+  /** Wat gaat goed, wat minder? (ook gebruikt door de planner) */
+  insights(): Insights {
+    return this.cached('insights', () => {
+      const prefs = this.prefs();
+      const adj = activeAdjustments(this.adjustments(), this.today());
+      const strength = adj?.strengthSessions ?? prefs.strengthPerWeek;
+      const target = adj?.targetSessions ?? prefs.targetPerWeek;
+      return buildInsights({
+        today: this.today(),
+        history: this.sessions(),
+        planned: this.snapshot(),
+        checks: this.checks().map((c) => ({ date: c.date, level: c.level })),
+        strengthTarget: strength,
+        cardioTarget: Math.max(0, target - strength),
+      });
+    });
+  }
+
+  /** Nog nieuw voor je spieren: de eerste 6 krachttrainingen. */
+  novice(): boolean {
+    return this.sessions().filter((s) => s.kind === 'strength').length < 6;
+  }
+
+  /** Herstel per spiergroep nu (voor Vandaag). */
+  recovery(date: ISODate = this.today()): Record<Group, GroupRecovery> {
+    return this.cached(`recovery:${date}`, () => {
+      const novice = this.novice();
+      const events = this.sessions()
+        .filter((s) => SWEAT_KINDS.has(s.kind) && s.date >= addDays(date, -4) && s.date < date)
+        .map((s) => eventFromSession(s, novice));
+      return recoveryAt({ date, slot: isWeekend(date) ? 'day' : 'evening' }, events, this.checkFor(date)?.sore ?? []);
+    });
+  }
+
   /** Rollend plan: de komende 7 dagen vanaf `start` (standaard vandaag). */
   plan(start?: ISODate): WeekPlan {
     const today = this.today();
@@ -298,6 +370,11 @@ export class Store {
         readinessLog: this.checks().map((c) => ({ date: c.date, level: c.level })),
         postponed: this.postponedDays(),
         originalPlan: this.snapshot(),
+        weather: (d) => this.weatherFor(d),
+        avoidWeekdays: this.insights().avoidWeekdays,
+        weakGroup: this.insights().weakGroup,
+        soreToday: this.checkFor(today)?.sore,
+        novice: this.novice(),
       }),
     );
   }
@@ -332,6 +409,7 @@ export class Store {
         injuries: this.injuries(),
         adjustments: activeAdjustments(this.adjustments(), day.date),
         beginner: this.prefs().experience === 'beginner',
+        focus: day.focus,
       });
     }
     if (day.type !== 'cardio') return undefined;
@@ -399,9 +477,19 @@ export class Store {
     const date = this.today();
     // Puur op jouw tik (Apple Health staat voorlopig uit).
     const r = assessReadiness({ history: [], energy });
+    const prev = this.checkFor(date);
     const check: ReadinessCheck = { date, energy, level: r.level, score: r.score, reasons: r.reasons, at: this.now().toISOString() };
+    if (prev?.sore) check.sore = prev.sore;
     await this.updateLog(date, (l) => ({ ...l, checks: [...l.checks.filter((c) => c.date !== date), check] }));
     return check;
+  }
+
+  /** Spierpijn vandaag (optioneel). Leeg = geen. */
+  async recordSore(groups: Group[]): Promise<void> {
+    const date = this.today();
+    const cur = this.checkFor(date);
+    if (!cur) return;
+    await this.updateLog(date, (l) => ({ ...l, checks: l.checks.map((c) => (c.date === date ? { ...c, sore: groups } : c)) }));
   }
 
   async postpone(date: ISODate): Promise<void> {

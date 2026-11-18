@@ -6,6 +6,7 @@ import type { DayAvailability } from '../coach/types.ts';
 import { idb } from './db.ts';
 import { paths, type AvailabilityMonth } from './schema.ts';
 import { defaultProfile, Store } from './store.ts';
+import { refreshWeather, setWeatherPlace } from './weather.ts';
 
 const MON = '2026-11-23';
 const D = (i: number) => addDays(MON, i);
@@ -105,5 +106,62 @@ describe('store: rollend plannen', () => {
     await again.init();
     expect(again.log('2026-W48').postponed).toEqual([MON]);
     expect(again.local.repo).toBe('training');
+  });
+
+  it('wisselen per dag: liever cycling op een lesmoment, en terug', async () => {
+    const s = await fresh();
+    await s.saveAvailability(week(MON));
+    expect(s.plan().days[0]!.type).toBe('strength');
+    await s.updateDay(D(0), { want: 'cardio' });
+    expect(s.plan().days[0]).toMatchObject({ type: 'cardio', groupClass: true, want: 'cardio' });
+    expect(s.explicitDay(D(0))?.want).toBe('cardio');
+    await s.updateDay(D(0), { want: undefined });
+    expect(s.plan().days[0]!.type).toBe('strength');
+  });
+
+  it('spierpijn na de dagvorm: herstelkaart en training passen zich aan', async () => {
+    const s = await fresh();
+    await s.saveAvailability(week(MON));
+    await s.recordCheck('ok');
+    await s.recordSore(['benen']);
+    expect(s.recovery().benen.state).toBe('moe');
+    const session = s.sessionFor(s.todayPlan());
+    expect(session?.kind).toBe('strength');
+    if (session?.kind === 'strength') {
+      expect(session.notes[0]).toMatch(/Benen nog moe \(spierpijn\)/);
+      expect(session.exercises.find((e) => e.exercise.id === 'leg-press')?.recoveryNote).toBeTruthy();
+    }
+    // Opnieuw de dagvorm tikken houdt je spierpijn bij.
+    await s.recordCheck('high');
+    expect(s.checkFor(MON)?.sore).toEqual(['benen']);
+  });
+
+  it('weer: lokaal bewaard (nooit in de repo), vers gebruikt in het plan, oud genegeerd', async () => {
+    const s = await fresh();
+    await s.saveAvailability(week(MON));
+    const hourly = { time: [] as string[], temperature_2m: [] as number[], precipitation_probability: [] as number[], precipitation: [] as number[], weather_code: [] as number[], wind_speed_10m: [] as number[] };
+    const days = Array.from({ length: 8 }, (_, i) => D(i));
+    for (const d of days) for (let h = 0; h < 24; h++) {
+      hourly.time.push(`${d}T${String(h).padStart(2, '0')}:00`);
+      hourly.temperature_2m.push(11); hourly.precipitation_probability.push(5); hourly.precipitation.push(0); hourly.weather_code.push(1); hourly.wind_speed_10m.push(8);
+    }
+    const body = { daily: { time: days, weather_code: days.map(() => 1), temperature_2m_max: days.map(() => 12), temperature_2m_min: days.map(() => 4), precipitation_probability_max: days.map(() => 5), precipitation_sum: days.map(() => 0), wind_speed_10m_max: days.map(() => 10) }, hourly };
+    const urls: string[] = [];
+    const fetchFn = (async (url: string) => { urls.push(url); return new Response(JSON.stringify(body), { status: 200 }); }) as unknown as typeof fetch;
+    expect(await refreshWeather(s, { fetchFn })).toBe(true);
+    expect(urls[0]).toContain('latitude=50.9'); // Brussel, afgerond
+    expect(await refreshWeather(s, { fetchFn })).toBe(false); // nog vers
+    expect(s.plan().days[1]).toMatchObject({ light: { id: 'wandeling' }, walk: { verdict: 'goed' }, weather: { tMax: 12 } });
+    expect(s.dirtyFiles().some((f) => JSON.stringify(f.content).includes('fetchedAt'))).toBe(false);
+    // Plaats kiezen → meteen vernieuwen, coördinaten afgerond.
+    await setWeatherPlace(s, { name: 'Mijn locatie', lat: 51.0543, lon: 3.7174 }, fetchFn);
+    expect(s.local.weatherPlace).toEqual({ name: 'Mijn locatie', lat: 51.1, lon: 3.7 });
+    expect(urls.at(-1)).toContain('latitude=51.1');
+    // Een bericht van 2 dagen oud gebruiken we niet meer.
+    s.now = () => new Date(`${D(2)}T09:00:00`);
+    s.emit();
+    expect(s.weatherFor(D(2))).toBeUndefined();
+    // Netwerkfout: stil, geen crash.
+    expect(await refreshWeather(s, { force: true, fetchFn: (async () => { throw new Error('offline'); }) as unknown as typeof fetch })).toBe(false);
   });
 });

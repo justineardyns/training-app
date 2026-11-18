@@ -24,7 +24,10 @@ Tests gebruiken verzonnen data (`e2e/seed.ts`, `FakeGitHub`).
 - Mobile-first, donker, grote tikdoelen (≥ 48 px, primaire acties ≥ 64 px). Zo weinig mogelijk typen.
 - Buiten scope: voeding, calorieën, lichaamsgewicht, metingen. Apple Health staat voorlopig uit
   (`src/coach/health.ts` en `src/data/healthInbox.ts` blijven slapend klaar; niet aanroepen).
-- Enkel gratis diensten.
+- Enkel gratis diensten. Weer: Open-Meteo vanop de iPhone (afgeronde coördinaten, cache enkel lokaal in IndexedDB,
+  nooit in de privé-repo). Het weer beïnvloedt enkel zweetvrije dagen, nooit de keuze van zweetdagen.
+- Herstel (`src/coach/recovery.ts`) en sterke/werkpunten (`src/coach/insights.ts`) sturen de planner en de sessies;
+  elke geplande dag krijgt een `why`.
 
 ## Commando's
 

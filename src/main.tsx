@@ -1,6 +1,7 @@
 import { render } from 'preact';
 import { App } from './ui/App.tsx';
 import { refreshPushSubscription, store, sync } from './data/app.ts';
+import { refreshWeather } from './data/weather.ts';
 import './styles.css';
 
 render(<App />, document.getElementById('app')!);
@@ -8,6 +9,11 @@ render(<App />, document.getElementById('app')!);
 void store.init().then(() => {
   sync.start();
   if (import.meta.env.PROD) refreshPushSubscription();
+  // Weer voor je wandeldagen (stil falen zonder netwerk).
+  void refreshWeather(store);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') void refreshWeather(store);
+  });
 });
 
 if ('serviceWorker' in navigator && import.meta.env.PROD) {

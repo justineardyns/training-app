@@ -159,7 +159,11 @@ describe('harde regels (fuzz, rollend)', () => {
       const avMap = new Map<string, DayAvailability>();
       for (let i = 0; i < 7; i++) {
         const d = addDays(today, i);
-        avMap.set(d, { date: d, slots: slotsFor(d), minutes: pick([30, 45, 60] as const), home: rnd() < 0.15, tennis: dayIndex(d) === 3 && rnd() < 0.3 ? pick([60, 120]) : undefined });
+        avMap.set(d, {
+          date: d, slots: slotsFor(d), minutes: pick([30, 45, 60] as const), home: rnd() < 0.15,
+          tennis: dayIndex(d) === 3 && rnd() < 0.3 ? pick([60, 120]) : undefined,
+          want: rnd() < 0.2 ? pick(['strength', 'cardio'] as const) : undefined,
+        });
       }
       const history: SessionLog[] = [];
       for (let i = -8; i < 0; i++) {
@@ -171,6 +175,9 @@ describe('harde regels (fuzz, rollend)', () => {
         today, availability: (d) => avMap.get(d)!, history,
         prefs: { ...DEFAULT_PREFS, targetPerWeek: pick([2, 3, 4]), strengthPerWeek: pick([1, 2, 3]), trainAtHome },
         readinessToday: pick(['green', 'orange', 'red', undefined] as const),
+        avoidWeekdays: rnd() < 0.3 ? [Math.floor(rnd() * 7)] : [],
+        soreToday: rnd() < 0.2 ? ['benen'] : [],
+        weather: (d) => (rnd() < 0.5 ? { date: d, code: pick([0, 3, 63, 95]), tMax: 10, tMin: 3, precipProb: pick([0, 50, 90]), precipSum: 0, windMax: 10, hours: [] } : undefined),
       });
       const ctx = JSON.stringify({ today, history: history.map((h) => h.date), av: [...avMap.values()] });
       expect(p.violations, ctx).toEqual([]);
@@ -189,6 +196,81 @@ describe('harde regels (fuzz, rollend)', () => {
         }
       }
     }
+  });
+});
+
+describe('de coach denkt mee: herstel, je keuze, het weer en het waarom', () => {
+  it('tennis + 2 plekken: kracht gaat voor, en de coach zegt eerlijk waarom er geen cycling staat', () => {
+    // Wo kan niet, do tennis (blokkeert vr), za/zo overdag, ma avond, di kan niet.
+    const WED = '2026-11-18';
+    const av = (d: string): DayAvailability => {
+      const i = dayIndex(d);
+      if (i === 2 || i === 1) return { date: d, slots: [], minutes: 45 };
+      if (i === 3) return { date: d, slots: ['evening'], minutes: 45, tennis: 60 };
+      return std(d);
+    };
+    const p = planWeek(base({ today: WED, availability: av }));
+    expect(short(p)).toBe('.T.A.B.');
+    expect(p.days[3]!.why).toMatch(/Kracht gaat voor: tennis is al je conditie/);
+    expect(p.messages.join(' ')).toMatch(/Indoor cycling staat er deze 7 dagen niet in: tennis is al je conditie en kracht gaat voor\. Liever indoor cycling op zaterdag\?/);
+    // Jij kiest: zaterdag liever cycling → zaterdag les, maandag kracht.
+    const q = planWeek(base({ today: WED, availability: (d) => (d === '2026-11-21' ? { ...av(d), want: 'cardio' } : av(d)) }));
+    expect(short(q)).toBe('.T.G.A.');
+    expect(q.days[3]).toMatchObject({ want: 'cardio', groupClass: true });
+    expect(q.days[3]!.why).toMatch(/^Jouw keuze: indoor cycling\./);
+    expect(q.messages.join(' ')).toMatch(/1× kracht in plaats van 2×/);
+    expect(q.violations).toEqual([]);
+  });
+
+  it('elke dag heeft een waarom', () => {
+    const p = planWeek(base());
+    for (const d of p.days) expect(d.why, d.date).toBeTruthy();
+    expect(p.days[2]!.why).toMatch(/^Lesmoment indoor cycling/);
+    expect(p.days[1]!.why).toBe('Rustdag na kracht gisteren: je spieren bouwen nu op.');
+  });
+
+  it('jouw keuze "liever kracht" op een lesmoment wordt gevolgd', () => {
+    const p = planWeek(base({ availability: (d) => (d === D(2) ? { ...std(d), want: 'strength' } : std(d)) }));
+    expect(p.days[2]).toMatchObject({ type: 'strength', want: 'strength' });
+    expect(p.violations).toEqual([]);
+  });
+
+  it('spierpijn in je benen vandaag: kracht met bovenlichaam eerst', () => {
+    const p = planWeek(base({ soreToday: ['benen'] }));
+    expect(p.days[0]).toMatchObject({ type: 'strength' });
+    expect(p.days[0]!.focus?.reduce).toEqual(['benen']);
+    expect(p.days[0]!.why).toMatch(/Benen nog moe \(spierpijn\)/);
+  });
+
+  it('2u tennis donderdag: de kracht van het weekend schuift liefst naar zondag (schouders hersteld)', () => {
+    const p = planWeek(base({ availability: (d) => (d === D(3) ? { ...std(d), tennis: 120 } : dayIndex(d) <= 2 ? { date: d, slots: [], minutes: 45 } : std(d)) }));
+    expect(p.days[5]!.sweat).toBe(false);
+    expect(p.days[6]).toMatchObject({ type: 'strength' });
+  });
+
+  it('weekdag die vaak wegvalt: de planner kiest liever een andere dag', () => {
+    const prefs = { ...DEFAULT_PREFS, targetPerWeek: 3 };
+    expect(planWeek(base({ prefs })).days[0]!.sweat).toBe(true);
+    const p = planWeek(base({ prefs, avoidWeekdays: [0] }));
+    expect(p.days[0]!.sweat).toBe(false);
+    expect(sweatDates(p)).toHaveLength(3);
+    expect(p.violations).toEqual([]);
+    // Nooit een sessie minder om een dag te vermijden: met 4 blijft maandag staan.
+    expect(sweatDates(planWeek(base({ avoidWeekdays: [0] })))).toHaveLength(4);
+  });
+
+  it('weer: droog → wandelen met het beste moment; regen → binnen; zweetdagen veranderen nooit door het weer', () => {
+    const hrs = (prob: number) => Array.from({ length: 24 }, (_, h) => ({ hour: h, temp: 9, precipProb: prob, precip: prob > 60 ? 1.5 : 0, code: prob > 60 ? 63 : 2, wind: 10 }));
+    const wx = (prob: number) => (d: string) => ({ date: d, code: prob > 60 ? 63 : 2, tMax: 9, tMin: 2, precipProb: prob, precipSum: prob > 60 ? 8 : 0, windMax: 12, hours: hrs(prob) });
+    const dry = planWeek(base({ weather: wx(5) }));
+    const wet = planWeek(base({ weather: wx(90) }));
+    const none = planWeek(base());
+    expect(sweatDates(dry)).toEqual(sweatDates(none));
+    expect(sweatDates(wet)).toEqual(sweatDates(none));
+    expect(dry.days[1]).toMatchObject({ type: 'light', light: { id: 'wandeling' }, walk: { verdict: 'goed' } });
+    expect(dry.days[1]!.weather).toMatchObject({ icon: '🌤️', tMax: 9 });
+    expect(wet.days.filter((d) => d.type === 'light').every((d) => d.light!.id !== 'wandeling')).toBe(true);
+    expect(dry.days.filter((d) => d.type === 'light').every((d) => d.light!.id === 'wandeling')).toBe(true);
   });
 });
 

@@ -232,6 +232,8 @@ export interface DayAvailability {
   minutes: Minutes;
   /** Tennis die dag (minuten, bv. 60 of 120). Telt als zweetsessie. */
   tennis?: number;
+  /** Jouw keuze als de coach die dag een training plant: liever kracht of liever conditie (groepsles). */
+  want?: 'strength' | 'cardio';
 }
 
 export interface HealthDay {

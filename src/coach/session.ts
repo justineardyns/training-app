@@ -2,6 +2,7 @@ import { alternativesFor, EXERCISES, getExercise } from './catalog.ts';
 import { acceptableFor, injuryDecision, relevantInjuries } from './injury.ts';
 import { DEFAULT_GYM, isAvailable, loadOptions, snapLoad } from './loads.ts';
 import { easierVariant, deloadPrescription, exposures, lighterPrescription, nextPrescription, workingLoad } from './progression.ts';
+import { MUSCLE_GROUP, type Group, type StrengthFocus } from './recovery.ts';
 import type {
   CoachAdjustments,
   Exercise,
@@ -79,6 +80,8 @@ export interface SessionContext {
   adjustments?: CoachAdjustments;
   /** Absolute beginner: lichtere start, kennismaking, toestellen eerst. */
   beginner?: boolean;
+  /** Herstel en werkpunt: welke groepen eerst, welke 1 set minder. */
+  focus?: StrengthFocus;
 }
 
 export interface PlannedExercise {
@@ -91,6 +94,8 @@ export interface PlannedExercise {
   options: number[];
   replacedFrom?: string;
   injuryNote?: string;
+  /** Uitleg als herstel deze oefening lichter maakt. */
+  recoveryNote?: string;
 }
 
 export interface StrengthSession {
@@ -258,6 +263,9 @@ export function buildStrengthSession(ctx: SessionContext): StrengthSession {
     });
   }
 
+  // Herstel: moe → 1 set minder en niet zwaarder; wie fris is (of je werkpunt) komt eerst.
+  if (ctx.focus) applyFocus(planned, ctx.focus, ctx.history.filter((h) => h.date < ctx.date));
+
   // Supersets bij 30 min: A1/A2 en B1/B2, kern apart.
   if (vol.superset) {
     let n = 0;
@@ -299,6 +307,7 @@ export function buildStrengthSession(ctx: SessionContext): StrengthSession {
         }
     : undefined;
 
+  if (ctx.focus?.why) notes.unshift(ctx.focus.why);
   if (ctx.deload) notes.unshift('Deloadweek: minder sets en iets lichter. Je wordt er sterker van.');
   if (ctx.readiness === 'orange') notes.unshift('Dagvorm oranje: 1 set minder en geen zwaarder gewicht.');
   if (ctx.adjustments?.focus) notes.push(`Coach: ${ctx.adjustments.focus}`);
@@ -322,6 +331,40 @@ export function buildStrengthSession(ctx: SessionContext): StrengthSession {
     estimatedMinutes: Math.ceil((estimateSeconds(planned, vol.superset) + (finisher ? finisherSec : 0)) / 60),
     notes,
   };
+}
+
+export function groupOf(ex: Exercise): Group {
+  return MUSCLE_GROUP[ex.muscles[0]!];
+}
+
+/** Herstel toepassen op een lijst oefeningen (in place). */
+export function applyFocus(planned: PlannedExercise[], focus: StrengthFocus, history: SessionLog[]): void {
+  for (const p of planned) {
+    const g = groupOf(p.exercise);
+    if (p.role === 'core' || !focus.reduce.includes(g)) continue;
+    const last = exposures(history, p.exercise.id).at(-1);
+    const prevLoad = last ? snapLoad(workingLoad(last.log), p.options, 'down') : undefined;
+    const noUp = p.prescription.change === 'load_up' && prevLoad !== undefined;
+    p.prescription = {
+      ...p.prescription,
+      sets: Math.max(1, p.prescription.sets - 1),
+      load: noUp ? prevLoad : p.prescription.load,
+      targetReps: noUp ? p.prescription.repRange[0] + 1 : p.prescription.targetReps,
+    };
+    p.recoveryNote = 'Herstel: 1 set minder en niet zwaarder dan vorige keer.';
+  }
+  const rank = (p: PlannedExercise) => {
+    const g = groupOf(p.exercise);
+    if (focus.reduce.includes(g)) return 3;
+    if (focus.later.includes(g)) return 2;
+    if (focus.first === g) return 0;
+    return 1;
+  };
+  const mainIdx = planned.map((p, i) => (p.role === 'main' ? i : -1)).filter((i) => i >= 0);
+  const mains = mainIdx.map((i) => planned[i]!).map((p, k) => ({ p, k })).sort((a, b) => rank(a.p) - rank(b.p) || a.k - b.k);
+  mainIdx.forEach((i, k) => {
+    planned[i] = mains[k]!.p;
+  });
 }
 
 export interface CardioSession {

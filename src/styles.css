@@ -399,3 +399,33 @@ p { margin: 0 0 12px; }
 .set.noload { grid-template-columns: 22px 1fr 58px; }
 .set.noload .stepper { justify-content: flex-start; }
 .set.noload .set-reps { text-align: left; min-width: 0; padding-left: 8px; }
+
+/* Coach: waarom, herstel, sterk/werkpunten, weer */
+.plan-day { display: block; padding: 0; }
+.plan-row {
+  display: grid; grid-template-columns: 64px 1fr auto; gap: 8px; align-items: center; width: 100%;
+  padding: 12px; min-height: 56px; background: none; border: 0; color: inherit; font: inherit; text-align: left; cursor: pointer;
+}
+.plan-row:disabled { cursor: default; opacity: 1; }
+.plan-day.open { border-color: var(--blue); }
+.plan-actions { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 12px 12px; }
+.plan-actions .btn { flex: 1 1 45%; }
+.plan-icon { display: flex; gap: 6px; align-items: center; justify-content: flex-end; white-space: nowrap; }
+.why { display: block; color: var(--muted); font-size: 14px; line-height: 1.35; margin-top: 2px; }
+p.why { font-size: 15px; margin: 4px 0 10px; }
+.wx { font-size: 14px; color: var(--muted); font-weight: 600; white-space: nowrap; }
+.eyebrow .wx { text-transform: none; font-size: 16px; }
+.recovery { list-style: none; padding: 0; margin: 8px 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.rec { display: grid; grid-template-columns: 12px 1fr; column-gap: 8px; align-items: center; padding: 10px; border-radius: 12px; background: var(--surface-2); }
+.rec-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); grid-row: span 2; }
+.rec.orange .rec-dot { background: var(--orange); }
+.rec.red .rec-dot { background: var(--red); }
+.rec-name { font-weight: 650; font-size: 15px; }
+.rec-state { font-size: 14px; color: var(--muted); }
+.insight { display: flex; gap: 8px; margin: 6px 0; }
+.walk { font-size: 15px; margin: 4px 0 10px; }
+.walk.goed strong { color: var(--accent); }
+.walk.matig strong { color: var(--orange); }
+.walk.slecht strong { color: var(--red); }
+.sore { margin-top: 8px; }
+.sore p { margin: 0; }

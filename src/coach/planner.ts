@@ -1,7 +1,19 @@
 import { classSlotOn, DEFAULT_CLASS_SLOTS, defaultDay, resolveDay } from './availability.ts';
-import { addDays, dayIndex, dayName, diffDays, weekStart } from './dates.ts';
+import { addDays, DAY_SHORT, dayIndex, dayName, diffDays, weekStart } from './dates.ts';
 import { decideDeload, type DeloadDecision } from './deload.ts';
-import { lightFor, LIGHT, type LightActivity } from './light.ts';
+import { chooseLight, LIGHT, type LightActivity } from './light.ts';
+import {
+  cardioLoad,
+  eventFromSession,
+  GROUP_LABEL,
+  PLANNED_STRENGTH,
+  recoveryAt,
+  strengthFocus,
+  type Group,
+  type LoadEvent,
+  type StrengthFocus,
+} from './recovery.ts';
+import { walkAdvice, weatherIcon, weatherText, type DayWeather, type WalkAdvice } from './weather.ts';
 import { clampTarget, MAX_PER_WEEK, NORMAL_MIN, validateRolling, type Violation } from './rules.ts';
 import type {
   CoachAdjustments,
@@ -40,6 +52,18 @@ export interface PlannedDay {
   deload?: boolean;
   sessions?: SessionLog[];
   note?: string;
+  /** Waarom de coach dit zo plant (één zin). */
+  why?: string;
+  /** Krachttraining: wat er vandaag anders is voor je herstel (en je werkpunt). */
+  focus?: StrengthFocus;
+  /** Valt deze dag op een lesmoment (bv. indoor cycling)? */
+  classSlot?: boolean;
+  /** Jouw keuze voor die dag (kracht of conditie), als je die maakte. */
+  want?: 'strength' | 'cardio';
+  /** Weer, als je iPhone het kon ophalen. */
+  weather?: { icon: string; text: string; tMax: number; tMin: number; precipProb: number };
+  /** Zweetvrije dag: wandelen of binnen? */
+  walk?: WalkAdvice;
 }
 
 export interface WeekPlan {
@@ -74,6 +98,16 @@ export interface PlanInput {
   postponed?: ISODate[];
   /** Eerder geplande dagen (voor stabiliteit en "gemist"). */
   originalPlan?: ISODate[];
+  /** Weerbericht per dag (enkel op je iPhone; zonder weer plant de coach gewoon). */
+  weather?: (date: ISODate) => DayWeather | undefined;
+  /** Weekdagen waarop je training vaak wegvalt (uit je sterke/zwakke punten). */
+  avoidWeekdays?: number[];
+  /** Groep die het traagst vooruitgaat: komt eerst in je krachttraining. */
+  weakGroup?: Group;
+  /** Spierpijn die je vandaag aangaf. */
+  soreToday?: Group[];
+  /** Nog nieuw voor je spieren (eerste weken): iets meer hersteltijd. */
+  novice?: boolean;
 }
 
 export const SWEAT_KINDS = new Set(['strength', 'cardio', 'class']);
@@ -132,6 +166,7 @@ function sessionTitle(s: SessionLog): string {
 
 type Kind = 'strength' | 'cardio';
 
+
 export function planWeek(input: PlanInput): WeekPlan {
   const { today } = input;
   const start = input.start && input.start > today ? input.start : today;
@@ -144,7 +179,10 @@ export function planWeek(input: PlanInput): WeekPlan {
   const cardioPerWeek = Math.max(0, target - strengthPerWeek);
   const postponed = new Set(input.postponed ?? []);
   const original = new Set(input.originalPlan ?? []);
+  const avoid = new Set(input.avoidWeekdays ?? []);
   const av = new Map(days.map((d) => [d, input.availability(d)]));
+  const wish = (d: ISODate) => av.get(d)?.want;
+  const short = (d: ISODate) => DAY_SHORT[dayIndex(d)]!;
 
   // Gedane zweetsessies (ook vóór het venster: nodig voor "nooit 2 dagen na elkaar" en max 4 per 7 dagen).
   const sweat = input.history.filter((s) => SWEAT_KINDS.has(s.kind));
@@ -164,7 +202,29 @@ export function planWeek(input: PlanInput): WeekPlan {
     [...fixedCount].reduce((n, [d, c]) => n + (d >= from && d <= to ? c : 0), 0) + extra.filter((d) => d >= from && d <= to).length;
 
   const doneTodayCount = start === today ? (doneOn.get(today)?.length ?? 0) : 0;
-  const want = Math.max(0, target - tennis.length - doneTodayCount);
+  const wanted = Math.max(0, target - tennis.length - doneTodayCount);
+
+  // Herstel: wat je spieren nog meedragen van gedane sessies en tennis.
+  const novice = !!input.novice;
+  const fixedEvents: LoadEvent[] = [
+    ...sweat.filter((s) => s.date >= addDays(start, -4) && s.date <= addDays(start, horizon)).map((s) => eventFromSession(s, novice)),
+    ...tennis.map((d) => {
+      const min = av.get(d)!.tennis ?? 60;
+      return { date: d, slot: 'evening' as Slot, label: `tennis${min >= 90 ? ' (2u)' : ''} ${short(d)}`, load: cardioLoad('tennis', min) };
+    }),
+  ];
+  const soreOn = (d: ISODate) => (d === today ? (input.soreToday ?? []) : []);
+  const slotFor = (d: ISODate, k: Kind): Slot | undefined => {
+    const a = av.get(d)!;
+    return (k === 'cardio' ? classSlotOn(a, prefs.classSlots, prefs.trainAtHome) : undefined) ?? resolveDay(a, prefs.trainAtHome).slot;
+  };
+  const plannedEvent = (d: ISODate, k: Kind): LoadEvent => {
+    const a = av.get(d)!;
+    const cls = classSlotOn(a, prefs.classSlots, prefs.trainAtHome);
+    return k === 'strength'
+      ? { date: d, slot: slotFor(d, k), label: `kracht ${short(d)}`, load: PLANNED_STRENGTH }
+      : { date: d, slot: slotFor(d, k), label: `${cls ? prefs.className.toLowerCase() : 'cardio'} ${short(d)}`, load: cardioLoad(cls ? 'cycling' : 'fiets', a.minutes) };
+  };
 
   const candidates = days.filter((d) => {
     const r = resolveDay(av.get(d)!, prefs.trainAtHome);
@@ -191,21 +251,29 @@ export function planWeek(input: PlanInput): WeekPlan {
 
   /**
    * Soort per gekozen dag. Per dag kijken we naar de 6 dagen ervoor (rollend) en naar tennis die nog komt:
-   * wat ontbreekt er nog aan kracht en conditie? Is beide nodig, dan afwisselen.
+   * wat ontbreekt er nog aan kracht en conditie? Is beide nodig, dan afwisselen. Jouw keuze per dag gaat altijd voor.
    * We proberen te starten met kracht én met conditie en houden de versie met de meeste groepslessen.
    */
   const assignWith = (set: ISODate[], first: Kind): Map<ISODate, Kind> => {
     const kinds = new Map<ISODate, Kind>();
     const typed: [ISODate, Kind][] = [...sweat.map((s) => [s.date, kindOf(s)] as [ISODate, Kind]), ...tennis.map((d) => [d, 'cardio'] as [ISODate, Kind])];
     set.forEach((d, i) => {
+      const own = wish(d);
+      if (own) {
+        kinds.set(d, own);
+        return;
+      }
       const from = addDays(d, -6);
       const before = [...typed, ...kinds].filter(([x]) => x >= from && x < d).sort((a, b) => (a[0] < b[0] ? -1 : 1));
       const sIn = before.filter(([, k]) => k === 'strength').length;
       const cIn = before.filter(([, k]) => k === 'cardio').length;
       const cAhead = tennis.filter((t) => t > d && t <= addDays(d, 6)).length;
-      const needS = strengthPerWeek - sIn;
-      const needC = cardioPerWeek - cIn - cAhead;
-      const left = set.length - i;
+      const ahead = set.slice(i + 1).filter((x) => x <= addDays(d, 6));
+      const wS = ahead.filter((x) => wish(x) === 'strength').length;
+      const wC = ahead.filter((x) => wish(x) === 'cardio').length;
+      const needS = strengthPerWeek - sIn - wS;
+      const needC = cardioPerWeek - cIn - cAhead - wC;
+      const left = set.length - i - set.slice(i + 1).filter((x) => wish(x)).length;
       let k: Kind;
       if (needS > 0 && needC > 0) {
         const last = before.at(-1)?.[1];
@@ -228,6 +296,21 @@ export function planWeek(input: PlanInput): WeekPlan {
     return classFit(b) > classFit(a) ? b : a;
   };
 
+  /** Hoe vermoeid zijn de spieren die je op die dagen nodig hebt? (kleine straf in de score) */
+  const recoveryPenalty = (set: ISODate[], kinds: Map<ISODate, Kind>) => {
+    const events = [...fixedEvents];
+    let pen = 0;
+    for (const d of set) {
+      const k = kinds.get(d)!;
+      const rec = recoveryAt({ date: d, slot: slotFor(d, k) }, events, soreOn(d));
+      if (k === 'strength') {
+        for (const g of ['benen', 'duwen', 'trekken'] as Group[]) pen += rec[g].state === 'moe' ? 1.5 : rec[g].state === 'herstelt' ? 0.5 : 0;
+      } else pen += rec.benen.state === 'moe' ? 1 : rec.benen.state === 'herstelt' ? 0.3 : 0;
+      events.push(plannedEvent(d, k));
+    }
+    return pen;
+  };
+
   const score = (set: ISODate[]) => {
     const kinds = assign(set);
     const all = [...new Set([...fixedDates, ...set])].filter((d) => d >= addDays(start, -3)).sort();
@@ -244,16 +327,19 @@ export function planWeek(input: PlanInput): WeekPlan {
           a.minutes / 15 +
           (k === 'strength' && r.location === 'gym' ? 1 : 0) +
           (k === 'cardio' ? (cls ? 3 : -1) : 0) +
-          (original.has(d) ? 4 : 0) -
+          (original.has(d) ? 4 : 0) +
+          (a.want ? 6 : 0) -
+          (avoid.has(dayIndex(d)) ? 4 : 0) -
           0.15 * diffDays(d, start)
         );
       }, 0) +
-      2 * minGap
+      2 * minGap -
+      recoveryPenalty(set, kinds)
     );
   };
 
   let chosen: ISODate[] = [];
-  for (let k = Math.min(want, candidates.length); k > 0 && chosen.length === 0; k--) {
+  for (let k = Math.min(wanted, candidates.length); k > 0 && chosen.length === 0; k--) {
     let best = -Infinity;
     for (const set of subsets(candidates, k)) {
       if (!validSet(set)) continue;
@@ -277,18 +363,39 @@ export function planWeek(input: PlanInput): WeekPlan {
     .sort((a, b) => (a.date < b.date ? -1 : 1))
     .at(-1)?.template;
 
+  // Vorige zweetsessie vóór een dag (gedaan, tennis of gepland), voor de uitleg.
+  const sweatDays = new Map<ISODate, string>();
+  for (const s of sweat) sweatDays.set(s.date, s.kind === 'strength' ? 'kracht' : (s.title ?? s.workoutType ?? 'conditie').toLowerCase());
+  for (const t of tennis) sweatDays.set(t, 'tennis');
+  for (const d of chosen) sweatDays.set(d, kinds.get(d) === 'strength' ? 'kracht' : classSlotOn(av.get(d)!, prefs.classSlots, prefs.trainAtHome) ? prefs.className.toLowerCase() : 'cardio');
+  const prevSweat = (d: ISODate) => {
+    for (let k = 1; k <= 6; k++) {
+      const x = addDays(d, -k);
+      if (sweatDays.has(x)) return { date: x, label: sweatDays.get(x)!, gap: k };
+    }
+    return undefined;
+  };
+  const sinceText = (d: ISODate) => {
+    const p = prevSweat(d);
+    return p ? `${p.gap} dagen na ${p.label} (${short(p.date)}): je spieren zijn hersteld.` : 'Uitgerust aan de start.';
+  };
+  const tennisNear = (d: ISODate) => tennis.some((t) => Math.abs(diffDays(t, d)) <= 6);
+
+  const timeline: LoadEvent[] = [...fixedEvents];
   const result: PlannedDay[] = [];
   for (const d of days) {
     const prev = result.at(-1);
     const prevStrength = prev?.type === 'strength' || (prev === undefined && sweat.some((s) => s.date === addDays(d, -1) && s.kind === 'strength'));
     const a = av.get(d)!;
+    const wx = input.weather?.(d);
+    const weather = wx ? { icon: weatherIcon(wx.code), text: weatherText(wx.code), tMax: wx.tMax, tMin: wx.tMin, precipProb: wx.precipProb } : undefined;
     const done = doneOn.get(d);
     if (done) {
       const strengthLog = done.find((s) => s.kind === 'strength');
       if (strengthLog?.template) lastTemplate = strengthLog.template;
       result.push({
         date: d, type: strengthLog ? 'strength' : 'cardio', sweat: true, status: 'done', title: done.map(sessionTitle).join(' + '),
-        template: strengthLog?.template, location: strengthLog?.location, sessions: done,
+        template: strengthLog?.template, location: strengthLog?.location, sessions: done, weather,
       });
       continue;
     }
@@ -296,35 +403,76 @@ export function planWeek(input: PlanInput): WeekPlan {
       const min = a.tennis!;
       result.push({
         date: d, type: 'tennis', sweat: true, status: 'planned', minutes: Math.min(60, min) as Minutes, note: 'Telt als conditiesessie.',
-        title: `Tennis · ${min >= 60 ? `${Math.round(min / 60)}u` : `${min} min`}`,
+        title: `Tennis · ${min >= 60 ? `${Math.round(min / 60)}u` : `${min} min`}`, weather,
+        why: 'Telt als je conditie. De dag ervoor en erna geen training: zo sta je fris op het veld.',
       });
       continue;
     }
     if (chosen.includes(d)) {
       const r = resolveDay(a, prefs.trainAtHome);
       const lighter = d === today && input.readinessToday === 'orange';
-      if (kinds.get(d) === 'strength') {
+      const cls = classSlotOn(a, prefs.classSlots, prefs.trainAtHome);
+      const k = kinds.get(d)!;
+      const rec = recoveryAt({ date: d, slot: slotFor(d, k) }, timeline, soreOn(d));
+      timeline.push(plannedEvent(d, k));
+      if (k === 'strength') {
         const t: Template = lastTemplate === 'A' ? 'B' : 'A';
         lastTemplate = t;
+        const focus = strengthFocus(rec, input.weakGroup);
+        const kindWhy =
+          a.want === 'strength'
+            ? 'Jouw keuze: kracht.'
+            : cls
+              ? tennisNear(d)
+                ? `Kracht gaat voor: tennis is al je conditie deze 7 dagen.`
+                : 'Kracht gaat voor: de motor van je recompositie.'
+              : '';
         result.push({
           date: d, type: 'strength', sweat: true, status: 'planned', template: t, location: r.location, minutes: a.minutes, slot: r.slot,
           title: `Full body ${t} · ${LOC[r.location]} · ${a.minutes} min${deload.deload ? ' · deload' : ''}`, lighter, deload: deload.deload,
+          focus, classSlot: !!cls, want: a.want, weather,
+          why: [kindWhy, focus.why ?? sinceText(d)].filter(Boolean).join(' '),
         });
       } else {
-        const cls = classSlotOn(a, prefs.classSlots, prefs.trainAtHome);
         const location: Location = cls ? 'gym' : r.location;
+        const legs = rec.benen;
+        const legWhy =
+          legs.state === 'moe'
+            ? `Benen nog moe${legs.cause ? ` (${legs.cause})` : ''}: draai rustig mee.`
+            : legs.state === 'herstelt'
+              ? 'Benen herstellen nog: neem de zware stukken rustig.'
+              : sinceText(d);
+        const kindWhy = lighter
+          ? 'Dagvorm oranje: rustig tempo, geen intervallen.'
+          : a.want === 'cardio'
+            ? `Jouw keuze: ${cls ? prefs.className.toLowerCase() : 'conditie'}.`
+            : cls
+              ? `Lesmoment ${prefs.className.toLowerCase()}: je conditie voor deze 7 dagen.`
+              : 'Conditie: geen lesmoment die dag, dus fiets of roeier.';
         result.push({
           date: d, type: 'cardio', sweat: true, status: 'planned', location, minutes: a.minutes, slot: cls ?? r.slot, groupClass: !!cls && !lighter,
-          title: cardioTitle(location, a.minutes, lighter, cls ? prefs.className : undefined), lighter,
+          title: cardioTitle(location, a.minutes, lighter, cls ? prefs.className : undefined), lighter, classSlot: !!cls, want: a.want, weather,
+          why: `${kindWhy} ${legWhy}`,
         });
       }
       continue;
     }
     const moved = (postponed.has(d) || (d === today && input.readinessToday === 'red')) && original.has(d);
-    const light = moved ? LIGHT.mobiliteit : lightFor(prevStrength, dayIndex(d));
+    const walk = wx ? walkAdvice(wx) : undefined;
+    const picked = moved ? { light: LIGHT.mobiliteit } : chooseLight(prevStrength, dayIndex(d), walk);
+    const light = picked.light;
+    const yesterday = sweatDays.get(addDays(d, -1));
+    const tomorrow = sweatDays.get(addDays(d, 1));
     result.push({
       date: d, type: 'light', sweat: false, status: moved ? 'moved' : 'free', title: `${light.title} (${light.minutes} min, zweetvrij)`, light,
-      note: moved ? 'Verplaatst: vandaag herstel.' : undefined,
+      note: moved ? 'Verplaatst: vandaag herstel.' : undefined, weather, walk,
+      why: moved
+        ? undefined
+        : yesterday
+          ? `Rustdag na ${yesterday} gisteren: je spieren bouwen nu op.`
+          : tomorrow
+            ? `Morgen ${tomorrow}: vandaag rustig.`
+            : 'Zweetvrij tussen je trainingen.',
     });
   }
 
@@ -347,6 +495,17 @@ export function planWeek(input: PlanInput): WeekPlan {
     const why = `In de komende 7 dagen passen ${total} van de ${target} sessies binnen je beschikbaarheid en de regels (max ${MAX_PER_WEEK} per 7 dagen, nooit 2 dagen na elkaar).`;
     messages.push(total < NORMAL_MIN ? `${why} Kan je ergens een extra avond vrijmaken?` : why);
   }
+  // Groepsles: eerlijk zeggen waarom ze er niet staat, en hoe je ze toch krijgt.
+  const strengthOnClass = result.filter((r) => r.status === 'planned' && r.type === 'strength' && r.classSlot && !r.want);
+  if (prefs.className && !result.some((r) => r.groupClass) && strengthOnClass.length > 0) {
+    messages.push(
+      `${prefs.className} staat er deze 7 dagen niet in: ${tennis.length ? 'tennis is al je conditie en ' : ''}kracht gaat voor. Liever ${prefs.className.toLowerCase()} op ${dayName((strengthOnClass.find((r) => r.date !== today) ?? strengthOnClass[0]!).date)}? Tik op die dag hierboven.`,
+    );
+  }
+  const strengthPlanned = result.filter((r) => r.type === 'strength' && r.status !== 'free').length;
+  if (result.some((r) => r.want === 'cardio') && strengthPlanned < strengthPerWeek) {
+    messages.push(`Door je keuze voor conditie staat er deze 7 dagen ${strengthPlanned}× kracht in plaats van ${strengthPerWeek}×. Prima af en toe; kracht is wel je motor.`);
+  }
   if (adj?.focus) messages.push(`Coach: ${adj.focus}`);
 
   const violations = validateRolling({
@@ -360,3 +519,5 @@ export function planWeek(input: PlanInput): WeekPlan {
 
   return { start, days: result, target, done: doneTodayCount, planned: chosen.length + tennis.length, deload, messages, violations };
 }
+
+export { GROUP_LABEL };

@@ -1,3 +1,5 @@
+import type { WalkAdvice } from './weather.ts';
+
 // Zweetvrije activiteiten voor de dagen tussen je trainingen. Allemaal optioneel.
 
 export type LightId = 'mobiliteit' | 'wandeling' | 'core' | 'stretching';
@@ -59,4 +61,26 @@ export function lightFor(prevWasStrength: boolean, dayIdx: number): LightActivit
   if (prevWasStrength) return LIGHT.mobiliteit;
   const rot: LightId[] = ['wandeling', 'core', 'wandeling', 'stretching'];
   return LIGHT[rot[dayIdx % rot.length]!];
+}
+
+/**
+ * Met het weer erbij: droog → wandelen (ook na kracht: dat helpt je herstel), regen → binnen.
+ * Zonder weerdata: zoals lightFor.
+ */
+export function chooseLight(prevWasStrength: boolean, dayIdx: number, walk?: WalkAdvice): { light: LightActivity; note?: string } {
+  const base = lightFor(prevWasStrength, dayIdx);
+  if (!walk) return { light: base };
+  if (walk.verdict === 'goed') {
+    const why = prevWasStrength
+      ? `${walk.text} Wandelen na een krachtdag: je spieren herstellen sneller.`
+      : `${walk.text} Ideaal om te wandelen.`;
+    return { light: { ...LIGHT.wandeling, why }, note: walk.text };
+  }
+  if (walk.verdict === 'matig') {
+    if (base.id === 'wandeling') return { light: { ...base, why: `${walk.text} Jas mee, of doe binnen stretching.` }, note: walk.text };
+    return { light: base, note: walk.text };
+  }
+  if (base.id !== 'wandeling') return { light: base, note: walk.text };
+  const indoor = prevWasStrength ? LIGHT.mobiliteit : dayIdx % 2 === 0 ? LIGHT.stretching : LIGHT.core;
+  return { light: { ...indoor, why: `Slecht wandelweer (${walk.text.replace(/\.$/, '').toLowerCase()}): vandaag binnen. ${indoor.why}` }, note: walk.text };
 }

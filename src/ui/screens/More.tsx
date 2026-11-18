@@ -9,6 +9,7 @@ import { SyncSettings } from './Connect.tsx';
 import { PrefsEditor } from './Prefs.tsx';
 import { InjuryCard } from './Injury.tsx';
 import { NotificationSettings } from './Notifications.tsx';
+import { WeatherSettings } from './CoachCards.tsx';
 
 export function More(props: { sub?: string }) {
   const s = useStore();
@@ -29,6 +30,16 @@ export function More(props: { sub?: string }) {
             Bewaar
           </button>
         </div>
+      </>
+    );
+  }
+  if (props.sub === 'weer') {
+    return (
+      <>
+        <WeatherSettings />
+        <button class="btn ghost" onClick={() => go('meer')}>
+          Terug
+        </button>
       </>
     );
   }
@@ -57,6 +68,9 @@ export function More(props: { sub?: string }) {
         )}
         <button class="btn" onClick={() => go('meer/jims')}>
           Gewichtsstappen in Jims
+        </button>
+        <button class="btn" onClick={() => go('meer/weer')}>
+          Weer voor je wandeldagen
         </button>
       </div>
 

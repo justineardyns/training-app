@@ -13,6 +13,7 @@ import { go } from '../router.ts';
 import { dayLabel, untickedDays } from './Week.tsx';
 import { SyncWarning } from './Connect.tsx';
 import { InjuryCard } from './Injury.tsx';
+import { InsightsCard, RecoveryCard, SoreChips, WeatherBadge } from './CoachCards.tsx';
 
 const ENERGY: { value: Energy; label: string }[] = [
   { value: 'high', label: '💪 Top' },
@@ -87,6 +88,7 @@ function ReadinessCard() {
       </div>
       <p>{ADVICE[tone]}</p>
       {check.reasons.length > 0 && <p class="muted small">{check.reasons.join(' · ')}</p>}
+      {tone !== 'red' && <SoreChips />}
     </div>
   );
 }
@@ -137,7 +139,12 @@ export function Today() {
 
   return (
     <>
-      <p class="muted eyebrow">{dayName(today)} {dayLabel(today).split(' ')[1]}</p>
+      <p class="muted eyebrow row-between">
+        <span>
+          {dayName(today)} {dayLabel(today).split(' ')[1]}
+        </span>
+        <WeatherBadge day={day} />
+      </p>
       <h1>Vandaag</h1>
       <SyncWarning />
 
@@ -168,7 +175,11 @@ export function Today() {
 
       {day.sweat && day.status === 'planned' && session && !w && (
         <div class="card today-card">
-          <h2>{day.title}</h2>
+          <h2>
+            {day.groupClass ? '🚴 ' : ''}
+            {day.title}
+          </h2>
+          {day.why && <p class="why">{day.why}</p>}
           <div class="stack">
             {!day.groupClass && s.prefs().trainAtHome && (
               <Chips<Location>
@@ -188,7 +199,7 @@ export function Today() {
           {session.kind === 'strength' ? (
             <>
               <StrengthPreview session={session} />
-              {session.notes.map((n) => (
+              {session.notes.filter((n) => !day.why?.includes(n)).map((n) => (
                 <p key={n} class="muted small">
                   {n}
                 </p>
@@ -209,7 +220,7 @@ export function Today() {
       {day.type === 'tennis' && day.status === 'planned' && (
         <div class="card today-card">
           <h2>🎾 {day.title}</h2>
-          <p class="muted">Telt als conditiesessie. Tik na het spelen op "Tennis gedaan".</p>
+          <p class="why">{day.why ?? 'Telt als conditiesessie.'} Tik na het spelen op "Tennis gedaan".</p>
           <button class="btn primary huge" onClick={() => s.quickLog(today, 'cardio', 'gym', (day.minutes ?? 60) as Minutes, 'Tennis')}>
             Tennis gedaan ✓
           </button>
@@ -223,10 +234,17 @@ export function Today() {
         <div class="card light-card">
           <h2>{day.status === 'moved' ? 'Herstel vandaag' : 'Zweetvrije dag'}</h2>
           {day.note && <p>{day.note}</p>}
+          {day.why && <p class="why">{day.why}</p>}
           <h3>
             {day.light.title} · {day.light.minutes} min <span class="muted small">(optioneel)</span>
           </h3>
           <p class="muted small">{day.light.why}</p>
+          {day.walk && (
+            <p class={`walk ${day.walk.verdict}`}>
+              {day.weather?.icon ?? ''} Wandelweer: <strong>{day.walk.verdict}</strong>
+              {day.walk.bestHour !== undefined && day.walk.verdict !== 'slecht' ? ` · vertrek rond ${day.walk.bestHour}u` : ''}
+            </p>
+          )}
           <ul class="steps">
             {day.light.steps.map((st) => (
               <li key={st}>{st}</li>
@@ -246,6 +264,10 @@ export function Today() {
           )}
         </div>
       )}
+
+      <RecoveryCard recovery={s.recovery()} />
+
+      <InsightsCard insights={s.insights()} />
 
       <Messages messages={plan.messages} />
 

@@ -12,11 +12,24 @@ Werkt offline in de gym, draait puur op jouw tikken en kost **€ 0**.
   in Jims eerst de toestellen.
 - **Slimme coach:** dubbele progressie, deloads, blessures ("Ik heb last van…"), flexibel herplannen
   bij een gemiste training of minder tijd.
+- **Denkt mee als een personal coach:**
+  - **Herstel per spiergroep:** benen, borst & schouders, rug & armen, romp. Kracht, indoor cycling en tennis
+    tellen mee, net als je tik "spierpijn". Wat nog moe is, komt later in je training of krijgt een set minder
+    en gaat niet zwaarder.
+  - **Sterke punten en werkpunten:** wat gaat vooruit, wat staat stil, welke dagen vallen vaak weg, en neem je
+    meer of minder dan voorgesteld. Je traagste spiergroep komt eerst in je training, en dagen die vaak wegvallen
+    plant de coach liever niet.
+  - **Bij elke dag een korte "waarom".** Tik op een dag om te wisselen tussen kracht en indoor cycling, of om
+    ze te schrappen.
 - **Rollend plannen:** altijd de komende 7 dagen. Je vinkt aan welke avonden passen (in het weekend
   overdag, want Jims sluit dan om 17u), en of je tennist. Alles gebeurt in Jims: geen thuistrainingen.
 - **Harde regels:** max 4 zweetsessies per 7 dagen (groepslessen en tennis inbegrepen), nooit twee dagen
-  na elkaar. Bij 4: 2× kracht + 2× conditie, met indoor cycling op de lesmomenten. Zweetvrije suggesties
-  op de tussendagen.
+  na elkaar. Bij 4: 2× kracht + 2× conditie, met indoor cycling op de lesmomenten (🚴 bij het aanvinken).
+  Tennis telt als conditie. Passen er maar 3, dan gaat kracht voor en zegt de coach dat eerlijk.
+  Je kan dan zelf voor cycling kiezen.
+- **Weer:** op rustdagen bij droog weer wandelen, met het beste uur. Regent het, dan doe je binnen mobiliteit of
+  stretching. Het weer komt gratis van Open-Meteo, zonder sleutel. Je plaats kies je met één tik in
+  **Meer → Weer**; standaard is dat Brussel.
 - **Puur op jouw input:** geen Apple Health nodig. (Een koppeling via de Opdrachten-app ligt klaar voor later,
   zie `docs/opdracht-health.md`, maar staat uit.)
 - **Weekrapport** in de app en een wekelijkse **coachsessie met Claude Code** (`/coach`).
@@ -41,9 +54,12 @@ Geen server, geen database, geen account bij een andere dienst.
 | Data | € 0 | privé-repo op GitHub Free |
 | Meldingen | € 0 | Web Push via een GitHub Action (±150 min/maand van de 2000 gratis minuten voor privé-repo's; zonder betaalkaart kan GitHub niets aanrekenen) |
 | Coachsessie | € 0 extra | Claude Code met je bestaand abonnement, geen betalende API |
+| Weer | € 0 | Open-Meteo: gratis voor niet-commercieel gebruik, geen sleutel, geen account (de app vraagt het hoogstens om de 2 uur op) |
 
 **Privacy:** deze repo bevat enkel code. Je trainingsdata gaan rechtstreeks van je
 iPhone naar je **privé**-repo. Je token blijft op je iPhone. Meldingen zijn end-to-end versleuteld.
+Naar Open-Meteo gaat enkel een afgeronde locatie (±10 km), nooit trainingsdata. Het weerbericht blijft
+op je iPhone.
 
 ---
 
@@ -106,9 +122,10 @@ stuurt volgende week bij en pusht. Dat kan ook automatisch als geplande taak elk
 | Wanneer | Wat |
 |---|---|
 | **Zondag** (of wanneer je wil) | Melding "Vink je komende dagen aan" → avonden (en weekend overdag) aanvinken, tennis aanduiden. 20 seconden. |
-| **'s Ochtends** | Melding met je plan. Open de app → tik hoe je je voelt → groen/oranje/rood advies. |
+| **'s Ochtends** | Melding met je plan. Open de app → tik hoe je je voelt (en optioneel: spierpijn in benen of bovenlijf) → groen/oranje/rood advies, training past zich aan je herstel aan. |
+| **Liever cycling dan kracht** (of omgekeerd) | **Week** → tik op de dag → *Liever indoor cycling* / *Liever kracht*. |
 | **Nieuwe oefening** | Tik op de naam: foto's van de beweging en het toestel, hoe je het instelt, techniektips. |
-| **In de gym** | **Start** → per set ✓ → na elke oefening *te licht / goed / zwaar*. Toestel bezet? Eén tik. |
+| **In de gym** | **Start** → per set ✓ → na elke oefening *Gelukt* of *Ik nam meer/minder*. Toestel bezet? Eén tik. |
 | **Minder tijd** | Op **Vandaag** tik je *30*: de training past zich aan. |
 | **Gewicht** | De app stelt het voor. Na de oefening: *Gelukt*, of *Ik nam meer/minder* + welk gewicht. |
 | **Lukt vandaag niet** | **Vandaag lukt niet**: het plan schuift op, zonder sessies op te stapelen. |
@@ -140,8 +157,8 @@ npm run build      # productie-build + dist/coach-cli.mjs
 
 | Map | Inhoud |
 |---|---|
-| `src/coach/` | pure coachlogica: catalogus, gewichten, progressie, dagvorm, blessures, planner + regels, sessies, rapport, Health |
-| `src/data/` | opslag (IndexedDB), sync met GitHub, Health-inbox, meldingen |
+| `src/coach/` | pure coachlogica: catalogus, gewichten, progressie, dagvorm, herstel per spiergroep, sterke/werkpunten, weer, blessures, planner + regels, sessies, rapport, Health |
+| `src/data/` | opslag (IndexedDB), sync met GitHub, weer ophalen (lokaal), Health-inbox, meldingen |
 | `src/ui/` | Preact-schermen en componenten |
 | `cli/` | `coach-cli` voor GitHub Actions en `/coach` |
 | `docs/` | handleiding voor een latere Apple Health-koppeling (staat uit) |

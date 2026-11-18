@@ -6,6 +6,7 @@ import { paths } from '../../data/schema.ts';
 import { BarList, DataTable, fmt, LineChart, StatTile } from '../charts.tsx';
 import { useStore } from '../hooks.ts';
 import { Markdown } from '../markdown.tsx';
+import { InsightsCard } from './CoachCards.tsx';
 
 export function Report() {
   const s = useStore();
@@ -21,6 +22,7 @@ export function Report() {
     planned: s.plannedCount(monday),
     nextWeek: s.plan(addDays(monday, 7)),
     today,
+    insights: back === 0 ? s.insights() : undefined,
   });
   const coachMd = s.read<string>(paths.report(week));
   const volume = (Object.entries(report.volume) as [Muscle, number][])
@@ -45,6 +47,8 @@ export function Report() {
       <div class="card coach">
         <p>{report.message}</p>
       </div>
+
+      {back === 0 && <InsightsCard insights={s.insights()} full />}
 
       <div class="tiles">
         <StatTile label="Sessies" value={`${report.done}/${report.planned}`} sub={`${report.strength}× kracht · ${report.cardio}× conditie`} />

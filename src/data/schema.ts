@@ -12,6 +12,7 @@ import type {
   SessionLog,
 } from '../coach/types.ts';
 import type { LightId } from '../coach/light.ts';
+import type { Group } from '../coach/recovery.ts';
 import type { WatchWorkout } from '../coach/health.ts';
 
 export type { WatchWorkout };
@@ -45,6 +46,8 @@ export interface ReadinessCheck {
   score: number;
   reasons: string[];
   at: string;
+  /** Spierpijn die je aangaf (optioneel, één tik). */
+  sore?: Group[];
 }
 
 export interface LogFile {

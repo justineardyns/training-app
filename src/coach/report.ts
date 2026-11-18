@@ -5,6 +5,7 @@ import type { WeekPlan } from './planner.ts';
 import { SWEAT_KINDS } from './planner.ts';
 import { e1rm } from './progression.ts';
 import type { ISODate, Muscle, ReadinessLevel, SessionLog } from './types.ts';
+import type { Insights } from './insights.ts';
 
 // Weekrapport: cijfers + korte, eerlijke coachboodschap.
 
@@ -42,6 +43,9 @@ export interface WeeklyReport {
   nextWeek?: { date: ISODate; title: string; sweat: boolean }[];
   /** De week loopt nog (rapport vóór zondagavond). */
   inProgress: boolean;
+  /** Sterke punten en werkpunten (met wat de coach ermee doet). */
+  strong: string[];
+  work: string[];
   message: string;
 }
 
@@ -55,6 +59,7 @@ export interface ReportInput {
   nextWeek?: WeekPlan;
   /** Vandaag: als die in deze week valt (vóór zondag), is het een tussenstand. */
   today?: ISODate;
+  insights?: Insights;
 }
 
 const inRange = (d: ISODate, from: ISODate, to: ISODate) => d >= from && d <= to;
@@ -167,6 +172,8 @@ export function buildReport(input: ReportInput): WeeklyReport {
     streak: streakWeeks(history, monday),
     nextWeek: input.nextWeek?.days.map((d) => ({ date: d.date, title: d.title, sweat: d.sweat })),
     inProgress: !!input.today && input.today >= monday && input.today < sunday,
+    strong: (input.insights?.strong ?? []).map((i) => i.text),
+    work: (input.insights?.work ?? []).map((i) => (i.action ? `${i.text} ${i.action}` : i.text)),
     message: '',
   };
   report.message = coachMessage(report, input.nextWeek);
@@ -226,6 +233,11 @@ export function reportMarkdown(r: WeeklyReport): string {
   else lines.push('- Geen nieuwe records deze week.');
   if (r.trend.length) lines.push('', 'Geschatte 1RM per week (kg):', '');
   for (const t of r.trend) lines.push(`- ${t.name}: ${t.points.map((p) => nf.format(Math.round(p.e1rm))).join(' → ')}`);
+  if (r.strong.length || r.work.length) {
+    lines.push('', '## Sterk en werkpunten', '');
+    for (const t of r.strong) lines.push(`- 💪 ${t}`);
+    for (const t of r.work) lines.push(`- 🎯 ${t}`);
+  }
   lines.push('', '## Volume (harde sets)', '');
   const vol = Object.entries(r.volume).sort((a, b) => b[1] - a[1]);
   lines.push(vol.length ? vol.map(([m, v]) => `${MUSCLE_LABEL[m as Muscle]} ${nf.format(v)}`).join(' · ') : 'Geen krachtsessies.');

@@ -5,6 +5,7 @@ import type { PlannedDay, WeekPlan } from '../../coach/planner.ts';
 import type { DayAvailability, Minutes, Slot } from '../../coach/types.ts';
 import { SWEAT_KINDS } from '../../coach/planner.ts';
 import { Chips, Messages } from '../components.tsx';
+import { WeatherBadge } from './CoachCards.tsx';
 import { useStore } from '../hooks.ts';
 import { go } from '../router.ts';
 
@@ -16,23 +17,69 @@ export function dayLabel(date: string): string {
 
 const MOMENT: Record<Slot, string> = { day: 'overdag', evening: "'s avonds" };
 
-export function PlanList(props: { plan: WeekPlan; today: string }) {
+/** Rollend plan. Tik op een dag: waarom, en wisselen (kracht ↔ conditie) of "kan niet". */
+export function PlanList(props: { plan: WeekPlan; today: string; className?: string; onChange?: (date: string, patch: Partial<DayAvailability>) => void }) {
+  const [open, setOpen] = useState<string | null>(null);
+  const cls = props.className ?? 'Indoor cycling';
   return (
     <div class="plan">
-      {props.plan.days.map((d) => (
-        <div key={d.date} class={`plan-day ${d.sweat ? 'sweat' : 'light'} ${d.status} ${d.date === props.today ? 'today' : ''}`}>
-          <span class="plan-date">{d.date === props.today ? 'vandaag' : dayLabel(d.date)}</span>
-          <span class="plan-title">
-            {d.type === 'tennis' ? '🎾 ' : d.groupClass ? '🚴 ' : ''}
-            {d.title}
-            {d.slot && d.status === 'planned' && <span class="muted small"> · {MOMENT[d.slot]}</span>}
-            {d.lighter && <span class="pill orange">lichter</span>}
-          </span>
-          <span class="plan-icon" aria-label={d.status}>
-            {STATUS_ICON[d.status]}
-          </span>
-        </div>
-      ))}
+      {props.plan.days.map((d) => {
+        const actionable = !!props.onChange && d.status === 'planned' && d.sweat;
+        const isOpen = open === d.date && actionable;
+        return (
+          <div key={d.date} class={`plan-day ${d.sweat ? 'sweat' : 'light'} ${d.status} ${d.date === props.today ? 'today' : ''} ${isOpen ? 'open' : ''}`}>
+            <button
+              class="plan-row"
+              disabled={!actionable}
+              aria-expanded={actionable ? isOpen : undefined}
+              aria-label={actionable ? `${dayLabel(d.date)}: ${d.title}. Tik om te wisselen` : undefined}
+              onClick={() => setOpen(isOpen ? null : d.date)}
+            >
+              <span class="plan-date">{d.date === props.today ? 'vandaag' : dayLabel(d.date)}</span>
+              <span class="plan-title">
+                {d.type === 'tennis' ? '🎾 ' : d.groupClass ? '🚴 ' : ''}
+                {d.title}
+                {d.slot && d.status === 'planned' && <span class="muted small"> · {MOMENT[d.slot]}</span>}
+                {d.lighter && <span class="pill orange">lichter</span>}
+                {d.want && <span class="pill green">jouw keuze</span>}
+                {d.why && <span class="why">{d.why}</span>}
+              </span>
+              <span class="plan-icon" aria-label={d.status}>
+                <WeatherBadge day={d} />
+                {STATUS_ICON[d.status]}
+              </span>
+            </button>
+            {isOpen && (
+              <div class="plan-actions">
+                {d.type === 'strength' && (
+                  <button class="btn small" onClick={() => { props.onChange!(d.date, { want: 'cardio' }); setOpen(null); }}>
+                    {d.classSlot ? `🚴 Liever ${cls.toLowerCase()}` : 'Liever conditie'}
+                  </button>
+                )}
+                {d.type === 'cardio' && (
+                  <button class="btn small" onClick={() => { props.onChange!(d.date, { want: 'strength' }); setOpen(null); }}>
+                    🏋️ Liever kracht
+                  </button>
+                )}
+                {d.want && (
+                  <button class="btn small ghost" onClick={() => { props.onChange!(d.date, { want: undefined }); setOpen(null); }}>
+                    ↺ Terug naar het voorstel
+                  </button>
+                )}
+                {d.type === 'tennis' ? (
+                  <button class="btn small ghost" onClick={() => { props.onChange!(d.date, { tennis: undefined }); setOpen(null); }}>
+                    Tennis gaat niet door
+                  </button>
+                ) : (
+                  <button class="btn small ghost" onClick={() => { props.onChange!(d.date, { slots: [], want: undefined }); setOpen(null); }}>
+                    Kan niet die dag
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -66,7 +113,8 @@ export function Week() {
         {plan.planned + plan.done}/{plan.target} sessies gepland · max 4 per 7 dagen, nooit 2 dagen na elkaar
         {plan.deload.deload ? ' · deloadweek' : ''}
       </p>
-      <PlanList plan={plan} today={today} />
+      <PlanList plan={plan} today={today} className={s.prefs().className} onChange={(date, patch) => s.updateDay(date, patch)} />
+      <p class="muted small">Tik op een dag om te wisselen tussen kracht en {s.prefs().className.toLowerCase()}, of om ze te schrappen.</p>
       <Messages messages={plan.messages} />
       <button class="btn primary" onClick={() => go('beschikbaarheid')}>
         Dagen aanvinken
@@ -116,7 +164,7 @@ export function Availability() {
   return (
     <>
       <h1>Wanneer kan je?</h1>
-      <p class="muted">Vink aan wat past de komende 7 dagen: weekdagen 's avonds, in het weekend overdag (Jims sluit dan om 17u).</p>
+      <p class="muted">Vink aan wat past de komende 7 dagen: weekdagen 's avonds, in het weekend overdag (Jims sluit dan om 17u). 🚴 = lesmoment {prefs.className.toLowerCase()}.</p>
       <div class="card">
         <h3>Tijd per training</h3>
         <Chips<Minutes>
@@ -146,7 +194,9 @@ export function Availability() {
               <div class="chips" role="group" aria-label={`Momenten op ${dayLabel(d.date)}`}>
                 {slotOptions(d.date, prefs.trainAtHome).map((slot) => {
                   const on = d.slots.includes(slot) && !playing;
-                  const label = slot === 'day' ? 'Overdag' : isWeekend(d.date) && !gymOpen(d.date, 'evening') ? 'Avond · thuis' : 'Avond';
+                  const base = slot === 'day' ? 'Overdag' : isWeekend(d.date) && !gymOpen(d.date, 'evening') ? 'Avond · thuis' : 'Avond';
+                  const lesson = prefs.classSlots.some((c) => c.day === dayIndex(d.date) && c.slot === slot);
+                  const label = lesson ? `${base} · 🚴` : base;
                   return (
                     <button key={slot} class={`chip ${on ? 'on' : ''}`} aria-pressed={on} disabled={playing} onClick={() => toggleSlot(i, slot)}>
                       {on ? '✓ ' : ''}
