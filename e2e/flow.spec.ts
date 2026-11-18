@@ -26,14 +26,14 @@ test('eerste opstart → plannen → trainen → bewaren', async ({ page }) => {
   await snap(page, '02-beschikbaarheid');
   await page.getByRole('button', { name: 'Bewaar en plan' }).click();
   await expect(page.getByRole('heading', { name: 'Komende 7 dagen' })).toBeVisible();
-  // 6 trainingen, di vrij (rustdag): tennis op do, indoor cycling op zondag om 10u, de rest kracht.
-  await expect(page.locator('.plan-day.sweat')).toHaveCount(6);
-  await expect(page.locator('.plan-day').nth(1)).not.toHaveClass(/sweat/);
-  await expect(page.locator('.plan-day').nth(3)).toContainText('Tennis');
-  await expect(page.locator('.plan-day').nth(6)).toContainText('Indoor cycling (groepsles) · Jims · 10u');
+  // Beginner: 4 trainingen (opbouw). Tennis op do, indoor cycling op zondag om 10u, de rest kracht.
+  await expect(page.locator('.plan').first().locator('.plan-day.sweat')).toHaveCount(4);
+  await expect(page.locator('.plan').first().locator('.plan-day').nth(1)).not.toHaveClass(/sweat/);
+  await expect(page.locator('.plan').first().locator('.plan-day').nth(3)).toContainText('Tennis');
+  await expect(page.locator('.plan').first().locator('.plan-day').nth(6)).toContainText('Indoor cycling (groepsles) · Jims · 10u');
   // Vandaag liever kracht dan indoor cycling: één tik.
   await preferStrengthToday(page);
-  await expect(page.locator('.plan-day').first()).toContainText('Full body A');
+  await expect(page.locator('.plan').first().locator('.plan-day').first()).toContainText('Full body A');
   await snap(page, '03-week');
 
   // Vandaag
@@ -92,5 +92,5 @@ test('eerste opstart → plannen → trainen → bewaren', async ({ page }) => {
   await expect(page.locator('.card.done')).toBeVisible();
   await page.getByRole('link', { name: /Week/ }).click();
   await expect(page.locator('.plan-day.done')).toHaveCount(1);
-  await expect(page.locator('.plan-day').first()).toContainText('vandaag');
+  await expect(page.locator('.plan').first().locator('.plan-day').first()).toContainText('vandaag');
 });

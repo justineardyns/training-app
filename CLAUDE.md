@@ -26,8 +26,9 @@ Tests gebruiken verzonnen data (`e2e/seed.ts`, `FakeGitHub`).
   - geen benen (full body of benen & romp) de dag ná indoor cycling of andere conditie die zwaar is voor de benen
     (tennis niet: licht);
   - twee krachtdagen na elkaar enkel bovenlichaam ↔ benen.
-- Doel: het maximum (standaard 6, 1 rustdag; 1 minder bij vaak moe), minstens 1× en liefst 2× indoor cycling,
-  de rest kracht. Kracht: `A`/`B` full body, `U` bovenlichaam, `L` benen & romp.
+- Doel: het maximum (standaard 6, 1 rustdag; beginners bouwen op 4 → 5 → 6; 1 minder bij vaak moe), minstens 1× en
+  liefst 2× indoor cycling, de rest kracht (minstens 2×). `planTwoWeeks` plant 14 dagen: dag 8–14 is voorlopig en
+  bouwt verder op dag 1–7. `booked` (gereserveerde les) werkt als een vaste keuze voor conditie. Kracht: `A`/`B` full body, `U` bovenlichaam, `L` benen & romp.
 - UI-teksten in Vlaams Nederlands, de gebruiker aanspreken met "je". Kort, direct, motiverend.
 - Mobile-first, donker, grote tikdoelen (≥ 48 px, primaire acties ≥ 64 px). Zo weinig mogelijk typen.
 - Buiten scope: voeding, calorieën, lichaamsgewicht, metingen. Apple Health staat voorlopig uit

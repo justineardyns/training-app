@@ -239,6 +239,8 @@ export interface DayAvailability {
   tennis?: number;
   /** Jouw keuze als de coach die dag een training plant: liever kracht of liever conditie (groepsles). */
   want?: 'strength' | 'cardio';
+  /** Je reserveerde de groepsles van die dag in de Jims-app: die blijft vast staan. */
+  booked?: boolean;
 }
 
 export interface HealthDay {

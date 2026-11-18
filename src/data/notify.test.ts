@@ -31,8 +31,8 @@ describe('ochtendmelding', () => {
     const s = await at('2026-11-23T06:07:00Z');
     await s.saveAvailability(days7(MON).map((d, i) => (i === 0 ? { ...d, want: 'strength' as const } : d)));
     const m = morningMessage(s)!;
-    expect(m.title).toBe("Vandaag: Benen & romp · Jims 's avonds");
-    expect(m.body).toMatch(/^45 min · Leg press, /);
+    expect(m.title).toBe("Vandaag: Full body A · Jims 's avonds");
+    expect(m.body).toMatch(/^45 min · Leg press, Chest press \(toestel\), Lat pulldown…/);
   });
 
   it('rustdag → zweetvrije suggestie en de volgende training', async () => {
@@ -58,10 +58,14 @@ describe('ochtendmelding', () => {
 describe('zondagherinnering', () => {
   beforeEach(() => idb.reset());
 
-  it('enkel als je de komende dagen nog niet aanvinkte', async () => {
+  it('niet aangevinkt → aanvinken; daarna: reserveer je lessen (tot ze allemaal gereserveerd zijn)', async () => {
     const s = await at('2026-11-29T18:07:00Z');
     expect(sundayMessage(s)).toMatchObject({ title: 'Vink je komende dagen aan', url: '#/beschikbaarheid' });
     await s.saveAvailability(days7('2026-11-29').concat([defaultDay('2026-12-06', 45)]));
+    const book = sundayMessage(s)!;
+    expect(book).toMatchObject({ title: 'Reserveer je indoor cycling 🎟️', url: '#/week' });
+    expect(book.body).toMatch(/Lessen zitten snel vol: /);
+    for (const d of s.upcomingClasses()) await s.updateDay(d.date, { booked: true });
     expect(sundayMessage(s)).toBeNull();
   });
 

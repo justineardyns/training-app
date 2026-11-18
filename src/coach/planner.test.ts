@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { defaultDay, resolveDay } from './availability.ts';
 import { addDays, dayIndex } from './dates.ts';
-import { coachTarget, DEFAULT_PREFS, normalizePrefs, planWeek, type PlanInput, type PlannedDay, type WeekPlan } from './planner.ts';
+import { coachTarget, DEFAULT_PREFS, normalizePrefs, planTwoWeeks, planWeek, type PlanInput, type PlannedDay, type WeekPlan } from './planner.ts';
 import { MAX_CARDIO, MAX_PER_WEEK, MAX_STRENGTH, sanitizeAdjustments, validateRolling } from './rules.ts';
 import type { DayAvailability, Prefs, SessionLog, Slot, Template } from './types.ts';
 
@@ -61,8 +61,17 @@ function checkRules(p: WeekPlan, history: SessionLog[], ctx = '') {
 }
 
 describe('de coach kiest: max 6 per 7 dagen, conditie en kracht elk max 4', () => {
-  it('6 trainingen en 1 rustdag: 2× indoor cycling op lesmomenten, de rest kracht', () => {
+  it('absolute beginner start met 4 (opbouw): 2× indoor cycling + 2× kracht', () => {
     const p = planWeek(base());
+    expect(p).toMatchObject({ target: 4, cap: 6, strength: 2, cardio: 2 });
+    expect(p.days.filter((d) => d.groupClass)).toHaveLength(2);
+    expect(p.messages.join(' ')).toMatch(/Opbouw: de eerste weken 4 trainingen/);
+    expect(p.violations).toEqual([]);
+    checkRules(p, []);
+  });
+
+  it('6 trainingen en 1 rustdag: 2× indoor cycling op lesmomenten, de rest kracht', () => {
+    const p = planWeek(base({ prefs: PRO }));
     expect(p).toMatchObject({ target: 6, cap: 6, strength: 4, cardio: 2 });
     expect(trainDates(p)).toHaveLength(6);
     expect(p.days.filter((d) => d.groupClass)).toHaveLength(2);
@@ -71,8 +80,12 @@ describe('de coach kiest: max 6 per 7 dagen, conditie en kracht elk max 4', () =
     checkRules(p, []);
   });
 
-  it('jouw maximum telt, en vaak moe = 1 minder', () => {
-    expect(coachTarget({ prefs: DEFAULT_PREFS, history: [], today: MON }).target).toBe(6);
+  it('opbouw 4 → 5 → 6, jouw maximum telt, en vaak moe = 1 minder', () => {
+    const hist = (n: number) => Array.from({ length: n }, (_, i) => done(addDays(MON, -2 * i - 2), i % 2 ? 'class' : 'strength', 'A'));
+    expect(coachTarget({ prefs: DEFAULT_PREFS, history: hist(7), today: MON }).target).toBe(4);
+    expect(coachTarget({ prefs: DEFAULT_PREFS, history: hist(8), today: MON }).target).toBe(5);
+    expect(coachTarget({ prefs: DEFAULT_PREFS, history: hist(16), today: MON }).target).toBe(6);
+    expect(coachTarget({ prefs: PRO, history: [], today: MON }).target).toBe(6);
     expect(coachTarget({ prefs: { ...DEFAULT_PREFS, targetPerWeek: 3 }, history: [], today: MON }).target).toBe(3);
     const tired = [1, 2, 3].map((i) => ({ date: addDays(MON, -i), level: 'orange' as const }));
     expect(coachTarget({ prefs: PRO, history: [], today: MON, readinessLog: tired })).toMatchObject({ target: 5, note: expect.stringMatching(/vaak moe/) });
@@ -296,6 +309,35 @@ describe('de coach denkt mee: herstel, je keuze, het weer en het waarom', () => 
   });
 });
 
+describe('14 dagen vooruit', () => {
+  it('dag 8–14 bouwt verder op dag 1–7: de regels gelden over de grens heen', () => {
+    for (const prefs of [DEFAULT_PREFS, PRO]) {
+      const { first, second } = planTwoWeeks(base({ prefs }));
+      expect(second.start).toBe(D(7));
+      expect(second.days).toHaveLength(7);
+      expect(second.days.every((d) => d.provisional)).toBe(true);
+      expect(second.days.some((d) => d.groupClass)).toBe(true);
+      // Samen hercontroleren alsof dag 1–7 gedaan is.
+      const asDone = first.days
+        .filter((d) => d.status === 'planned' && d.sweat)
+        .map((d) => done(d.date, d.type === 'strength' ? 'strength' : 'class', d.template, d.type === 'tennis' ? 'Tennis' : 'Indoor cycling'));
+      expect(second.violations).toEqual([]);
+      checkRules(second, asDone, prefs.experience);
+    }
+  });
+
+  it('een gereserveerde les blijft vast staan (ook in de voorlopige week)', () => {
+    const { second } = planTwoWeeks(base());
+    const strengthOnClass = second.days.find((d) => d.type === 'strength' && d.classSlot) ?? second.days.find((d) => d.type === 'light' && [0, 2, 3, 5, 6].includes(dayIndex(d.date)))!;
+    const booked = planTwoWeeks(base({ availability: (d) => (d === strengthOnClass.date ? { ...std(d), booked: true } : std(d)) }));
+    const day = [...booked.first.days, ...booked.second.days].find((d) => d.date === strengthOnClass.date)!;
+    if (day.type === 'cardio') {
+      expect(day).toMatchObject({ booked: true, groupClass: true });
+      expect(day.why).toMatch(/^Gereserveerd: indoor cycling/);
+    } else expect([...booked.first.messages, ...booked.second.messages].join(' ')).toMatch(/Je reserveerde een les/);
+  });
+});
+
 describe('harde regels (fuzz, rollend)', () => {
   let seed = 7;
   const rnd = () => ((seed = (seed * 1664525 + 1013904223) % 2 ** 32) / 2 ** 32);
@@ -344,6 +386,10 @@ describe('harde regels (fuzz, rollend)', () => {
         if (!trainAtHome) expect(d.location, ctx).toBe('gym');
       }
       checkRules(p, history, ctx);
+      if (n % 5 === 0) {
+        const two = planTwoWeeks({ today, availability: (d) => avMap.get(d) ?? defaultDay(d, 45), history, prefs });
+        expect(two.second.violations, ctx).toEqual([]);
+      }
     }
   });
 });

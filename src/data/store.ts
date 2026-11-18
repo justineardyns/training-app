@@ -1,7 +1,18 @@
 import { addDays, isoWeek, todayIn } from '../coach/dates.ts';
 import { defaultDay } from '../coach/availability.ts';
 import { DEFAULT_GYM, DEFAULT_HOME } from '../coach/loads.ts';
-import { activeAdjustments, coachTarget, DEFAULT_PREFS, normalizePrefs, planWeek, type PlannedDay, type WeekPlan } from '../coach/planner.ts';
+import {
+  activeAdjustments,
+  coachTarget,
+  DEFAULT_PREFS,
+  normalizePrefs,
+  planTwoWeeks,
+  planWeek,
+  type PlanInput,
+  type PlannedDay,
+  type TwoWeekPlan,
+  type WeekPlan,
+} from '../coach/planner.ts';
 import { assessReadiness } from '../coach/readiness.ts';
 import { sanitizeAdjustments } from '../coach/rules.ts';
 import { buildCardioSession, buildStrengthSession, type CardioSession, type StrengthSession } from '../coach/session.ts';
@@ -357,26 +368,40 @@ export class Store {
   plan(start?: ISODate): WeekPlan {
     const today = this.today();
     const from = start && start > today ? start : today;
-    return this.cached(`plan:${from}`, () =>
-      planWeek({
-        today,
-        start: from,
-        availability: (d) => this.dayAvailability(d).day,
-        explicit: (d) => !!this.explicitDay(d),
-        history: this.sessions(),
-        prefs: this.prefs(),
-        adjustments: this.adjustments(),
-        readinessToday: this.checkFor(today)?.level,
-        readinessLog: this.checks().map((c) => ({ date: c.date, level: c.level })),
-        postponed: this.postponedDays(),
-        originalPlan: this.snapshot(),
-        weather: (d) => this.weatherFor(d),
-        avoidWeekdays: this.insights().avoidWeekdays,
-        weakGroup: this.insights().weakGroup,
-        soreToday: this.checkFor(today)?.sore,
-        novice: this.novice(),
-      }),
-    );
+    return this.cached(`plan:${from}`, () => planWeek(this.planInput(from)));
+  }
+
+  /** 14 dagen vooruit: de komende 7 dagen + dag 8–14 (voorlopig). */
+  planAhead(): TwoWeekPlan {
+    return this.cached('ahead', () => planTwoWeeks(this.planInput(this.today())));
+  }
+
+  /** Groepslessen in de komende 14 dagen (om op tijd te reserveren). */
+  upcomingClasses(): PlannedDay[] {
+    const { first, second } = this.planAhead();
+    return [...first.days, ...second.days].filter((d) => d.groupClass && d.status === 'planned');
+  }
+
+  private planInput(from: ISODate): PlanInput {
+    const today = this.today();
+    return {
+      today,
+      start: from,
+      availability: (d) => this.dayAvailability(d).day,
+      explicit: (d) => !!this.explicitDay(d),
+      history: this.sessions(),
+      prefs: this.prefs(),
+      adjustments: this.adjustments(),
+      readinessToday: this.checkFor(today)?.level,
+      readinessLog: this.checks().map((c) => ({ date: c.date, level: c.level })),
+      postponed: this.postponedDays(),
+      originalPlan: this.snapshot(),
+      weather: (d) => this.weatherFor(d),
+      avoidWeekdays: this.insights().avoidWeekdays,
+      weakGroup: this.insights().weakGroup,
+      soreToday: this.checkFor(today)?.sore,
+      novice: this.novice(),
+    };
   }
 
   /** Gepland aantal sessies in een kalenderweek (voor het weekrapport). */
@@ -436,7 +461,8 @@ export class Store {
    */
   async saveAvailability(days: DayAvailability[]): Promise<void> {
     const today = this.today();
-    const shownBefore = this.plan().days.filter((d) => d.sweat).map((d) => d.date);
+    const ahead = () => [...this.planAhead().first.days, ...this.planAhead().second.days];
+    const shownBefore = ahead().filter((d) => d.sweat).map((d) => d.date);
     const months = new Map<string, AvailabilityMonth>();
     const monthFile = (m: string) => {
       if (!months.has(m)) {
@@ -453,10 +479,10 @@ export class Store {
     }
     for (const [m, f] of months) this.files.set(paths.availability(m), { ...(this.files.get(paths.availability(m)) ?? { path: paths.availability(m), dirty: true, updatedAt: 0 }), content: f });
     this.memo.clear();
-    const plan = this.plan();
-    const planned = new Set(plan.days.filter((d) => d.sweat && (d.status === 'planned' || d.status === 'done')).map((d) => d.date));
-    const range = new Set(plan.days.map((d) => d.date));
-    for (const d of plan.days) monthFile(d.date.slice(0, 7));
+    const all = ahead();
+    const planned = new Set(all.filter((d) => d.sweat && (d.status === 'planned' || d.status === 'done')).map((d) => d.date));
+    const range = new Set(all.map((d) => d.date));
+    for (const d of all) monthFile(d.date.slice(0, 7));
     for (const [m, f] of months) {
       f.planned = [...new Set([...f.planned.filter((d) => d < today || !range.has(d)), ...[...planned].filter((d) => d.startsWith(m))])].sort();
       f.savedAt = this.now().toISOString();

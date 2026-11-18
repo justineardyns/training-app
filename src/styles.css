@@ -430,3 +430,6 @@ p.why { font-size: 15px; margin: 4px 0 10px; }
 .sore { margin-top: 8px; }
 .sore p { margin: 0; }
 .hair { font-size: 15px; }
+.week-head { margin: 20px 0 6px; display: flex; align-items: center; gap: 8px; }
+.card.booking { border-left: 4px solid var(--blue); }
+.card.booking h3 { margin-top: 0; }

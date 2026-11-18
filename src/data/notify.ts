@@ -1,5 +1,6 @@
 import { templateTitle } from '../coach/session.ts';
-import { addDays, dayName } from '../coach/dates.ts';
+import { addDays, DAY_SHORT, dayIndex, dayName } from '../coach/dates.ts';
+import { hourText } from '../coach/planner.ts';
 import { ZONE_LABEL } from '../coach/injury.ts';
 import type { Store } from './store.ts';
 
@@ -66,11 +67,25 @@ export function morningMessage(store: Store): PushMessage | null {
 
 /** Zondagavond: herinnering als je de komende dagen nog niet aanvinkte. */
 export function sundayMessage(store: Store): PushMessage | null {
-  if (unticked(store) < 3) return null;
+  const toBook = store.upcomingClasses().filter((d) => !d.booked);
+  const cls = store.prefs().className.toLowerCase();
+  const when = toBook
+    .slice(0, 3)
+    .map((d) => `${DAY_SHORT[dayIndex(d.date)]} ${Number(d.date.slice(8))}/${Number(d.date.slice(5, 7))}${d.time ? ` ${hourText(d.time)}` : ''}`)
+    .join(', ');
+  if (unticked(store) >= 3) {
+    return {
+      title: 'Vink je komende dagen aan',
+      body: `Welke avonden (en weekenddagen) passen de komende week? Tik en vink aan: 20 seconden.${toBook.length ? ` Daarna: reserveer je ${cls}.` : ''}`,
+      url: '#/beschikbaarheid',
+      tag: 'plan',
+    };
+  }
+  if (toBook.length === 0) return null;
   return {
-    title: 'Vink je komende dagen aan',
-    body: 'Welke avonden (en weekenddagen) passen de komende week? Tik en vink aan: 20 seconden.',
-    url: '#/beschikbaarheid',
+    title: `Reserveer je ${cls} 🎟️`,
+    body: `Lessen zitten snel vol: ${when}. Reserveer in de Jims-app en tik in Week aan wat lukte.`,
+    url: '#/week',
     tag: 'plan',
   };
 }

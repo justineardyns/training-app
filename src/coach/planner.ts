@@ -71,6 +71,10 @@ export interface PlannedDay {
   classSlot?: boolean;
   /** Jouw keuze voor die dag (kracht of conditie), als je die maakte. */
   want?: 'strength' | 'cardio';
+  /** Groepsles gereserveerd. */
+  booked?: boolean;
+  /** Dag 8–14: voorlopig (bouwt verder op de eerste 7 dagen). */
+  provisional?: boolean;
   /** Krachttraining: full body, bovenlichaam of benen & romp. */
   split?: Split;
   /** Uur van de groepsles (bv. '10:00'). */
@@ -214,8 +218,8 @@ export interface CoachTarget {
 }
 
 /**
- * Hoeveel trainingen deze 7 dagen? Jouw maximum (standaard 6: 1 vaste rustdag).
- * Vaak moe → 1 minder. /coach kan het vastzetten.
+ * Hoeveel trainingen deze 7 dagen? Jouw maximum (standaard 6: 1 vaste rustdag), maar een goede coach bouwt op:
+ * absolute beginner eerst 4, dan 5, dan 6. Vaak moe → 1 minder. /coach kan het vastzetten.
  */
 export function coachTarget(input: {
   prefs: Prefs;
@@ -228,6 +232,16 @@ export function coachTarget(input: {
   if (input.adjustments?.targetSessions) return { target: cap, cap };
   let target = cap;
   let note: string | undefined;
+  if (input.prefs.experience === 'beginner') {
+    const n = input.history.filter((s) => SWEAT_KINDS.has(s.kind) && s.date < input.today).length;
+    if (n < 8 && target > 4) {
+      target = 4;
+      note = 'Opbouw: de eerste weken 4 trainingen per 7 dagen, daarna 5 en dan 6. Zo raakt je lichaam eraan gewend.';
+    } else if (n < 16 && target > 5) {
+      target = 5;
+      note = 'Opbouw: nu 5 trainingen per 7 dagen. Binnenkort 6.';
+    }
+  }
   const recent = (input.readinessLog ?? []).filter((r) => r.date < input.today && r.date >= addDays(input.today, -7));
   if (recent.filter((r) => r.level !== 'green').length >= 3 && target > 2) {
     target -= 1;
@@ -254,7 +268,7 @@ export function planWeek(input: PlanInput): WeekPlan {
   const original = new Set(input.originalPlan ?? []);
   const avoid = new Set(input.avoidWeekdays ?? []);
   const av = new Map(days.map((d) => [d, input.availability(d)]));
-  const wish = (d: ISODate) => av.get(d)?.want;
+  const wish = (d: ISODate) => av.get(d)?.want ?? (av.get(d)?.booked ? 'cardio' : undefined);
   const short = (d: ISODate) => DAY_SHORT[dayIndex(d)]!;
   const idx = (d: ISODate) => diffDays(d, start);
 
@@ -386,7 +400,7 @@ export function planWeek(input: PlanInput): WeekPlan {
   const dayInfo = days.map((d, i) => {
     const a = av.get(d)!;
     return {
-      base: 20 + a.minutes / 15 - 0.15 * i + (original.has(d) ? 3 : 0) + (a.want ? 6 : 0) - (avoid.has(dayIndex(d)) ? 4 : 0),
+      base: 20 + a.minutes / 15 - 0.15 * i + (original.has(d) ? 3 : 0) + (a.want || a.booked ? 6 : 0) - (avoid.has(dayIndex(d)) ? 4 : 0),
       cls: classSlotOn(a, prefs.classSlots, prefs.trainAtHome) ? 3 : -4,
       isClass: !!classSlotOn(a, prefs.classSlots, prefs.trainAtHome),
       gym: resolveDay(a, prefs.trainAtHome).location === 'gym' ? 1 : 0,
@@ -434,6 +448,8 @@ export function planWeek(input: PlanInput): WeekPlan {
     // Indoor cycling: minstens 1×, liefst 2×, en niet meer (de rest is kracht).
     sc -= cyc === 0 ? 15 : cyc === 1 ? 4 : 3 * (cyc - WANT_CYCLING);
     if (wantS !== undefined) sc -= 3.5 * Math.abs(nS - wantS);
+    // Kracht is de motor van je recompositie: minstens 2× per 7 dagen (als er 3 of meer trainingen zijn).
+    else if (T >= 3 && nS < 2) sc -= 8 * (2 - nS);
     if (nS >= 2 && lowerN === 0) sc -= 6;
     if (nS >= 2 && upperN === 0) sc -= 6;
     if (nS >= 3 && (lowerN < 2 || upperN < 2)) sc -= 1;
@@ -604,14 +620,17 @@ export function planWeek(input: PlanInput): WeekPlan {
               : 'Morgen geen benen: die krijgen een rustdag.';
         const kindWhy = lighter
           ? 'Dagvorm oranje: rustig tempo, geen intervallen.'
-          : a.want === 'cardio'
-            ? `Jouw keuze: ${cls ? prefs.className.toLowerCase() : 'conditie'}.`
+          : a.booked && cls
+            ? `Gereserveerd: ${prefs.className.toLowerCase()}${cls.time ? ` om ${hourText(cls.time)}` : ''}.`
+            : a.want === 'cardio'
+              ? `Jouw keuze: ${cls ? prefs.className.toLowerCase() : 'conditie'}.`
             : cls
               ? `Lesmoment ${prefs.className.toLowerCase()}${cls.time ? ` om ${hourText(cls.time)}` : ''}.`
               : 'Conditie: geen les die dag, dus fiets of roeier.';
         result.push({
           date: d, type: 'cardio', sweat: true, status: 'planned', location, minutes: a.minutes, slot, groupClass: !!cls && !lighter,
           title: cardioTitle(location, a.minutes, lighter, cls ? prefs.className : undefined, cls?.time), lighter, classSlot: !!cls, want: a.want,
+          booked: !!a.booked && !!cls,
           weather, hair: true, time: cls?.time,
           why: `${kindWhy} ${legWhy}`,
         });
@@ -626,7 +645,7 @@ export function planWeek(input: PlanInput): WeekPlan {
     const tomorrow = labelOn.get(addDays(d, 1));
     result.push({
       date: d, type: 'light', sweat: false, status: moved ? 'moved' : 'free', title: `${light.title} (${light.minutes} min, zweetvrij)`, light,
-      note: moved ? 'Verplaatst: vandaag herstel.' : undefined, weather, walk, want: a.want,
+      note: moved ? 'Verplaatst: vandaag herstel.' : undefined, weather, walk, want: wish(d),
       why: moved
         ? undefined
         : yesterday
@@ -672,7 +691,9 @@ export function planWeek(input: PlanInput): WeekPlan {
     messages.push(
       cycling === 0
         ? `Geen ${prefs.className.toLowerCase()} deze 7 dagen: er valt geen lesmoment op een dag die past. ${how}.`
-        : `1× ${prefs.className.toLowerCase()} deze 7 dagen. Zin in een tweede? ${how}.`,
+        : tennis.length && nStrength <= 2
+          ? `1× ${prefs.className.toLowerCase()} + tennis deze 7 dagen: de andere trainingen zijn kracht (minstens 2× per week).`
+          : `1× ${prefs.className.toLowerCase()} deze 7 dagen. Zin in een tweede? ${how}.`,
     );
   }
   if (result.some((r) => r.want === 'cardio') && nStrength < 2 && T >= 3) {
@@ -683,7 +704,7 @@ export function planWeek(input: PlanInput): WeekPlan {
     const got = result.find((r) => r.date === d);
     if (!w || !candidate(d) || (w === 'strength' ? got?.type === 'strength' : got?.type === 'cardio')) continue;
     messages.push(
-      `Je koos ${w === 'strength' ? 'kracht' : 'conditie'} op ${dayName(d)}, maar dat past daar niet binnen de regels (conditie nooit 2 dagen na elkaar, geen benen de dag na ${prefs.className.toLowerCase()}, max per 7 dagen). Ik hield die dag vrij.`,
+      `${av.get(d)?.booked && !av.get(d)?.want ? 'Je reserveerde een les' : `Je koos ${w === 'strength' ? 'kracht' : 'conditie'}`} op ${dayName(d)}, maar dat past daar niet binnen de regels (conditie nooit 2 dagen na elkaar, geen benen de dag na ${prefs.className.toLowerCase()}, max per 7 dagen). Ik hield die dag vrij.`,
     );
   }
   if (adj?.focus) messages.push(`Coach: ${adj.focus}`);
@@ -702,6 +723,45 @@ export function planWeek(input: PlanInput): WeekPlan {
     start, days: result, target: T, cap: ct.cap, strength: nStrength, cardio: nCardio,
     done: doneTodayCount, planned: chosen.length + tennis.length, deload, messages, violations,
   };
+}
+
+/** Een geplande dag als "gedane" sessie, om verder te plannen (dag 8–14 bouwt op dag 1–7). */
+function asSession(d: PlannedDay, className: string): SessionLog | undefined {
+  if (d.status !== 'planned' || !d.sweat) return undefined;
+  const base = { id: `plan-${d.date}`, date: d.date, source: 'app' as const, exercises: [], location: d.location ?? 'gym' };
+  if (d.type === 'strength') return { ...base, kind: 'strength', template: d.template };
+  if (d.type === 'tennis') return { ...base, kind: 'cardio', title: 'Tennis', durationMin: d.minutes };
+  return d.groupClass ? { ...base, kind: 'class', title: className, durationMin: d.minutes } : { ...base, kind: 'cardio', title: 'Cardio', durationMin: d.minutes };
+}
+
+export interface TwoWeekPlan {
+  first: WeekPlan;
+  /** Dag 8–14: voorlopig, alsof je dag 1–7 volgt. Zo zie je op tijd welke lessen je moet reserveren. */
+  second: WeekPlan;
+}
+
+/** 14 dagen vooruit: eerst de komende 7 dagen, daarna de 7 erna met dezelfde regels over de grens heen. */
+export function planTwoWeeks(input: PlanInput): TwoWeekPlan {
+  const first = planWeek(input);
+  const prefs = normalizePrefs(input.prefs);
+  const ahead = first.days.map((d) => asSession(d, prefs.className)).filter((s): s is SessionLog => !!s);
+  const from = addDays(first.start, 7);
+  const secondInput: PlanInput = {
+    ...input,
+    start: from,
+    history: [...input.history, ...ahead],
+    originalPlan: (input.originalPlan ?? []).filter((d) => d >= from),
+  };
+  delete secondInput.explicit;
+  delete secondInput.readinessToday;
+  delete secondInput.soreToday;
+  const raw = planWeek(secondInput);
+  const second: WeekPlan = {
+    ...raw,
+    days: raw.days.map((d) => ({ ...d, provisional: true })),
+    messages: raw.messages.filter((m) => !first.messages.includes(m)),
+  };
+  return { first, second };
 }
 
 export { GROUP_LABEL };

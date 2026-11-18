@@ -32,9 +32,10 @@ describe('store: rollend plannen', () => {
     await s.saveAvailability(week(MON));
     const nov = s.read<AvailabilityMonth>(paths.availability('2026-11'))!;
     expect(Object.keys(nov.days)).toHaveLength(7);
-    // 6 trainingen, 1 rustdag.
-    expect(nov.planned).toHaveLength(6);
-    expect(s.plannedCount(MON)).toBe(6);
+    // Beginner: eerst 4 per 7 dagen; de momentopname gaat 14 dagen vooruit (ook de voorlopige week).
+    expect(nov.planned.filter((d) => d <= D(6))).toHaveLength(4);
+    expect(nov.planned.some((d) => d > D(6))).toBe(true);
+    expect(s.plannedCount(MON)).toBe(4);
   });
 
   it('over de maandgrens: twee maandbestanden', async () => {

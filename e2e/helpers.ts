@@ -15,9 +15,9 @@ export async function quickSetup(page: Page, when = '2026-11-23T08:00:00') {
 
 /** In Week: vandaag liever kracht (de coach plant op maandag standaard indoor cycling). */
 export async function preferStrengthToday(page: Page) {
-  const today = page.locator('.plan-day').first();
+  const today = page.locator('.plan').first().locator('.plan-day').first();
   if (await today.getByText(/Full body|Bovenlichaam|Benen & romp/).count()) return;
   await today.getByRole('button').first().click();
   await page.getByRole('button', { name: /Liever kracht/ }).click();
-  await expect(page.locator('.plan-day').first()).toContainText(/Full body|Bovenlichaam|Benen & romp/);
+  await expect(page.locator('.plan').first().locator('.plan-day').first()).toContainText(/Full body|Bovenlichaam|Benen & romp/);
 }
