@@ -21,10 +21,6 @@ export function App() {
   const { route, params } = useRoute();
 
   useEffect(() => {
-    void s.init();
-  }, []);
-
-  useEffect(() => {
     window.scrollTo(0, 0);
   }, [route, params.join('/')]);
 

@@ -10,6 +10,7 @@ import { Chips, Messages, Pill, Sheet } from '../components.tsx';
 import { useStore } from '../hooks.ts';
 import { go } from '../router.ts';
 import { dayLabel, needsNextWeek } from './Week.tsx';
+import { SyncWarning } from './Connect.tsx';
 
 const ENERGY: { value: Energy; label: string }[] = [
   { value: 'low', label: '😴 Laag' },
@@ -138,6 +139,7 @@ export function Today() {
     <>
       <p class="muted eyebrow">{dayName(today)} {dayLabel(today).split(' ')[1]}</p>
       <h1>Vandaag</h1>
+      <SyncWarning />
 
       {w && (
         <button class="card cta" onClick={() => go('training')}>

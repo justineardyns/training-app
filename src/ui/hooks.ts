@@ -4,7 +4,11 @@ import { store } from '../data/store.ts';
 /** Herrendert bij elke wijziging in de store. */
 export function useStore() {
   const [, setV] = useState(store.version);
-  useEffect(() => store.subscribe(() => setV(store.version)), []);
+  useEffect(() => {
+    const unsubscribe = store.subscribe(() => setV(store.version));
+    setV(store.version); // wijzigingen tussen render en inschrijven niet missen
+    return unsubscribe;
+  }, []);
   return store;
 }
 

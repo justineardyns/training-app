@@ -1,8 +1,11 @@
 import { render } from 'preact';
 import { App } from './ui/App.tsx';
+import { store, sync } from './data/app.ts';
 import './styles.css';
 
 render(<App />, document.getElementById('app')!);
+
+void store.init().then(() => sync.start());
 
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch((err) => {

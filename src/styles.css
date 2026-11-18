@@ -294,3 +294,13 @@ p { margin: 0 0 12px; }
 }
 .wheel-row.on { background: var(--accent); color: var(--accent-ink); border-radius: 14px; }
 .wheel-row.on .muted { color: var(--accent-ink); }
+
+/* Invoervelden (enkel bij het koppelen) */
+.field { display: flex; flex-direction: column; gap: 4px; font-size: 15px; color: var(--muted); }
+.field input {
+  min-height: 52px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface-2);
+  padding: 0 12px; font-size: 17px; color: var(--text); width: 100%;
+}
+.field .row { align-items: stretch; }
+.field .row .btn { flex: 0 0 auto; }
+.card a { color: var(--blue); }

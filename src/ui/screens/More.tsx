@@ -5,6 +5,7 @@ import { Chips } from '../components.tsx';
 import { useStore } from '../hooks.ts';
 import { go } from '../router.ts';
 import { GymEditor, HomeEquipmentEditor } from './Equipment.tsx';
+import { SyncSettings } from './Connect.tsx';
 
 export function More(props: { sub?: string }) {
   const s = useStore();
@@ -53,6 +54,9 @@ export function More(props: { sub?: string }) {
           Gewichtsstappen in Jims
         </button>
       </div>
+
+      <h2>Privé-repo</h2>
+      <SyncSettings />
 
       <h2>Voorkeuren</h2>
       <div class="card">
