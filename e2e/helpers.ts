@@ -12,3 +12,12 @@ export async function quickSetup(page: Page, when = '2026-11-23T08:00:00') {
   await page.getByRole('button', { name: 'Bewaar en plan' }).click();
   await expect(page.getByRole('heading', { name: 'Komende 7 dagen' })).toBeVisible();
 }
+
+/** In Week: vandaag liever kracht (de coach plant op maandag standaard indoor cycling). */
+export async function preferStrengthToday(page: Page) {
+  const today = page.locator('.plan-day').first();
+  if (await today.getByText(/Full body|Bovenlichaam|Benen & romp/).count()) return;
+  await today.getByRole('button').first().click();
+  await page.getByRole('button', { name: /Liever kracht/ }).click();
+  await expect(page.locator('.plan-day').first()).toContainText(/Full body|Bovenlichaam|Benen & romp/);
+}

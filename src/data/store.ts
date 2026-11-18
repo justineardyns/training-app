@@ -1,7 +1,7 @@
 import { addDays, isoWeek, todayIn } from '../coach/dates.ts';
 import { defaultDay } from '../coach/availability.ts';
 import { DEFAULT_GYM, DEFAULT_HOME } from '../coach/loads.ts';
-import { activeAdjustments, DEFAULT_PREFS, normalizePrefs, planWeek, type PlannedDay, type WeekPlan } from '../coach/planner.ts';
+import { activeAdjustments, coachTarget, DEFAULT_PREFS, normalizePrefs, planWeek, type PlannedDay, type WeekPlan } from '../coach/planner.ts';
 import { assessReadiness } from '../coach/readiness.ts';
 import { sanitizeAdjustments } from '../coach/rules.ts';
 import { buildCardioSession, buildStrengthSession, type CardioSession, type StrengthSession } from '../coach/session.ts';
@@ -324,8 +324,8 @@ export class Store {
     return this.cached('insights', () => {
       const prefs = this.prefs();
       const adj = activeAdjustments(this.adjustments(), this.today());
-      const strength = adj?.strengthSessions ?? prefs.strengthPerWeek;
-      const target = adj?.targetSessions ?? prefs.targetPerWeek;
+      const target = coachTarget({ prefs, history: this.sessions(), today: this.today(), adjustments: adj }).target;
+      const strength = adj?.strengthSessions ?? Math.ceil(target / 2);
       return buildInsights({
         today: this.today(),
         history: this.sessions(),
@@ -421,6 +421,7 @@ export class Store {
       equipment: profile.equipment,
       gym: profile.gym,
       groupClass: day.groupClass ? this.prefs().className : undefined,
+      ...(day.time ? { time: day.time } : {}),
     });
   }
 

@@ -18,8 +18,15 @@ Tests gebruiken verzonnen data (`e2e/seed.ts`, `FakeGitHub`).
 
 ## Regels
 
-- Harde planningsregels (max 4 per rollend venster van 7 dagen, nooit twee zweetdagen na elkaar) worden afgedwongen in
-  `src/coach/planner.ts` en gecontroleerd door `src/coach/rules.ts`. Elke wijziging daaraan: fuzz-test groen houden.
+- Harde planningsregels worden afgedwongen in `src/coach/planner.ts` en gecontroleerd door `src/coach/rules.ts`.
+  Elke wijziging daaraan: fuzz-test groen houden. Ze gelden per rollend venster van 7 dagen:
+  - max 6 trainingen, één per dag;
+  - conditie (haarwasdag) max 4 en nooit 2 dagen na elkaar;
+  - kracht max 4;
+  - geen benen (full body of benen & romp) naast indoor cycling of andere conditie die zwaar is voor de benen;
+  - twee krachtdagen na elkaar enkel bovenlichaam ↔ benen.
+- De coach kiest de mix en het aantal (opbouw 4 → 5 → 6 voor beginners, minder bij vaak moe). Kracht: `A`/`B` full body,
+  `U` bovenlichaam, `L` benen & romp.
 - UI-teksten in Vlaams Nederlands, de gebruiker aanspreken met "je". Kort, direct, motiverend.
 - Mobile-first, donker, grote tikdoelen (≥ 48 px, primaire acties ≥ 64 px). Zo weinig mogelijk typen.
 - Buiten scope: voeding, calorieën, lichaamsgewicht, metingen. Apple Health staat voorlopig uit

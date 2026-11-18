@@ -11,7 +11,7 @@ const key = (c: ClassSlot) => `${c.day}-${c.slot}`;
 /** Voorkeuren voor je week: aantal sessies, verdeling, ervaring, lesmomenten en tennisdagen. */
 export function PrefsEditor(props: { value: Prefs; onChange: (p: Prefs) => void; full?: boolean }) {
   const p = props.value;
-  const set = (patch: Partial<Prefs>) => props.onChange({ ...p, ...patch, strengthPerWeek: Math.min(patch.targetPerWeek ?? p.targetPerWeek, patch.strengthPerWeek ?? p.strengthPerWeek) });
+  const set = (patch: Partial<Prefs>) => props.onChange({ ...p, ...patch, rulesVersion: 2 });
   return (
     <div class="stack">
       <div class="card">
@@ -31,20 +31,17 @@ export function PrefsEditor(props: { value: Prefs; onChange: (p: Prefs) => void;
         </p>
       </div>
       <div class="card">
-        <h3>Trainingen per 7 dagen</h3>
+        <h3>Maximum trainingen per 7 dagen</h3>
         <Chips
-          options={[2, 3, 4].map((n) => ({ value: n, label: n === 4 ? '4 (max)' : String(n) }))}
+          options={[3, 4, 5, 6].map((n) => ({ value: n, label: n === 6 ? '6 (max)' : String(n) }))}
           value={p.targetPerWeek}
           onChange={(v) => set({ targetPerWeek: v })}
         />
-        <p class="muted small">Groepslessen en tennis tellen mee. Nooit twee dagen na elkaar.</p>
-        <h3>Waarvan kracht</h3>
-        <Chips
-          options={[1, 2, 3].filter((n) => n <= p.targetPerWeek).map((n) => ({ value: n, label: `${n}× kracht` }))}
-          value={p.strengthPerWeek}
-          onChange={(v) => set({ strengthPerWeek: v })}
-        />
-        <p class="muted small">De rest is conditie: {p.className.toLowerCase()}, tennis of cardio.</p>
+        <p class="muted small">
+          De coach kiest elke week de mix: soms wat meer kracht, soms wat meer conditie. Conditie (haarwasdag: {p.className.toLowerCase()}, tennis,
+          cardio) max 4 en nooit 2 dagen na elkaar, kracht max 4, nooit benen naast {p.className.toLowerCase()}.
+          {p.experience === 'beginner' ? ' Als beginner bouw je op: eerst 4, dan 5, dan 6.' : ''}
+        </p>
       </div>
       {props.full && (
         <div class="card">
@@ -57,9 +54,15 @@ export function PrefsEditor(props: { value: Prefs; onChange: (p: Prefs) => void;
                   key={key(c)}
                   class={`chip ${on ? 'on' : ''}`}
                   aria-pressed={on}
-                  onClick={() => set({ classSlots: on ? p.classSlots.filter((x) => key(x) !== key(c)) : [...p.classSlots, c] })}
+                  onClick={() =>
+                    set({
+                      classSlots: on
+                        ? p.classSlots.filter((x) => key(x) !== key(c))
+                        : [...p.classSlots, c.slot === 'day' ? { ...c, time: '10:00' } : c].sort((a, b) => a.day - b.day),
+                    })
+                  }
                 >
-                  {DAY_SHORT[c.day]} {c.slot === 'day' ? 'overdag' : 'avond'}
+                  {DAY_SHORT[c.day]} {c.slot === 'day' ? (p.classSlots.find((x) => key(x) === key(c))?.time ? 'om 10u' : 'overdag') : 'avond'}
                 </button>
               );
             })}

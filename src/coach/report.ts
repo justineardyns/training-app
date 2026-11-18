@@ -1,4 +1,5 @@
 import { EXERCISES } from './catalog.ts';
+import { templateTitle } from './session.ts';
 import { addDays, DAY_SHORT, dayIndex, isoWeek, weekDays } from './dates.ts';
 import { kg } from './loads.ts';
 import type { WeekPlan } from './planner.ts';
@@ -159,7 +160,7 @@ export function buildReport(input: ReportInput): WeeklyReport {
     done: sweat.length,
     strength: sweat.filter((s) => s.kind === 'strength').length,
     cardio: sweat.filter((s) => s.kind !== 'strength').length,
-    sessions: sweat.map((s) => ({ date: s.date, title: s.title ?? (s.kind === 'strength' ? `Full body ${s.template ?? ''}`.trim() : s.workoutType ?? 'Cardio'), kind: s.kind, durationMin: s.durationMin })),
+    sessions: sweat.map((s) => ({ date: s.date, title: s.title ?? (s.kind === 'strength' ? templateTitle(s.template) : s.workoutType ?? 'Cardio'), kind: s.kind, durationMin: s.durationMin })),
     prs,
     trend,
     volume,

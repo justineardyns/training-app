@@ -32,7 +32,7 @@ interface Slot {
   beginnerGym?: string[];
 }
 
-/** Full body A/B. Volgorde = prioriteit (bij weinig tijd vallen de laatste weg). */
+/** Full body A/B, bovenlichaam (U), benen & romp (L). Volgorde = prioriteit (bij weinig tijd vallen de laatste weg). */
 export const TEMPLATES: Record<Template, Slot[]> = {
   A: [
     { role: 'main', pattern: 'squat', gym: ['leg-press', 'goblet-squat'], home: ['goblet-squat', 'kb-goblet-squat'] },
@@ -52,7 +52,34 @@ export const TEMPLATES: Record<Template, Slot[]> = {
     { role: 'core', pattern: 'core', gym: ['pallof-press', 'side-plank'], home: ['side-plank', 'plank'] },
     { role: 'accessory', pattern: 'arms', gym: ['triceps-pushdown'], home: ['overhead-triceps'] },
   ],
+  // Bovenlichaam: op een dag naast indoor cycling (benen rusten) of naast een benentraining.
+  U: [
+    { role: 'main', pattern: 'push_h', gym: ['db-bench', 'chest-press'], beginnerGym: ['chest-press', 'db-bench'], home: ['incline-push-up', 'db-floor-press'] },
+    { role: 'main', pattern: 'pull_v', gym: ['lat-pulldown', 'close-grip-pulldown'], home: ['bent-over-row-homebar', 'bent-over-row-db'] },
+    { role: 'main', pattern: 'pull_h', gym: ['seated-cable-row', 'machine-row'], home: ['one-arm-db-row', 'bent-over-row-db'] },
+    { role: 'accessory', pattern: 'push_v', gym: ['db-shoulder-press', 'machine-shoulder-press'], beginnerGym: ['machine-shoulder-press', 'db-shoulder-press'], home: ['standing-db-press', 'half-kneeling-kb-press'] },
+    { role: 'core', pattern: 'core', gym: ['pallof-press', 'dead-bug'], home: ['dead-bug', 'plank'] },
+    { role: 'accessory', pattern: 'arms', gym: ['db-curl', 'hammer-curl'], home: ['db-curl', 'hammer-curl'] },
+    { role: 'accessory', pattern: 'arms', gym: ['triceps-pushdown'], home: ['overhead-triceps'] },
+  ],
+  // Benen & romp: nooit naast indoor cycling.
+  L: [
+    { role: 'main', pattern: 'squat', gym: ['leg-press', 'goblet-squat'], home: ['goblet-squat', 'kb-goblet-squat'] },
+    { role: 'main', pattern: 'hinge', gym: ['rdl-db', 'rdl-barbell'], home: ['rdl-homebar', 'rdl-db'] },
+    { role: 'main', pattern: 'lunge', gym: ['reverse-lunge', 'step-up'], home: ['reverse-lunge', 'step-up'] },
+    { role: 'accessory', pattern: 'legs_iso', gym: ['leg-curl'], home: ['single-leg-rdl'] },
+    { role: 'accessory', pattern: 'hinge', gym: ['hip-thrust', 'glute-bridge'], beginnerGym: ['glute-bridge', 'hip-thrust'], home: ['glute-bridge', 'kb-deadlift'] },
+    { role: 'core', pattern: 'core', gym: ['dead-bug', 'side-plank'], home: ['side-plank', 'dead-bug'] },
+    { role: 'accessory', pattern: 'legs_iso', gym: ['leg-extension'], home: ['step-up'] },
+  ],
 };
+
+/** Naam van een krachttraining. */
+export function templateTitle(t: Template | undefined): string {
+  if (t === 'U') return 'Bovenlichaam';
+  if (t === 'L') return 'Benen & romp';
+  return `Full body ${t ?? ''}`.trim();
+}
 
 /** Als niets van hetzelfde patroon de blessure spaart: deze patronen trainen grotendeels dezelfde zone. */
 const INJURY_FALLBACK: Partial<Record<Pattern, Pattern[]>> = {
@@ -320,7 +347,7 @@ export function buildStrengthSession(ctx: SessionContext): StrengthSession {
   return {
     kind: 'strength',
     date: ctx.date,
-    title: `Full body ${ctx.template}`,
+    title: templateTitle(ctx.template),
     template: ctx.template,
     location: ctx.location,
     minutes: ctx.minutes,
@@ -378,7 +405,7 @@ export interface CardioSession {
 }
 
 export function buildCardioSession(
-  ctx: Pick<SessionContext, 'date' | 'location' | 'minutes' | 'readiness' | 'equipment' | 'gym'> & { groupClass?: string },
+  ctx: Pick<SessionContext, 'date' | 'location' | 'minutes' | 'readiness' | 'equipment' | 'gym'> & { groupClass?: string; time?: string },
 ): CardioSession {
   const { minutes: min, location } = ctx;
   const lighter = ctx.readiness === 'orange' || ctx.readiness === 'red';
@@ -395,6 +422,7 @@ export function buildCardioSession(
         options.push({
           title: `${ctx.groupClass} (groepsles)`,
           steps: [
+            ...(ctx.time ? [`Les om ${ctx.time.replace(':00', 'u').replace(':', 'u')}: wees er 10 min vroeger`] : []),
             'Reserveer je plaats in de Jims-app als dat nodig is',
             'Eerste keer? Kom 10 min vroeger: vraag de lesgever om je fiets af te stellen (zadelhoogte = heupbeen)',
             'Absolute beginner: draai mee op je eigen tempo, je hoeft niet alle sprints voluit te doen',

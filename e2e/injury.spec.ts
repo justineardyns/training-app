@@ -1,8 +1,9 @@
 import { expect, test } from '@playwright/test';
-import { quickSetup } from './helpers.ts';
+import { preferStrengthToday, quickSetup } from './helpers.ts';
 
 test('"Ik heb last van…" past de training aan en volgt op', async ({ page }) => {
   await quickSetup(page);
+  await preferStrengthToday(page);
   await page.getByRole('link', { name: /Vandaag/ }).click();
   await expect(page.locator('.preview')).toContainText('Leg press');
 

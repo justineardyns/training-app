@@ -21,12 +21,24 @@ Werkt offline in de gym, draait puur op jouw tikken en kost **€ 0**.
     plant de coach liever niet.
   - **Bij elke dag een korte "waarom".** Tik op een dag om te wisselen tussen kracht en indoor cycling, of om
     ze te schrappen.
+  - **Krachttrainingen in drie soorten:**
+    - *Full body* als er geen indoor cycling naast staat.
+    - *Bovenlichaam* de dag voor of na indoor cycling.
+    - *Benen & romp* en *Bovenlichaam* om de beurt als je twee dagen na elkaar kracht doet.
 - **Rollend plannen:** altijd de komende 7 dagen. Je vinkt aan welke avonden passen (in het weekend
   overdag, want Jims sluit dan om 17u), en of je tennist. Alles gebeurt in Jims: geen thuistrainingen.
-- **Harde regels:** max 4 zweetsessies per 7 dagen (groepslessen en tennis inbegrepen), nooit twee dagen
-  na elkaar. Bij 4: 2× kracht + 2× conditie, met indoor cycling op de lesmomenten (🚴 bij het aanvinken).
-  Tennis telt als conditie. Passen er maar 3, dan gaat kracht voor en zegt de coach dat eerlijk.
-  Je kan dan zelf voor cycling kiezen.
+- **Harde regels:**
+  - Max 6 trainingen per 7 dagen, één per dag.
+  - **Conditie** (indoor cycling, tennis, cardio) is een haarwasdag 🚿: max 4 per 7 dagen en nooit 2 dagen na elkaar.
+  - **Kracht**: max 4 per 7 dagen.
+  - Nooit benen naast indoor cycling: de dag ervoor of erna wordt het bovenlichaam.
+  - Twee krachtdagen na elkaar wisselen bovenlichaam en benen & romp af.
+- **De coach kiest de mix:** soms wat meer kracht, soms wat meer conditie, afhankelijk van je vorige 7 dagen.
+  Als absolute beginner bouw je op: eerst 4 trainingen, dan 5 en dan 6.
+  - Indoor cycling staat op de lesmomenten: maandag-, woensdag- en donderdagavond, en zaterdag en zondag
+    om 10u (🚴 bij het aanvinken).
+  - Tennis telt als conditie.
+  - Je kan per dag zelf kiezen voor kracht of cycling. Breekt dat een regel, dan zegt de coach het.
 - **Weer:** op rustdagen bij droog weer wandelen, met het beste uur. Regent het, dan doe je binnen mobiliteit of
   stretching. Het weer komt gratis van Open-Meteo, zonder sleutel. Je plaats kies je met één tik in
   **Meer → Weer**; standaard is dat Brussel.
@@ -100,7 +112,7 @@ Open [github.com/settings/personal-access-tokens/new](https://github.com/setting
 3. Open **Coach** vanaf je beginscherm → **Start**.
 4. Plak je token → **Koppel**. Je gebruikersnaam en `training` staan al ingevuld.
 5. Kies de gewichtsstappen in Jims (weet je het niet: laat staan) en je voorkeuren (ervaring,
-   trainingen per 7 dagen, lesmomenten van indoor cycling, tennisdag) → **Klaar**.
+   maximum trainingen per 7 dagen, lesmomenten van indoor cycling, tennisdag) → **Klaar**.
 6. Vink aan welke momenten de komende 7 dagen passen → **Bewaar en plan**.
 
 ### 5. Meldingen
@@ -123,7 +135,8 @@ stuurt volgende week bij en pusht. Dat kan ook automatisch als geplande taak elk
 |---|---|
 | **Zondag** (of wanneer je wil) | Melding "Vink je komende dagen aan" → avonden (en weekend overdag) aanvinken, tennis aanduiden. 20 seconden. |
 | **'s Ochtends** | Melding met je plan. Open de app → tik hoe je je voelt (en optioneel: spierpijn in benen of bovenlijf) → groen/oranje/rood advies, training past zich aan je herstel aan. |
-| **Liever cycling dan kracht** (of omgekeerd) | **Week** → tik op de dag → *Liever indoor cycling* / *Liever kracht*. |
+| **Liever cycling dan kracht** (of omgekeerd) | **Week** → tik op de dag → *Liever indoor cycling* / *Liever kracht*. Past het niet binnen de regels, dan zegt de coach waarom. |
+| **Haar wassen plannen** | 🚿 in **Week** = conditiedag (nooit 2 dagen na elkaar). Krachtdagen zijn zonder haarwas. |
 | **Nieuwe oefening** | Tik op de naam: foto's van de beweging en het toestel, hoe je het instelt, techniektips. |
 | **In de gym** | **Start** → per set ✓ → na elke oefening *Gelukt* of *Ik nam meer/minder*. Toestel bezet? Eén tik. |
 | **Minder tijd** | Op **Vandaag** tik je *30*: de training past zich aan. |

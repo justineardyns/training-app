@@ -6,7 +6,8 @@ export type ISODate = string;
 
 export type Location = 'gym' | 'home';
 export type Minutes = 30 | 45 | 60;
-export type Template = 'A' | 'B';
+/** Full body A/B, bovenlichaam (U) of benen & romp (L). */
+export type Template = 'A' | 'B' | 'U' | 'L';
 
 /** Gevoel na een oefening: te licht / goed / zwaar. */
 export type Feel = 'light' | 'good' | 'hard';
@@ -126,14 +127,16 @@ export type Slot = 'day' | 'evening';
 export interface ClassSlot {
   day: number;
   slot: Slot;
+  /** Uur van de les, bv. '10:00' (optioneel). */
+  time?: string;
 }
 
 export type Experience = 'beginner' | 'returning';
 
 export interface Prefs {
-  /** Zweetsessies per 7 dagen (rollend). Absoluut max 4. */
+  /** Maximum trainingen per 7 dagen (rollend, kracht + conditie). Absoluut max 6. De coach bouwt op en kiest de mix. */
   targetPerWeek: number;
-  /** Waarvan krachttrainingen; de rest is conditie (groepsles, cardio of tennis). */
+  /** Oud veld (vroeger vaste verdeling). De coach kiest nu zelf de mix; enkel nog als terugval. */
   strengthPerWeek: number;
   /** Elke hoeveelste trainingsweek een deload (standaard 6). */
   deloadEvery: number;
@@ -148,6 +151,8 @@ export interface Prefs {
   minutes: Minutes;
   /** Ook thuis trainen? Standaard uit: alles in Jims. */
   trainAtHome: boolean;
+  /** Versie van de regels waarmee deze voorkeuren bewaard zijn (2 = kracht en conditie apart). */
+  rulesVersion?: number;
 }
 
 export type ProgressionChange =
@@ -267,7 +272,7 @@ export interface CoachAdjustments {
   /** Vanaf welke maandag dit geldt. */
   validFrom?: ISODate;
   targetSessions?: number;
-  /** Krachttrainingen per 7 dagen (rest = conditie). */
+  /** Krachttrainingen per 7 dagen (1–4); zonder dit kiest de coach de mix. */
   strengthSessions?: number;
   forceDeload?: boolean;
   swaps?: { from: string; to: string; reason?: string }[];

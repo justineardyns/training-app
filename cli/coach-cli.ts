@@ -130,9 +130,12 @@ export function context(store: Store, monday: string) {
     }),
     nextWeek: {
       target: next.target,
+      cap: next.cap,
+      strength: next.strength,
+      cardio: next.cardio,
       deload: next.deload,
       days: next.days.map((d) => ({
-        date: d.date, type: d.type, title: d.title, slot: d.slot, location: d.location, groupClass: d.groupClass, why: d.why,
+        date: d.date, type: d.type, title: d.title, slot: d.slot, location: d.location, groupClass: d.groupClass, why: d.why, split: d.split,
         focus: d.focus && (d.focus.reduce.length || d.focus.later.length || d.focus.first) ? d.focus : undefined,
       })),
       messages: next.messages,

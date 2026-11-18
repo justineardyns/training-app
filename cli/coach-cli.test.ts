@@ -25,7 +25,12 @@ function repo(files: Record<string, unknown>): string {
 const MON = '2026-11-23';
 const base = {
   'data/profile.json': { ...defaultProfile(), setupDone: true, notifyHour: 7 },
-  'data/availability/2026-11.json': { month: '2026-11', days: Object.fromEntries(weekDays(MON).map((date) => [date, defaultDay(date, 45)])), planned: [MON, '2026-11-25', '2026-11-27', '2026-11-29'], savedAt: '' },
+  'data/availability/2026-11.json': {
+    month: '2026-11',
+    days: Object.fromEntries(weekDays(MON).map((date) => [date, date === MON ? { ...defaultDay(date, 45), want: 'strength' } : defaultDay(date, 45)])),
+    planned: [MON, '2026-11-25', '2026-11-27', '2026-11-29'],
+    savedAt: '',
+  },
 };
 
 describe('pushmeldingen: sleutels en versleuteling', () => {

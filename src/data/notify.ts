@@ -1,3 +1,4 @@
+import { templateTitle } from '../coach/session.ts';
 import { addDays, dayName } from '../coach/dates.ts';
 import { ZONE_LABEL } from '../coach/injury.ts';
 import type { Store } from './store.ts';
@@ -39,7 +40,7 @@ export function morningMessage(store: Store): PushMessage | null {
       const session = store.sessionFor(day);
       const names = session && 'exercises' in session ? session.exercises.slice(0, 3).map((e) => e.exercise.name) : [];
       return {
-        title: `Vandaag: Full body ${day.template} · ${where}${when}`,
+        title: `Vandaag: ${templateTitle(day.template)} · ${where}${when}`,
         body: `${day.minutes} min${day.deload ? ' · deloadweek' : ''}${names.length ? ` · ${names.join(', ')}…` : ''}. Tik voor je dagvorm-check.${injuryAsk}${ask}`,
         url: '#/vandaag',
         tag: 'vandaag',

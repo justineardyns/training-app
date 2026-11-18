@@ -29,7 +29,7 @@ describe('ochtendmelding', () => {
 
   it('trainingsdag → wat je doet, waar en hoelang', async () => {
     const s = await at('2026-11-23T06:07:00Z');
-    await s.saveAvailability(days7(MON));
+    await s.saveAvailability(days7(MON).map((d, i) => (i === 0 ? { ...d, want: 'strength' as const } : d)));
     const m = morningMessage(s)!;
     expect(m.title).toBe("Vandaag: Full body A · Jims 's avonds");
     expect(m.body).toMatch(/^45 min · Leg press, Chest press \(toestel\), Lat pulldown…/);

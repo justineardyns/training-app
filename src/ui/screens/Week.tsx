@@ -3,6 +3,7 @@ import { gymOpen, isWeekend, slotOptions } from '../../coach/availability.ts';
 import { addDays, DAY_SHORT, dayIndex } from '../../coach/dates.ts';
 import type { PlannedDay, WeekPlan } from '../../coach/planner.ts';
 import type { DayAvailability, Minutes, Slot } from '../../coach/types.ts';
+import { templateTitle } from '../../coach/session.ts';
 import { SWEAT_KINDS } from '../../coach/planner.ts';
 import { Chips, Messages } from '../components.tsx';
 import { WeatherBadge } from './CoachCards.tsx';
@@ -39,12 +40,17 @@ export function PlanList(props: { plan: WeekPlan; today: string; className?: str
               <span class="plan-title">
                 {d.type === 'tennis' ? '🎾 ' : d.groupClass ? '🚴 ' : ''}
                 {d.title}
-                {d.slot && d.status === 'planned' && <span class="muted small"> · {MOMENT[d.slot]}</span>}
+                {d.slot && d.status === 'planned' && !d.time && <span class="muted small"> · {MOMENT[d.slot]}</span>}
                 {d.lighter && <span class="pill orange">lichter</span>}
                 {d.want && <span class="pill green">jouw keuze</span>}
                 {d.why && <span class="why">{d.why}</span>}
               </span>
               <span class="plan-icon" aria-label={d.status}>
+                {d.hair && d.status !== 'free' && (
+                  <span class="hair" title="Haarwasdag" aria-label="haarwasdag">
+                    🚿
+                  </span>
+                )}
                 <WeatherBadge day={d} />
                 {STATUS_ICON[d.status]}
               </span>
@@ -110,8 +116,12 @@ export function Week() {
         </button>
       )}
       <p class="muted small">
-        {plan.planned + plan.done}/{plan.target} sessies gepland · max 4 per 7 dagen, nooit 2 dagen na elkaar
+        <strong>
+          {plan.planned + plan.done}/{plan.target} trainingen: {plan.strength}× kracht + {plan.cardio}× conditie
+        </strong>
         {plan.deload.deload ? ' · deloadweek' : ''}
+        <br />
+        Conditie (🚿 haarwasdag) max 4 en nooit 2 dagen na elkaar · kracht max 4 · nooit benen naast {s.prefs().className.toLowerCase()}
       </p>
       <PlanList plan={plan} today={today} className={s.prefs().className} onChange={(date, patch) => s.updateDay(date, patch)} />
       <p class="muted small">Tik op een dag om te wisselen tussen kracht en {s.prefs().className.toLowerCase()}, of om ze te schrappen.</p>
@@ -122,11 +132,11 @@ export function Week() {
       {past.length > 0 && (
         <>
           <h2>Afgelopen 7 dagen</h2>
-          <p class="muted small">{inLast7} zweetsessies</p>
+          <p class="muted small">{inLast7} trainingen</p>
           <ul class="plain">
             {past.map((x) => (
               <li key={x.id}>
-                <strong>{dayLabel(x.date)}</strong> {x.title ?? (x.kind === 'strength' ? `Full body ${x.template ?? ''}` : x.workoutType ?? 'Cardio')}
+                <strong>{dayLabel(x.date)}</strong> {x.title ?? (x.kind === 'strength' ? templateTitle(x.template) : x.workoutType ?? 'Cardio')}
               </li>
             ))}
           </ul>
@@ -222,7 +232,9 @@ export function Availability() {
         })}
       </div>
       <p class="muted small">
-        {count === 0 ? 'Niets aangevinkt: dan plan ik deze dagen niets.' : `Ik kies de beste ${prefs.targetPerWeek > count ? count : prefs.targetPerWeek} momenten, nooit twee dagen na elkaar, met ${prefs.className.toLowerCase()} op de lesmomenten.`}
+        {count === 0
+          ? 'Niets aangevinkt: dan plan ik deze dagen niets.'
+          : `Ik kies de beste momenten (max ${prefs.targetPerWeek}) en de mix kracht/conditie: conditie nooit 2 dagen na elkaar, geen benen naast ${prefs.className.toLowerCase()}.`}
       </p>
       <div class="sticky-actions">
         <button class="btn primary huge" disabled={saving} onClick={save}>

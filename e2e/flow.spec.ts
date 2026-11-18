@@ -25,9 +25,12 @@ test('eerste opstart → plannen → trainen → bewaren', async ({ page }) => {
   await snap(page, '02-beschikbaarheid');
   await page.getByRole('button', { name: 'Bewaar en plan' }).click();
   await expect(page.getByRole('heading', { name: 'Komende 7 dagen' })).toBeVisible();
-  // ma kracht, do tennis, za kracht (wo/vr kunnen niet naast tennis, zo niet na za)
-  await expect(page.locator('.plan-day.sweat')).toHaveCount(3);
-  await expect(page.locator('.plan-day.sweat').nth(1)).toContainText('Tennis');
+  // Beginner: 4 trainingen (opbouw): ma full body A, wo full body B, do tennis, zo indoor cycling om 10u.
+  await expect(page.locator('.plan-day.sweat')).toHaveCount(4);
+  await expect(page.locator('.plan-day.sweat').nth(0)).toContainText('Full body A');
+  await expect(page.locator('.plan-day.sweat').nth(2)).toContainText('Tennis');
+  await expect(page.locator('.plan-day.sweat').nth(3)).toContainText('Indoor cycling (groepsles) · Jims · 10u');
+  await expect(page.getByText(/2× kracht \+ 2× conditie/)).toBeVisible();
   await snap(page, '03-week');
 
   // Vandaag

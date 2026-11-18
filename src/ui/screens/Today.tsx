@@ -2,7 +2,7 @@ import { useState } from 'preact/hooks';
 import { dayName, isoWeek } from '../../coach/dates.ts';
 import { formatLoad } from '../../coach/loads.ts';
 import { ADVICE, LEVEL_LABEL } from '../../coach/readiness.ts';
-import type { CardioSession, StrengthSession } from '../../coach/session.ts';
+import { templateTitle, type CardioSession, type StrengthSession } from '../../coach/session.ts';
 import type { Energy, Location, Minutes } from '../../coach/types.ts';
 import { newId } from '../../data/store.ts';
 import { startWorkout } from '../../data/workout.ts';
@@ -150,7 +150,7 @@ export function Today() {
 
       {w && (
         <button class="card cta" onClick={() => go('training')}>
-          <strong>Training bezig: Full body {w.template}</strong>
+          <strong>Training bezig: {templateTitle(w.template)}</strong>
           <span class="muted small">Tik om verder te gaan</span>
         </button>
       )}

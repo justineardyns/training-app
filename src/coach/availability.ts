@@ -50,8 +50,15 @@ export function classSlotOn(av: DayAvailability, classSlots: ClassSlot[], allowH
 export const DEFAULT_CLASS_SLOTS: ClassSlot[] = [
   { day: 0, slot: 'evening' },
   { day: 2, slot: 'evening' },
-  { day: 5, slot: 'day' },
-  { day: 6, slot: 'day' },
+  { day: 3, slot: 'evening' },
+  { day: 5, slot: 'day', time: '10:00' },
+  { day: 6, slot: 'day', time: '10:00' },
 ];
+
+/** Het lesmoment (met uur) op die dag, als er een is. */
+export function classSlotFor(av: DayAvailability, classSlots: ClassSlot[], allowHome = false): ClassSlot | undefined {
+  const slot = classSlotOn(av, classSlots, allowHome);
+  return slot ? classSlots.find((c) => c.day === dayIndex(av.date) && c.slot === slot) : undefined;
+}
 
 export type { Prefs };

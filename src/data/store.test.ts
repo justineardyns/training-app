@@ -54,6 +54,7 @@ describe('store: rollend plannen', () => {
 
   it('vandaag: krachtsessie met concrete oefeningen, beginner start licht', async () => {
     const s = await fresh();
+    await s.saveAvailability(week(MON, (_, i) => (i === 0 ? { want: 'strength' } : {})));
     const day = s.todayPlan();
     expect(day.type).toBe('strength');
     const session = s.sessionFor(day);
@@ -73,7 +74,7 @@ describe('store: rollend plannen', () => {
 
   it('flexibel: vandaag minder tijd (30 min), altijd in Jims', async () => {
     const s = await fresh();
-    await s.saveAvailability(week(MON));
+    await s.saveAvailability(week(MON, (_, i) => (i === 0 ? { want: 'strength' } : {})));
     await s.updateDay(MON, { minutes: 30 });
     expect(s.todayPlan()).toMatchObject({ type: 'strength', location: 'gym', minutes: 30 });
     const session = s.sessionFor(s.todayPlan());
@@ -108,20 +109,20 @@ describe('store: rollend plannen', () => {
     expect(again.local.repo).toBe('training');
   });
 
-  it('wisselen per dag: liever cycling op een lesmoment, en terug', async () => {
+  it('wisselen per dag: liever kracht op een lesmoment, en terug', async () => {
     const s = await fresh();
     await s.saveAvailability(week(MON));
-    expect(s.plan().days[0]!.type).toBe('strength');
-    await s.updateDay(D(0), { want: 'cardio' });
-    expect(s.plan().days[0]).toMatchObject({ type: 'cardio', groupClass: true, want: 'cardio' });
-    expect(s.explicitDay(D(0))?.want).toBe('cardio');
+    expect(s.plan().days[0]).toMatchObject({ type: 'cardio', groupClass: true });
+    await s.updateDay(D(0), { want: 'strength' });
+    expect(s.plan().days[0]).toMatchObject({ type: 'strength', want: 'strength' });
+    expect(s.explicitDay(D(0))?.want).toBe('strength');
     await s.updateDay(D(0), { want: undefined });
-    expect(s.plan().days[0]!.type).toBe('strength');
+    expect(s.plan().days[0]!.type).toBe('cardio');
   });
 
   it('spierpijn na de dagvorm: herstelkaart en training passen zich aan', async () => {
     const s = await fresh();
-    await s.saveAvailability(week(MON));
+    await s.saveAvailability(week(MON, (_, i) => (i === 0 ? { want: 'strength' } : {})));
     await s.recordCheck('ok');
     await s.recordSore(['benen']);
     expect(s.recovery().benen.state).toBe('moe');

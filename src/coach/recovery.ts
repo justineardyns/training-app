@@ -176,23 +176,26 @@ export interface StrengthFocus {
 const lower = (g: Group) => GROUP_LABEL[g].toLowerCase();
 const list = (gs: Group[]) => gs.map(lower).join(' en ');
 
-/** Focus voor een krachttraining, op basis van herstel (en je werkpunt). */
-export function strengthFocus(rec: Record<Group, GroupRecovery>, weakGroup?: Group): StrengthFocus {
-  const reduce = GROUPS.filter((g) => g !== 'core' && rec[g].state === 'moe');
-  const later = GROUPS.filter((g) => g !== 'core' && rec[g].state === 'herstelt');
-  const fresh = GROUPS.filter((g) => g !== 'core' && rec[g].state === 'fris');
-  const first = weakGroup && rec[weakGroup].state === 'fris' ? weakGroup : undefined;
+/** Focus voor een krachttraining, op basis van herstel (en je werkpunt). `groups`: wat deze training traint. */
+export function strengthFocus(rec: Record<Group, GroupRecovery>, weakGroup?: Group, groups: Group[] = ['benen', 'duwen', 'trekken']): StrengthFocus {
+  const active = GROUPS.filter((g) => g !== 'core' && groups.includes(g));
+  const reduce = active.filter((g) => rec[g].state === 'moe');
+  const later = active.filter((g) => rec[g].state === 'herstelt');
+  const fresh = active.filter((g) => rec[g].state === 'fris');
+  const first = weakGroup && active.includes(weakGroup) && rec[weakGroup].state === 'fris' ? weakGroup : undefined;
   let why: string | undefined;
   if (reduce.length) {
     const cause = rec[reduce[0]!].cause;
     why = `${GROUP_LABEL[reduce[0]!]}${reduce.length > 1 ? ` en ${lower(reduce[1]!)}` : ''} nog moe${cause ? ` (${cause})` : ''}: ${
       fresh.length ? `eerst ${list(fresh)}, ` : ''
     }${list(reduce)} 1 set minder en niet zwaarder.`;
-  } else if (later.length) {
+  } else if (later.length && fresh.length) {
     const cause = rec[later[0]!].cause;
-    why = `${GROUP_LABEL[later[0]!]} herstelt nog${cause ? ` (${cause})` : ''}: ${fresh.length ? `je start met ${list(fresh)}` : 'rustig opbouwen'}.`;
+    why = `${GROUP_LABEL[later[0]!]} nog niet helemaal hersteld${cause ? ` (${cause})` : ''}: je start met ${list(fresh)}.`;
+  } else if (later.length) {
+    why = 'Nog niet helemaal hersteld: bouw rustig op en ga niet zwaarder dan je voelt.';
   } else if (first) {
-    why = `Alles hersteld. ${GROUP_LABEL[first]} is je werkpunt: daar begin je mee.`;
+    why = `${GROUP_LABEL[first]} is je werkpunt: daar begin je mee.`;
   }
   return { reduce, later, first, why };
 }

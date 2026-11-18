@@ -83,6 +83,7 @@ describe('blessures melden', () => {
 
   it('een knieblessure verandert de training van vandaag', async () => {
     const s = await fresh();
+    await s.updateDay(s.today(), { want: 'strength' });
     const before = s.sessionFor(s.todayPlan());
     await reportInjury(s, 'knie', 2, false);
     const after = s.sessionFor(s.todayPlan());

@@ -1,4 +1,4 @@
-import type { PlannedExercise, Role, StrengthSession } from '../coach/session.ts';
+import { templateTitle, type PlannedExercise, type Role, type StrengthSession } from '../coach/session.ts';
 import type { Feel, ISODate, Location, Minutes, Prescription, ReadinessLevel, SessionLog, SetLog, Template } from '../coach/types.ts';
 
 // Status van een lopende training. Pure functies: makkelijk te testen en te bewaren (crash-proof).
@@ -219,7 +219,7 @@ export function toSessionLog(w: WorkoutState, endedAt: Date): SessionLog {
     deload: w.deload,
     readiness: w.readiness,
     source: 'app',
-    title: `Full body ${w.template}`,
+    title: templateTitle(w.template),
     durationMin: Math.round((endedAt.getTime() - new Date(w.startedAt).getTime()) / 60000),
     exercises: w.items
       .filter((it) => it.sets.some((s) => s.done))
