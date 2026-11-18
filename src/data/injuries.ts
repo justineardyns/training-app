@@ -1,4 +1,4 @@
-import type { Illness, IllnessKind } from '../coach/illness.ts';
+import type { Illness } from '../coach/illness.ts';
 import type { Injury, Severity, Zone } from '../coach/types.ts';
 import { paths, type InjuriesFile } from './schema.ts';
 import { newId, type Store } from './store.ts';
@@ -37,20 +37,20 @@ export async function updateInjury(store: Store, id: string, trend: 'beter' | 'z
   });
 }
 
-/** "Ik ben ziek": één actieve ziekte tegelijk. */
-export async function reportIllness(store: Store, kind: IllnessKind): Promise<Illness> {
+/** "Ik ben ziek": één tik. Ziek is ziek, hoe erg maakt niet uit. */
+export async function reportIllness(store: Store): Promise<Illness> {
   const today = store.today();
   const file = store.read<InjuriesFile>(paths.injuries) ?? { injuries: [] };
   const list = file.illnesses ?? [];
   const active = list.find((i) => !i.resolvedOn);
   const illness: Illness = active
-    ? { ...active, updates: [...active.updates.filter((u) => u.date !== today), { date: today, trend: 'zelfde', kind }] }
-    : { id: newId(), kind, startedOn: today, updates: [] };
+    ? { ...active, updates: [...active.updates.filter((u) => u.date !== today), { date: today, trend: 'zelfde' }] }
+    : { id: newId(), startedOn: today, updates: [] };
   await store.write(paths.injuries, { ...file, illnesses: [...list.filter((i) => i.id !== illness.id), illness] });
   return illness;
 }
 
-export async function updateIllness(store: Store, id: string, trend: 'beter' | 'zelfde' | 'erger' | 'weg', kind?: IllnessKind): Promise<void> {
+export async function updateIllness(store: Store, id: string, trend: 'beter' | 'zelfde' | 'erger' | 'weg'): Promise<void> {
   const today = store.today();
   const file = store.read<InjuriesFile>(paths.injuries) ?? { injuries: [] };
   await store.write(paths.injuries, {
@@ -60,7 +60,7 @@ export async function updateIllness(store: Store, id: string, trend: 'beter' | '
         ? i
         : {
             ...i,
-            updates: [...i.updates.filter((u) => u.date !== today), kind ? { date: today, trend, kind } : { date: today, trend }],
+            updates: [...i.updates.filter((u) => u.date !== today), { date: today, trend }],
             resolvedOn: trend === 'weg' ? today : i.resolvedOn,
           },
     ),

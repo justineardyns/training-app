@@ -4,7 +4,6 @@ import { currentSeverity, isResolved, referral, relevantInjuries, SEVERITY_LABEL
 import { EXERCISES } from '../../coach/catalog.ts';
 import type { Severity, Zone } from '../../coach/types.ts';
 import { reportIllness, reportInjury, updateIllness, updateInjury } from '../../data/injuries.ts';
-import { currentKind, ILLNESS_LABEL, type IllnessKind } from '../../coach/illness.ts';
 import { Chips } from '../components.tsx';
 import { useStore } from '../hooks.ts';
 import { go } from '../router.ts';
@@ -22,7 +21,6 @@ export function InjuryReport() {
   const [severity, setSeverity] = useState<Severity>();
   const [sharp, setSharp] = useState<'nee' | 'ja'>('nee');
   const [done, setDone] = useState<string>();
-  const [sick, setSick] = useState(false);
   const [sickDone, setSickDone] = useState(false);
 
   if (sickDone) {
@@ -71,28 +69,16 @@ export function InjuryReport() {
   return (
     <>
       <h1>Ik heb last van…</h1>
-      <button class={`btn alt sick ${sick ? 'selected' : ''}`} aria-pressed={sick} onClick={() => setSick(!sick)}>
+      <button
+        class="btn alt sick"
+        onClick={async () => {
+          await reportIllness(s);
+          setSickDone(true);
+        }}
+      >
         <span>🤒 Ik ben ziek</span>
-        <span class="muted small">Verkouden, griep, koorts of maag-darm</span>
+        <span class="muted small">Hoe erg maakt niet uit: rust tot je beter bent, daarna rustig terug</span>
       </button>
-      {sick && (
-        <div class="stack">
-          <h2>Wat heb je?</h2>
-          {(Object.keys(ILLNESS_LABEL) as IllnessKind[]).map((k) => (
-            <button
-              key={k}
-              class="btn alt"
-              onClick={async () => {
-                await reportIllness(s, k);
-                setSickDone(true);
-              }}
-            >
-              <span>{ILLNESS_LABEL[k]}</span>
-              <span class="muted small">{k === 'verkouden' ? 'Enkel boven de nek: lichter trainen mag' : 'Rust tot je beter bent'}</span>
-            </button>
-          ))}
-        </div>
-      )}
       <h2>Of een pijntje?</h2>
       <div class="zone-grid">
         {ZONES.map((z) => (
@@ -148,7 +134,7 @@ export function IllnessCard() {
   return (
     <div class={`card illness ${st.status === 'rest' ? 'rest' : ''}`}>
       <p>
-        <strong>🤒 {ILLNESS_LABEL[currentKind(ill)]}</strong>{' '}
+        <strong>{st.status === 'return' ? '💪 Terug na ziekte' : '🤒 Ziek'}</strong>{' '}
         <span class="muted small">{st.status === 'return' ? 'genezen, we bouwen rustig op' : `sinds ${diffDays(today, ill.startedOn) || 'vandaag'}${diffDays(today, ill.startedOn) ? ' d' : ''}`}</span>
       </p>
       <p class="small">{st.message}</p>
@@ -166,11 +152,6 @@ export function IllnessCard() {
             onChange={(t) => void updateIllness(s, ill.id, t)}
             wrap
           />
-          {currentKind(ill) === 'verkouden' && (
-            <button class="btn small ghost" onClick={() => void updateIllness(s, ill.id, 'erger', 'koorts')}>
-              Toch koorts of griep gekregen
-            </button>
-          )}
         </>
       )}
       {st.refer && <p class="note warn">{st.referMessage}</p>}

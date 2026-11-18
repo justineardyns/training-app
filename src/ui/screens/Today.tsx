@@ -13,6 +13,7 @@ import { go } from '../router.ts';
 import { dayLabel } from './Week.tsx';
 import { SyncWarning } from './Connect.tsx';
 import { InjuryCard } from './Injury.tsx';
+import { reportIllness } from '../../data/injuries.ts';
 import { InsightsCard, RecoveryCard, SoreChips, WeatherBadge } from './CoachCards.tsx';
 
 const ENERGY: { value: Energy; label: string }[] = [
@@ -89,9 +90,9 @@ function ReadinessCard() {
       <p>{ADVICE[tone]}</p>
       {check.reasons.length > 0 && <p class="muted small">{check.reasons.join(' · ')}</p>}
       {tone !== 'red' && <SoreChips />}
-      {check.energy === 'sick' && s.illness().status !== 'rest' && s.illness().status !== 'light' && (
-        <button class="btn small" onClick={() => go('blessure')}>
-          🤒 Ben je ziek? Duid aan wat je hebt
+      {check.energy === 'sick' && s.illness().status !== 'rest' && (
+        <button class="btn small" onClick={() => void reportIllness(s)}>
+          🤒 Ik ben ziek: rust tot ik beter ben
         </button>
       )}
     </div>

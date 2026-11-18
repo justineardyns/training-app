@@ -136,7 +136,7 @@ export interface PlanInput {
   soreToday?: Group[];
   /** Nog nieuw voor je spieren (eerste weken): iets meer hersteltijd. */
   novice?: boolean;
-  /** Ziek: rust (koorts, griep, maag-darm), lichter (verkouden) of terug na ziekte (eerste trainingen lichter). */
+  /** Ziek: rust, of terug na ziekte (eerste trainingen rustiger). */
   illness?: IllnessState;
 }
 
@@ -280,7 +280,7 @@ export function planWeek(input: PlanInput): WeekPlan {
   const doneOn = new Map<ISODate, SessionLog[]>();
   for (const s of sweat) doneOn.set(s.date, [...(doneOn.get(s.date) ?? []), s]);
 
-  // Ziek met koorts, griep of maag-darm: rust, geen enkele training (ook geen tennis).
+  // Ziek: rust, geen enkele training (ook geen tennis).
   const sickRest = input.illness?.status === 'rest';
   // Tennis: jouw vaste afspraak (conditie, haarwasdag), zolang die dag nog niets gedaan is.
   const tennis = sickRest ? [] : days.filter((d) => (av.get(d)!.tennis ?? 0) > 0 && !doneOn.has(d) && !postponed.has(d));
@@ -352,8 +352,8 @@ export function planWeek(input: PlanInput): WeekPlan {
   const deriveSplits = (): boolean => {
     for (let k = OFF; k < OFF + horizon; k++) SP[k] = undefined;
     const splitAt = (k: number) => SP[k] ?? fSplit[k];
-    // Benen krijgen een rustdag ná indoor cycling (de dag ervoor mag).
-    const blocked = (k: number) => legsCAt(k - 1);
+    // Nooit benen de dag vóór of ná indoor cycling.
+    const blocked = (k: number) => legsCAt(k - 1) || legsCAt(k + 1);
     const legsRecent = (k: number) => {
       for (let q = k - 1; q >= k - 6; q--) {
         const sp = splitAt(q);
@@ -383,15 +383,8 @@ export function planWeek(input: PlanInput): WeekPlan {
         if (nextFixed === 'full') return false;
         f = opposite(nextFixed);
       } else if (sPlanned(k + 1)) {
-        // Beide volgordes proberen: liefst geen benen de dag vóór cycling, dan de spieren die het langst rusten eerst.
-        const legsBeforeCycling = (first: Split) => {
-          let n = 0;
-          let g = first;
-          for (let q = k; sPlanned(q); q++, g = opposite(g)) if (g === 'lower' && legsCAt(q + 1)) n++;
-          return n;
-        };
+        // Beide volgordes proberen: de spieren die het langst rusten eerst.
         const order = (legsRecent(k) ? ['upper', 'lower'] : ['lower', 'upper']) as Split[];
-        order.sort((x, y) => legsBeforeCycling(x) - legsBeforeCycling(y));
         const ok = order.find((o) => runOk(k, o));
         if (!ok) return false;
         f = ok;
@@ -442,11 +435,7 @@ export function planWeek(input: PlanInput): WeekPlan {
       } else {
         nS++;
         const sp = SP[k]!;
-        if (sp !== 'upper') {
-          lowerN++;
-          // Benen de dag vóór indoor cycling mag, maar liever niet (zware benen in de les).
-          if (legsCAt(k + 1)) sc -= 2;
-        }
+        if (sp !== 'upper') lowerN++;
         if (sp !== 'lower') upperN++;
         sc += info.gym;
       }
@@ -456,8 +445,9 @@ export function planWeek(input: PlanInput): WeekPlan {
     if (wantS !== undefined) sc -= 3.5 * Math.abs(nS - wantS);
     // Kracht is de motor van je recompositie: minstens 2× per 7 dagen (als er 3 of meer trainingen zijn).
     else if (T >= 3 && nS < 2) sc -= 8 * (2 - nS);
-    if (nS >= 2 && lowerN === 0) sc -= 6;
-    if (nS >= 2 && upperN === 0) sc -= 6;
+    // Een week zonder benen (of zonder bovenlichaam) vermijden: dat is geen evenwichtige week.
+    if (nS >= 2 && lowerN === 0) sc -= 10;
+    if (nS >= 2 && upperN === 0) sc -= 10;
     if (nS >= 3 && (lowerN < 2 || upperN < 2)) sc -= 1;
     let run = nAt(OFF - 1) > 0 ? 1 : 0;
     for (let k = OFF; k < OFF + horizon; k++) {
@@ -481,8 +471,9 @@ export function planWeek(input: PlanInput): WeekPlan {
     for (const c of options[i]!) {
       A[k] = CODE[c];
       if (c === 'C' && (cAt(k - 1) > 0 || cAt(k + 1) > 0)) continue;
-      // Geen indoor cycling de dag vóór een vaste benentraining (benen krijgen een rustdag na cycling).
+      // Geen indoor cycling naast een (gedane) benentraining. Een les die jij koos of reserveerde mag wel na een gedane.
       if (c === 'C' && fSplit[k + 1] && fSplit[k + 1] !== 'upper') continue;
+      if (c === 'C' && fSplit[k - 1] && fSplit[k - 1] !== 'upper' && !wish(days[i]!)) continue;
       if (c === 'S' && fSplit[k - 1] === 'full') continue;
       if (c !== 'rest' && !windowOk(k)) continue;
       dfs(i + 1);
@@ -510,9 +501,9 @@ export function planWeek(input: PlanInput): WeekPlan {
   });
 
   // Herstel: wat je spieren nog meedragen (voor de focus binnen een training en de uitleg).
-  // Verkouden: alles lichter. Terug na ziekte: de eerste trainingen lichter.
+  // Terug na ziekte: de eerste trainingen rustiger.
   let returnLeft = input.illness?.status === 'return' ? RETURN_SESSIONS : 0;
-  const illWhy = input.illness?.status === 'light' ? 'Verkouden: lichter, geen intervallen.' : 'Terug na ziekte: lichter, rustig opbouwen.';
+  const illWhy = 'Terug na ziekte: rustiger, rustig opbouwen.';
 
   const timeline: LoadEvent[] = [
     ...sweat.filter((s) => s.date >= addDays(start, -4) && s.date <= addDays(start, horizon)).map((s) => eventFromSession(s, novice)),
@@ -586,7 +577,7 @@ export function planWeek(input: PlanInput): WeekPlan {
     }
     if (assign[idx(d)] !== 'rest') {
       const r = resolveDay(a, prefs.trainAtHome);
-      const illLighter = input.illness?.status === 'light' || returnLeft-- > 0;
+      const illLighter = returnLeft-- > 0;
       const lighter = (d === today && input.readinessToday === 'orange') || illLighter;
       const cls = classSlotFor(a, prefs.classSlots, prefs.trainAtHome);
       const k = kindOf(d);
@@ -602,12 +593,15 @@ export function planWeek(input: PlanInput): WeekPlan {
         });
         const focus = strengthFocus(rec, input.weakGroup, split === 'upper' ? ['duwen', 'trekken'] : split === 'lower' ? ['benen'] : undefined);
         const yLegs = legsCardio(addDays(d, -1));
+        const tLegs = legsCardio(addDays(d, 1));
         const prevSplit = result.at(-1)?.type === 'strength' ? result.at(-1)?.split : undefined;
         const nextS = assign[idx(d) + 1] === 'S';
         const splitWhy =
           split === 'upper' && yLegs
             ? `Bovenlichaam: gisteren ${labelOn.get(addDays(d, -1))}, je benen krijgen een rustdag.`
-            : split !== 'full' && prevSplit
+            : split === 'upper' && tLegs
+              ? `Bovenlichaam: morgen ${labelOn.get(addDays(d, 1))}, dan zijn je benen fris.`
+              : split !== 'full' && prevSplit
                 ? `${templateTitle(t)}: gisteren ${prevSplit === 'upper' ? 'bovenlichaam' : 'benen'}, vandaag de andere spieren.`
                 : split !== 'full' && nextS
                   ? `${templateTitle(t)}: morgen ${split === 'upper' ? 'benen' : 'bovenlichaam'}.`
@@ -628,7 +622,7 @@ export function planWeek(input: PlanInput): WeekPlan {
             ? `Benen nog moe${legs.cause ? ` (${legs.cause})` : ''}: draai rustig mee.`
             : legs.state === 'herstelt'
               ? 'Benen herstellen nog: neem de zware stukken rustig.'
-              : 'Morgen geen benen: die krijgen een rustdag.';
+              : 'Geen benen de dag ervoor of erna.';
         const kindWhy = illLighter
           ? `${illWhy} Rustig fietsen in zone 2 in plaats van ${cls ? 'de les' : 'intervallen'}.`
           : lighter
@@ -704,7 +698,7 @@ export function planWeek(input: PlanInput): WeekPlan {
   }
   // Indoor cycling: minstens 1×, liefst 2×. Lukt dat niet, eerlijk zeggen hoe je ze toch krijgt.
   const cycling = result.filter((r) => r.groupClass || (r.status === 'done' && r.sessions?.some((x) => x.kind === 'class'))).length;
-  if (prefs.className && cycling < WANT_CYCLING && !input.illness?.status.match(/rest|light/)) {
+  if (prefs.className && cycling < WANT_CYCLING && !sickRest) {
     const swap = result.find((r) => r.status === 'planned' && r.type === 'strength' && r.classSlot && !r.want && r.date !== today);
     const how = swap ? `Tik op ${dayName(swap.date)} in Week voor een les` : 'Maak een lesmoment groen in de Agenda';
     messages.push(
@@ -713,6 +707,12 @@ export function planWeek(input: PlanInput): WeekPlan {
         : tennis.length && nStrength <= 2
           ? `1× ${prefs.className.toLowerCase()} + tennis deze 7 dagen: de andere trainingen zijn kracht (minstens 2× per week).`
           : `1× ${prefs.className.toLowerCase()} deze 7 dagen. Zin in een tweede? ${how}.`,
+    );
+  }
+  const plannedStrength = result.filter((r) => r.status === 'planned' && r.type === 'strength');
+  if (plannedStrength.length > 0 && plannedStrength.every((r) => r.split === 'upper') && !sweat.some((x) => x.kind === 'strength' && x.date >= addDays(start, -3) && splitOfTemplate(x.template) !== 'upper')) {
+    messages.push(
+      `Geen benen deze 7 dagen: je krachtdagen liggen naast ${prefs.className.toLowerCase()}, en de dag ervoor of erna nooit benen. Zin in een benentraining? Maak in de Agenda een dag groen die niet naast een les ligt.`,
     );
   }
   if (result.some((r) => r.want === 'cardio') && nStrength < 2 && T >= 3) {
@@ -731,7 +731,7 @@ export function planWeek(input: PlanInput): WeekPlan {
   const plannedRules: RuleSession[] = chosen.map((d) =>
     kindOf(d) === 'strength'
       ? { date: d, planned: true, kind: 'strength', split: bestSplits.get(d) ?? 'full' }
-      : { date: d, planned: true, kind: 'cardio', legs: true },
+      : { date: d, planned: true, kind: 'cardio', legs: true, userChoice: !!wish(d) },
   );
   const violations = validateRolling({
     sessions: [...[...fixed.values()].flat(), ...plannedRules],
@@ -771,7 +771,7 @@ export function planTwoWeeks(input: PlanInput): TwoWeekPlan {
     history: [...input.history, ...ahead],
     originalPlan: (input.originalPlan ?? []).filter((d) => d >= from),
   };
-  // Ziek met rust: ook de week erna voorlopig rust. Verkouden of net genezen: de week erna gewoon.
+  // Ziek: ook de week erna voorlopig rust (tot je "Genezen" tikt). Net genezen: de week erna gewoon.
   if (input.illness?.status !== 'rest') delete secondInput.illness;
   delete secondInput.explicit;
   delete secondInput.readinessToday;

@@ -31,7 +31,7 @@ export function morningMessage(store: Store): PushMessage | null {
   const injury = store.injuries().find((i) => !i.resolvedOn);
   const ill = store.illness();
   const injuryAsk =
-    ill.status === 'rest' || ill.status === 'light'
+    ill.status === 'rest'
       ? ' Beterschap! Voel je je beter? Tik het aan in de app.'
       : injury
         ? ` Hoe is je ${ZONE_LABEL[injury.zone].toLowerCase()}?`

@@ -22,8 +22,8 @@ Werkt offline in de gym, draait puur op jouw tikken en kost **€ 0**.
   - **Bij elke dag een korte "waarom".** Tik op een dag om te wisselen tussen kracht en indoor cycling, of om
     ze te schrappen.
   - **Krachttrainingen in drie soorten:**
-    - *Full body* als de dag ervoor geen indoor cycling was.
-    - *Bovenlichaam* de dag na indoor cycling.
+    - *Full body* als er de dag ervoor en erna geen indoor cycling is.
+    - *Bovenlichaam* de dag vóór of na indoor cycling.
     - *Benen & romp* en *Bovenlichaam* om de beurt als je twee dagen na elkaar kracht doet.
 - **Planning (Week):** de komende 7 dagen. De week erna zie je al voorlopig in de **Agenda** (zelfde regels, bouwt
   verder op de eerste week). Je vinkt aan welke avonden passen (in het weekend overdag, want Jims sluit dan om 17u), en of je
@@ -41,7 +41,8 @@ Werkt offline in de gym, draait puur op jouw tikken en kost **€ 0**.
     eerst 4, na 8 trainingen 5, na 16 trainingen 6.
   - **Conditie** (indoor cycling, tennis, cardio) is een haarwasdag 🚿: max 4 per 7 dagen en nooit 2 dagen na elkaar.
   - **Kracht**: max 4 per 7 dagen.
-  - Je benen krijgen een rustdag na indoor cycling: de dag erna wordt het bovenlichaam.
+  - Nooit benen de dag vóór of ná indoor cycling: die dagen wordt het bovenlichaam (of rust). Voeg je een les toe
+    of reserveer je er een, dan passen de dagen ervoor en erna zich aan.
   - Twee krachtdagen na elkaar wisselen bovenlichaam en benen & romp af.
   - Tennis speel je ontspannen: de dag erna mag je gewoon kracht doen.
 - **Mix:** minstens 1×, liefst 2× indoor cycling per week, op de lesmomenten: maandag-, woensdag- en
@@ -154,7 +155,7 @@ stuurt volgende week bij en pusht. Dat kan ook automatisch als geplande taak elk
 | **Gewicht** | De app stelt het voor. Na de oefening: *Gelukt*, of *Ik nam meer/minder* + welk gewicht. |
 | **Lukt vandaag niet** | **Vandaag lukt niet**: het plan schuift op, zonder sessies op te stapelen. |
 | **Pijntje** | **Ik heb last van…** → zone + ernst. Oefeningen worden vervangen of lichter, daarna rustig opbouwen. |
-| **Ziek** | **Ik heb last van… → 🤒 Ik ben ziek** (of via dagvorm *Ziek of op*). Verkouden (enkel boven de nek): lichter trainen, geen intervallen of les. Griep, koorts of maag-darm: rust tot je *Genezen* tikt. Daarna zijn je eerste 2 trainingen lichter. Lang ziek of erger: de coach raadt je huisarts aan. |
+| **Ziek** | **Ik heb last van… → 🤒 Ik ben ziek** (of via dagvorm *Ziek of op*). Ziek is ziek: rust tot je *Genezen* tikt, daarna zijn je eerste 2 trainingen rustiger. Lang ziek of erger: de coach raadt je huisarts aan. |
 | **Groepsles of tennis** | Tik na afloop op *Gedaan* (of *Groepsles of cardio gedaan?* als het niet gepland was). |
 
 ## Problemen oplossen

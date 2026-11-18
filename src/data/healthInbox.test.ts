@@ -95,9 +95,9 @@ describe('blessures melden', () => {
 describe('ziek melden', () => {
   beforeEach(() => idb.reset());
 
-  it('koorts → rust; een blessure melden wist je ziekte niet; genezen → rustig terug', async () => {
+  it('ziek → rust; een blessure melden wist je ziekte niet; genezen → rustig terug', async () => {
     const s = await fresh();
-    const ill = await reportIllness(s, 'koorts');
+    const ill = await reportIllness(s);
     expect(s.illness().status).toBe('rest');
     expect(s.plan().days.every((d) => !d.sweat)).toBe(true);
     await reportInjury(s, 'knie', 1, false);
@@ -110,14 +110,5 @@ describe('ziek melden', () => {
     expect(first.lighter).toBe(true);
     const session = s.sessionFor(first);
     if (session?.kind === 'strength') expect(session.notes.join(' ')).toMatch(/1 set minder/);
-  });
-
-  it('verkouden → lichter; toch koorts → rust', async () => {
-    const s = await fresh();
-    const ill = await reportIllness(s, 'verkouden');
-    expect(s.illness().status).toBe('light');
-    expect(s.plan().days.filter((d) => d.sweat).every((d) => d.lighter)).toBe(true);
-    await updateIllness(s, ill.id, 'erger', 'koorts');
-    expect(s.illness().status).toBe('rest');
   });
 });
