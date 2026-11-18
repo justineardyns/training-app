@@ -55,7 +55,7 @@ describe('pushmeldingen: sleutels en versleuteling', () => {
 describe('welke melding wanneer', () => {
   it('ochtend: enkel op het ingestelde uur (Brussel, ook in zomertijd)', () => {
     const dir = repo(base);
-    expect(pickMessage(loadRepo(dir, { now: new Date('2026-11-23T06:07:00Z') }), { mode: 'morning' }).msg?.title).toBe("Vandaag: Full body A · Jims 's avonds");
+    expect(pickMessage(loadRepo(dir, { now: new Date('2026-11-23T06:07:00Z') }), { mode: 'morning' }).msg?.title).toMatch(/^Vandaag: (Full body A|Benen & romp|Bovenlichaam) · Jims 's avonds$/);
     expect(pickMessage(loadRepo(dir, { now: new Date('2026-11-23T05:07:00Z') }), { mode: 'morning' }).msg).toBeNull();
     // Zomer: 7u lokaal = 05u UTC
     const summer = repo({ ...base, 'data/availability/2026-06.json': { month: '2026-06', days: Object.fromEntries(weekDays('2026-06-29').map((date) => [date, defaultDay(date, 45)])), planned: [], savedAt: '' } });

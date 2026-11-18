@@ -22,7 +22,7 @@ export type RuleId =
   | 'max_cardio'
   | 'max_strength'
   | 'consecutive_cardio'
-  | 'legs_next_to_cycling'
+  | 'legs_after_cycling'
   | 'same_muscles'
   | 'unavailable'
   | 'double_day';
@@ -58,7 +58,7 @@ const fmt = (d: ISODate) => `${DAY_NAMES[dayIndex(d)]} ${d}`;
  * - één training per dag
  * - in elke 7 opeenvolgende dagen max 6 trainingen, waarvan max 4 conditie en max 4 kracht
  * - conditie (haarwasdag) nooit twee dagen na elkaar
- * - geen benentraining de dag voor of na indoor cycling (of andere conditie die zwaar is voor de benen)
+ * - geen benentraining de dag ná indoor cycling (of andere conditie die zwaar is voor de benen): benen krijgen een rustdag
  * - kracht twee dagen na elkaar enkel met andere spieren (bovenlichaam ↔ benen, nooit full body)
  * Gedane sessies zijn een feit; we melden enkel overtredingen waarin een geplande sessie zit.
  */
@@ -83,8 +83,8 @@ export function validateRolling(c: RollingCheck): Violation[] {
     if (A.some((x) => x.kind === 'cardio') && B.some((x) => x.kind === 'cardio')) {
       out.push({ rule: 'consecutive_cardio', dates: [a, b], message: `Conditie op ${a} én ${b}: nooit twee haarwasdagen na elkaar.` });
     }
-    if ((A.some((x) => x.kind === 'cardio' && x.legs) && B.some(trainsLegs)) || (B.some((x) => x.kind === 'cardio' && x.legs) && A.some(trainsLegs))) {
-      out.push({ rule: 'legs_next_to_cycling', dates: [a, b], message: `Benentraining naast indoor cycling (${a}, ${b}): je benen krijgen geen herstel.` });
+    if (A.some((x) => x.kind === 'cardio' && x.legs) && B.some(trainsLegs)) {
+      out.push({ rule: 'legs_after_cycling', dates: [a, b], message: `Benentraining op ${b}, de dag na indoor cycling: je benen krijgen geen rustdag.` });
     }
     const sa = A.find((x) => x.kind === 'strength');
     const sb = B.find((x) => x.kind === 'strength');

@@ -45,21 +45,24 @@ test('de coach kiest de mix, wisselt spieren af, laat je kiezen en kijkt naar he
   await page.getByRole('group', { name: 'Tennis op do 26/11' }).getByRole('button', { name: /1u/ }).click();
   await page.getByRole('button', { name: 'Bewaar en plan' }).click();
 
-  // Beginner: 4 trainingen (opbouw): ma full body A, wo full body B, do tennis, zo indoor cycling om 10u.
+  // 6 trainingen, 1 rustdag: ma cycling, di bovenlichaam (benen rusten), wo benen, do tennis, vr rust, za cycling 10u, zo bovenlichaam.
   await expect(page.getByRole('heading', { name: 'Komende 7 dagen' })).toBeVisible();
-  await expect(page.getByText(/4\/4 trainingen: 2× kracht \+ 2× conditie/)).toBeVisible();
+  await expect(page.getByText(/6\/6 trainingen: 3× kracht \+ 3× conditie/)).toBeVisible();
   const row = (i: number) => page.locator('.plan-day').nth(i);
-  await expect(row(0)).toContainText('Full body A');
-  await expect(row(2)).toContainText('Full body B');
+  await expect(row(0)).toContainText('Indoor cycling (groepsles)');
+  await expect(row(0).locator('.hair')).toBeVisible();
+  await expect(row(1)).toContainText('Bovenlichaam');
+  await expect(row(1)).toContainText('gisteren indoor cycling, je benen krijgen een rustdag');
+  await expect(row(1).locator('.hair')).toHaveCount(0);
+  await expect(row(2)).toContainText('Benen & romp');
   await expect(row(3)).toContainText('Tennis');
-  await expect(row(6)).toContainText('Indoor cycling (groepsles) · Jims · 10u');
-  await expect(row(6)).toContainText('Lesmoment indoor cycling om 10u');
-  await expect(row(6).locator('.hair')).toBeVisible();
   await expect(row(3).locator('.hair')).toBeVisible();
-  await expect(row(0).locator('.hair')).toHaveCount(0);
-  // Rustdag met droog weer: wandelen.
-  await expect(row(1)).toContainText('Wandeling');
-  await expect(row(1).locator('.wx')).toContainText('11°');
+  await expect(row(5)).toContainText('Indoor cycling (groepsles) · Jims · 10u');
+  await expect(row(5)).toContainText('Lesmoment indoor cycling om 10u');
+  await expect(row(6)).toContainText('Bovenlichaam');
+  // De rustdag met droog weer: wandelen.
+  await expect(row(4)).toContainText('Wandeling');
+  await expect(row(4).locator('.wx')).toContainText('11°');
   await snap(page, '10-week-waarom');
 
   // Jij kiest: woensdag liever indoor cycling → kan niet (donderdag tennis: nooit 2 haarwasdagen na elkaar), de coach zegt het.
@@ -67,16 +70,23 @@ test('de coach kiest de mix, wisselt spieren af, laat je kiezen en kijkt naar he
   await snap(page, '11-wissel');
   await page.getByRole('button', { name: /Liever indoor cycling/ }).click();
   await expect(page.getByText(/Je koos conditie op woensdag, maar dat past daar niet/)).toBeVisible();
-  // Zondag liever kracht: kan wel.
-  await row(6).getByRole('button').first().click();
-  await page.getByRole('button', { name: /Liever kracht/ }).click();
-  await expect(row(6)).toContainText(/Full body|Bovenlichaam|Benen & romp/);
-  await expect(row(6)).toContainText('jouw keuze');
-  await row(6).getByRole('button').first().click();
+  await expect(row(2)).toContainText('keuze past niet');
+  await row(2).getByRole('button').first().click();
   await page.getByRole('button', { name: /Terug naar het voorstel/ }).click();
-  await expect(row(6)).toContainText('Indoor cycling');
+  await expect(row(2)).not.toContainText('keuze past niet');
+  // De weekendles liever kracht: kan wel, en terug.
+  const weekendClass = page.locator('.plan-day', { hasText: 'Jims · 10u' });
+  const day = (await weekendClass.locator('.plan-date').textContent())!;
+  const sameDay = page.locator('.plan-day', { hasText: day });
+  await weekendClass.getByRole('button').first().click();
+  await page.getByRole('button', { name: /Liever kracht/ }).click();
+  await expect(sameDay).toContainText(/Full body|Bovenlichaam|Benen & romp/);
+  await expect(sameDay).toContainText('jouw keuze');
+  await sameDay.getByRole('button').first().click();
+  await page.getByRole('button', { name: /Terug naar het voorstel/ }).click();
+  await expect(sameDay).toContainText('Indoor cycling');
 
-  // Vandaag: dagvorm + spierpijn in de benen → benentraining lichter.
+  // Vandaag (indoor cycling): dagvorm + spierpijn in de benen → rustig meedraaien.
   await page.getByRole('link', { name: /Vandaag/ }).click();
   await expect(page.locator('.eyebrow .wx')).toContainText('11°');
   await page.getByRole('button', { name: /Oké/ }).click();

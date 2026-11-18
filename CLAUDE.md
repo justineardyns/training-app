@@ -23,10 +23,11 @@ Tests gebruiken verzonnen data (`e2e/seed.ts`, `FakeGitHub`).
   - max 6 trainingen, één per dag;
   - conditie (haarwasdag) max 4 en nooit 2 dagen na elkaar;
   - kracht max 4;
-  - geen benen (full body of benen & romp) naast indoor cycling of andere conditie die zwaar is voor de benen;
+  - geen benen (full body of benen & romp) de dag ná indoor cycling of andere conditie die zwaar is voor de benen
+    (tennis niet: licht);
   - twee krachtdagen na elkaar enkel bovenlichaam ↔ benen.
-- De coach kiest de mix en het aantal (opbouw 4 → 5 → 6 voor beginners, minder bij vaak moe). Kracht: `A`/`B` full body,
-  `U` bovenlichaam, `L` benen & romp.
+- Doel: het maximum (standaard 6, 1 rustdag; 1 minder bij vaak moe), minstens 1× en liefst 2× indoor cycling,
+  de rest kracht. Kracht: `A`/`B` full body, `U` bovenlichaam, `L` benen & romp.
 - UI-teksten in Vlaams Nederlands, de gebruiker aanspreken met "je". Kort, direct, motiverend.
 - Mobile-first, donker, grote tikdoelen (≥ 48 px, primaire acties ≥ 64 px). Zo weinig mogelijk typen.
 - Buiten scope: voeding, calorieën, lichaamsgewicht, metingen. Apple Health staat voorlopig uit

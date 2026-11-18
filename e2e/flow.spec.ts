@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { preferStrengthToday } from './helpers.ts';
 
 const shots = process.env.SHOTS_DIR;
 const snap = async (page: import('@playwright/test').Page, name: string) => {
@@ -25,12 +26,14 @@ test('eerste opstart → plannen → trainen → bewaren', async ({ page }) => {
   await snap(page, '02-beschikbaarheid');
   await page.getByRole('button', { name: 'Bewaar en plan' }).click();
   await expect(page.getByRole('heading', { name: 'Komende 7 dagen' })).toBeVisible();
-  // Beginner: 4 trainingen (opbouw): ma full body A, wo full body B, do tennis, zo indoor cycling om 10u.
-  await expect(page.locator('.plan-day.sweat')).toHaveCount(4);
-  await expect(page.locator('.plan-day.sweat').nth(0)).toContainText('Full body A');
-  await expect(page.locator('.plan-day.sweat').nth(2)).toContainText('Tennis');
-  await expect(page.locator('.plan-day.sweat').nth(3)).toContainText('Indoor cycling (groepsles) · Jims · 10u');
-  await expect(page.getByText(/2× kracht \+ 2× conditie/)).toBeVisible();
+  // 6 trainingen, di vrij (rustdag): tennis op do, indoor cycling op zondag om 10u, de rest kracht.
+  await expect(page.locator('.plan-day.sweat')).toHaveCount(6);
+  await expect(page.locator('.plan-day').nth(1)).not.toHaveClass(/sweat/);
+  await expect(page.locator('.plan-day').nth(3)).toContainText('Tennis');
+  await expect(page.locator('.plan-day').nth(6)).toContainText('Indoor cycling (groepsles) · Jims · 10u');
+  // Vandaag liever kracht dan indoor cycling: één tik.
+  await preferStrengthToday(page);
+  await expect(page.locator('.plan-day').first()).toContainText('Full body A');
   await snap(page, '03-week');
 
   // Vandaag

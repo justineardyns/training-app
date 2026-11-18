@@ -38,8 +38,11 @@ function checkRules(p: WeekPlan, history: SessionLog[], ctx = '') {
     for (const nb of [addDays(d.date, -1), addDays(d.date, 1)]) {
       const o = all.get(nb);
       if (!o || (!me.planned && !o.planned)) continue;
+      const after = nb > d.date;
       if (me.kind === 'C') expect(o.kind, `${ctx} conditie na elkaar ${d.date}/${nb}`).toBe('S');
-      if (me.kind === 'S' && me.split !== 'upper') expect(o.kind === 'C' && o.legs, `${ctx} benen naast cycling ${d.date}/${nb}`).toBe(false);
+      // Benen krijgen een rustdag ná cycling (ervoor mag).
+      if (me.kind === 'S' && me.split !== 'upper' && !after) expect(o.kind === 'C' && o.legs, `${ctx} benen na cycling ${nb}/${d.date}`).toBe(false);
+      if (me.kind === 'C' && me.legs && after) expect(o.kind === 'S' && o.split !== 'upper', `${ctx} benen na cycling ${d.date}/${nb}`).toBe(false);
       if (me.kind === 'S' && o.kind === 'S') {
         expect(me.split, `${ctx} kracht na elkaar ${d.date}/${nb}`).not.toBe('full');
         expect(o.split, ctx).not.toBe('full');
@@ -58,34 +61,32 @@ function checkRules(p: WeekPlan, history: SessionLog[], ctx = '') {
 }
 
 describe('de coach kiest: max 6 per 7 dagen, conditie en kracht elk max 4', () => {
-  it('absolute beginner start met 4 (opbouw): 2× kracht + 2× indoor cycling op lesmomenten', () => {
+  it('6 trainingen en 1 rustdag: 2× indoor cycling op lesmomenten, de rest kracht', () => {
     const p = planWeek(base());
-    expect(p).toMatchObject({ target: 4, cap: 6, strength: 2, cardio: 2 });
+    expect(p).toMatchObject({ target: 6, cap: 6, strength: 4, cardio: 2 });
+    expect(trainDates(p)).toHaveLength(6);
     expect(p.days.filter((d) => d.groupClass)).toHaveLength(2);
-    expect(p.messages.join(' ')).toMatch(/Opbouw: de eerste weken 4 trainingen/);
+    expect(p.days.filter((d) => d.type === 'cardio' && !d.groupClass)).toHaveLength(0);
     expect(p.violations).toEqual([]);
     checkRules(p, []);
   });
 
-  it('opbouw 4 → 5 → 6, en vaak moe = 1 minder', () => {
-    const hist = (n: number) => Array.from({ length: n }, (_, i) => done(addDays(MON, -2 * i - 2), i % 2 ? 'class' : 'strength', 'A'));
-    expect(coachTarget({ prefs: DEFAULT_PREFS, history: hist(7), today: MON }).target).toBe(4);
-    expect(coachTarget({ prefs: DEFAULT_PREFS, history: hist(8), today: MON }).target).toBe(5);
-    expect(coachTarget({ prefs: DEFAULT_PREFS, history: hist(16), today: MON }).target).toBe(6);
+  it('jouw maximum telt, en vaak moe = 1 minder', () => {
+    expect(coachTarget({ prefs: DEFAULT_PREFS, history: [], today: MON }).target).toBe(6);
     expect(coachTarget({ prefs: { ...DEFAULT_PREFS, targetPerWeek: 3 }, history: [], today: MON }).target).toBe(3);
     const tired = [1, 2, 3].map((i) => ({ date: addDays(MON, -i), level: 'orange' as const }));
     expect(coachTarget({ prefs: PRO, history: [], today: MON, readinessLog: tired })).toMatchObject({ target: 5, note: expect.stringMatching(/vaak moe/) });
   });
 
-  it('6 per 7 dagen: kracht naast een conditiedag mag, maar dan bovenlichaam; conditie nooit 2 dagen na elkaar', () => {
-    const p = planWeek(base({ prefs: PRO }));
-    expect(p).toMatchObject({ target: 6, strength: 3, cardio: 3 });
-    expect(trainDates(p)).toHaveLength(6);
+  it('de dag na indoor cycling: bovenlichaam (benen krijgen een rustdag); conditie nooit 2 dagen na elkaar', () => {
+    const p = planWeek(base({ prefs: PRO, availability: (d) => (d === D(0) ? { ...std(d), want: 'cardio' } : std(d)) }));
+    expect(p.days[0]).toMatchObject({ groupClass: true });
+    expect(p.days[1]).toMatchObject({ type: 'strength', split: 'upper' });
+    expect(p.days[1]!.why).toMatch(/gisteren indoor cycling, je benen krijgen een rustdag/);
     for (const [i, d] of p.days.entries()) {
-      if (d.type === 'strength' && (legsCardio(p.days[i - 1]) || legsCardio(p.days[i + 1]))) expect(d.split, d.date).toBe('upper');
+      if (d.type === 'strength' && legsCardio(p.days[i - 1])) expect(d.split, d.date).toBe('upper');
     }
     expect(p.days.some((d) => d.split === 'lower' || d.split === 'full')).toBe(true);
-    expect(p.days.find((d) => d.split === 'upper')!.why).toMatch(/je benen rusten|benen fris/);
     expect(p.violations).toEqual([]);
     checkRules(p, []);
   });
@@ -93,17 +94,21 @@ describe('de coach kiest: max 6 per 7 dagen, conditie en kracht elk max 4', () =
   it('twee krachtdagen na elkaar: bovenlichaam en benen wisselen af, nooit 2× full body', () => {
     // Enkel ma en di kunnen.
     const av = (d: string): DayAvailability => (d <= D(1) ? std(d) : { date: d, slots: [], minutes: 45 });
-    const p = planWeek(base({ prefs: PRO, availability: av, adjustments: { version: 1, strengthSessions: 2 } }));
+    const p = planWeek(base({ prefs: { ...PRO, classSlots: [] }, availability: av }));
     expect(short(p).slice(0, 2).split('').sort().join('')).toBe('LU');
     expect(p.days[1]!.why).toMatch(/gisteren (bovenlichaam|benen), vandaag de andere spieren/);
     checkRules(p, []);
   });
 
-  it('de dag na een gedane benentraining: geen cycling, wel bovenlichaam', () => {
-    const p = planWeek(base({ prefs: PRO, history: [done(addDays(MON, -1), 'strength', 'L')] }));
-    expect(p.days[0]!.type === 'cardio').toBe(false);
-    if (p.days[0]!.type === 'strength') expect(p.days[0]!.split).toBe('upper');
-    checkRules(p, [done(addDays(MON, -1), 'strength', 'L')]);
+  it('gisteren indoor cycling gedaan: vandaag geen benen; gisteren benen: cycling mag', () => {
+    const cyc = [done(addDays(MON, -1), 'class', undefined, 'Indoor cycling')];
+    const a = planWeek(base({ prefs: PRO, history: cyc, availability: (d) => (d === D(0) ? { ...std(d), want: 'strength' } : std(d)) }));
+    expect(a.days[0]).toMatchObject({ type: 'strength', split: 'upper' });
+    checkRules(a, cyc);
+    const legs = [done(addDays(MON, -1), 'strength', 'L')];
+    const b = planWeek(base({ prefs: PRO, history: legs, availability: (d) => (d === D(0) ? { ...std(d), want: 'cardio' } : std(d)) }));
+    expect(b.days[0]).toMatchObject({ type: 'cardio', groupClass: true });
+    expect(b.violations).toEqual([]);
   });
 
   it('het venster rolt mee en telt wat je al deed', () => {
@@ -131,26 +136,29 @@ describe('de coach kiest: max 6 per 7 dagen, conditie en kracht elk max 4', () =
     }
   });
 
-  it('tennis op donderdag = conditie: geen conditie op wo of vr, kracht mag ernaast', () => {
+  it('tennis op donderdag = conditie: geen conditie op wo of vr; de dag erna mag gewoon kracht (ook benen)', () => {
     const p = planWeek(base({ prefs: PRO, availability: (d) => (d === D(3) ? { ...std(d), tennis: 120 } : std(d)) }));
     expect(p.days[3]).toMatchObject({ type: 'tennis', title: 'Tennis · 2u', hair: true });
     expect(p.days[2]!.type).not.toBe('cardio');
     expect(p.days[4]!.type).not.toBe('cardio');
     expect(p.violations).toEqual([]);
+    const fri = planWeek(base({ prefs: PRO, availability: (d) => (d === D(3) ? { ...std(d), tennis: 120 } : d === D(4) ? { ...std(d), want: 'strength' } : std(d)) }));
+    expect(fri.days[4]).toMatchObject({ type: 'strength' });
+    expect(fri.days[4]!.focus?.reduce ?? []).toEqual([]);
   });
 
-  it('elke week anders: na een week vol conditie wat meer kracht, en omgekeerd', () => {
-    const cardioWeek = [-7, -5, -3, -1].map((n) => done(addDays(MON, n), 'class', undefined, 'Indoor cycling'));
-    const a = planWeek(base({ prefs: PRO, history: cardioWeek }));
-    expect(a.strength).toBeGreaterThan(a.cardio);
-    expect(a.messages.join(' ')).toMatch(/wat meer kracht/);
-    const strengthWeek = [-7, -5, -3, -1].map((n, i) => done(addDays(MON, n), 'strength', i % 2 ? 'B' : 'A'));
-    const b = planWeek(base({ prefs: PRO, history: strengthWeek }));
-    expect(b.cardio).toBeGreaterThanOrEqual(2);
-    expect(b.strength).toBeLessThan(4);
-    expect(b.messages.join(' ')).toMatch(/wat meer conditie/);
-    checkRules(a, cardioWeek);
-    checkRules(b, strengthWeek);
+  it('indoor cycling: minstens 1×, liefst 2×; geen lesmoment → de coach zegt hoe je er een krijgt', () => {
+    const none = planWeek(base({ prefs: { ...PRO, classSlots: [] } }));
+    expect(none.days.some((d) => d.groupClass)).toBe(false);
+    expect(none.messages.join(' ')).toMatch(/Geen indoor cycling deze 7 dagen.*Vink een lesmoment/);
+    // Enkel zaterdag een les: 1×, met een duw naar een tweede.
+    const one = planWeek(base({ prefs: { ...PRO, classSlots: [{ day: 5, slot: 'day', time: '10:00' }] } }));
+    expect(one.days.filter((d) => d.groupClass)).toHaveLength(1);
+    expect(one.messages.join(' ')).toMatch(/1× indoor cycling deze 7 dagen\. Zin in een tweede\?/);
+    // Veel lesmomenten: toch maar 2× cycling, de rest kracht.
+    const many = planWeek(base({ prefs: { ...PRO, classSlots: [0, 1, 2, 3, 4, 5, 6].map((day) => ({ day, slot: day >= 5 ? ('day' as const) : ('evening' as const) })) } }));
+    expect(many.days.filter((d) => d.groupClass)).toHaveLength(2);
+    expect(many.strength).toBe(4);
   });
 
   it('bijsturing van /coach: 4× kracht, of maar 3 trainingen, of pas vanaf volgende week', () => {
@@ -227,7 +235,6 @@ describe('de coach denkt mee: herstel, je keuze, het weer en het waarom', () => 
 
   it('met tennis staat er toch indoor cycling in, en kracht naast tennis mag', () => {
     const p = planWeek(base({ today: WED, availability: av }));
-    expect(p).toMatchObject({ target: 4 });
     expect(p.days.some((d) => d.groupClass)).toBe(true);
     expect(p.days[1]!.type).toBe('tennis');
     expect(p.violations).toEqual([]);
@@ -348,9 +355,10 @@ describe('validateRolling', () => {
   it('detecteert alle regelbreuken', () => {
     const rules = (sessions: Parameters<typeof validateRolling>[0]['sessions']) => validateRolling({ sessions }).map((v) => v.rule);
     expect(rules([C(D(0)), C(D(1))])).toContain('consecutive_cardio');
-    expect(rules([C(D(0)), S(D(1), true, 'lower')])).toContain('legs_next_to_cycling');
-    expect(rules([C(D(0)), S(D(1), true, 'full')])).toContain('legs_next_to_cycling');
+    expect(rules([C(D(0)), S(D(1), true, 'lower')])).toContain('legs_after_cycling');
+    expect(rules([C(D(0)), S(D(1), true, 'full')])).toContain('legs_after_cycling');
     expect(rules([C(D(0)), S(D(1), true, 'upper')])).toEqual([]);
+    expect(rules([S(D(0), true, 'lower'), C(D(1))])).toEqual([]); // benen de dag vóór cycling mag
     expect(rules([C(D(0), true, false), S(D(1), true, 'lower')])).toEqual([]); // tennis
     expect(rules([S(D(0), true, 'upper'), S(D(1), true, 'upper')])).toContain('same_muscles');
     expect(rules([S(D(0), true, 'full'), S(D(1), true, 'upper')])).toContain('same_muscles');

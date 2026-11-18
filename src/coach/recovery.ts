@@ -76,13 +76,14 @@ const add = (into: Partial<Record<Group, number>>, g: Group, v: number) => {
   into[g] = (into[g] ?? 0) + v;
 };
 
-/** Conditiesessie: welke spieren werken? (tennis = benen + schouders + romp; fietsen = benen) */
+/** Conditiesessie: welke spieren werken? (tennis = licht voor benen, schouders en romp; fietsen = zwaar voor de benen) */
 export function cardioLoad(title: string, minutes: number): Partial<Record<Group, number>> {
   const t = title.toLowerCase();
   const f = Math.max(0.5, minutes / 45);
   if (t.includes('tennis')) {
     const h = Math.max(0.5, minutes / 60);
-    return { benen: 3.5 * h, duwen: 3.5 * h, core: 2 * h, trekken: 1 * h };
+    // Je speelt ontspannen: licht genoeg om de dag erna gewoon te trainen.
+    return { benen: 1.2 * h, duwen: 1.2 * h, core: 1 * h, trekken: 0.5 * h };
   }
   if (t.includes('roei')) return { benen: 3 * f, trekken: 3 * f, core: 1 * f };
   if (t.includes('rustig') || t.includes('zone 2')) return { benen: 2 * f };

@@ -38,9 +38,9 @@ export function PrefsEditor(props: { value: Prefs; onChange: (p: Prefs) => void;
           onChange={(v) => set({ targetPerWeek: v })}
         />
         <p class="muted small">
-          De coach kiest elke week de mix: soms wat meer kracht, soms wat meer conditie. Conditie (haarwasdag: {p.className.toLowerCase()}, tennis,
-          cardio) max 4 en nooit 2 dagen na elkaar, kracht max 4, nooit benen naast {p.className.toLowerCase()}.
-          {p.experience === 'beginner' ? ' Als beginner bouw je op: eerst 4, dan 5, dan 6.' : ''}
+          {p.targetPerWeek === 6 ? '1 vaste rustdag per 7 dagen. ' : ''}
+          {p.className} minstens 1×, liefst 2× per week; de andere dagen kracht. Conditie (haarwasdag: {p.className.toLowerCase()}, tennis, cardio)
+          max 4 en nooit 2 dagen na elkaar, kracht max 4. Na {p.className.toLowerCase()} krijgen je benen een rustdag.
         </p>
       </div>
       {props.full && (

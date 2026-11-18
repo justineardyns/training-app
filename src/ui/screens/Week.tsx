@@ -25,7 +25,7 @@ export function PlanList(props: { plan: WeekPlan; today: string; className?: str
   return (
     <div class="plan">
       {props.plan.days.map((d) => {
-        const actionable = !!props.onChange && d.status === 'planned' && d.sweat;
+        const actionable = !!props.onChange && ((d.status === 'planned' && d.sweat) || (!!d.want && d.status !== 'done'));
         const isOpen = open === d.date && actionable;
         return (
           <div key={d.date} class={`plan-day ${d.sweat ? 'sweat' : 'light'} ${d.status} ${d.date === props.today ? 'today' : ''} ${isOpen ? 'open' : ''}`}>
@@ -42,7 +42,7 @@ export function PlanList(props: { plan: WeekPlan; today: string; className?: str
                 {d.title}
                 {d.slot && d.status === 'planned' && !d.time && <span class="muted small"> · {MOMENT[d.slot]}</span>}
                 {d.lighter && <span class="pill orange">lichter</span>}
-                {d.want && <span class="pill green">jouw keuze</span>}
+                {d.want && (d.sweat ? <span class="pill green">jouw keuze</span> : <span class="pill orange">keuze past niet</span>)}
                 {d.why && <span class="why">{d.why}</span>}
               </span>
               <span class="plan-icon" aria-label={d.status}>
@@ -72,7 +72,7 @@ export function PlanList(props: { plan: WeekPlan; today: string; className?: str
                     ↺ Terug naar het voorstel
                   </button>
                 )}
-                {d.type === 'tennis' ? (
+                {!d.sweat ? null : d.type === 'tennis' ? (
                   <button class="btn small ghost" onClick={() => { props.onChange!(d.date, { tennis: undefined }); setOpen(null); }}>
                     Tennis gaat niet door
                   </button>
@@ -121,7 +121,7 @@ export function Week() {
         </strong>
         {plan.deload.deload ? ' · deloadweek' : ''}
         <br />
-        Conditie (🚿 haarwasdag) max 4 en nooit 2 dagen na elkaar · kracht max 4 · nooit benen naast {s.prefs().className.toLowerCase()}
+        Conditie (🚿 haarwasdag) max 4 en nooit 2 dagen na elkaar · kracht max 4 · benen een rustdag na {s.prefs().className.toLowerCase()}
       </p>
       <PlanList plan={plan} today={today} className={s.prefs().className} onChange={(date, patch) => s.updateDay(date, patch)} />
       <p class="muted small">Tik op een dag om te wisselen tussen kracht en {s.prefs().className.toLowerCase()}, of om ze te schrappen.</p>
@@ -234,7 +234,7 @@ export function Availability() {
       <p class="muted small">
         {count === 0
           ? 'Niets aangevinkt: dan plan ik deze dagen niets.'
-          : `Ik kies de beste momenten (max ${prefs.targetPerWeek}) en de mix kracht/conditie: conditie nooit 2 dagen na elkaar, geen benen naast ${prefs.className.toLowerCase()}.`}
+          : `Ik kies de beste momenten (max ${prefs.targetPerWeek}): ${prefs.className.toLowerCase()} op de lesmomenten (liefst 2×), de rest kracht.`}
       </p>
       <div class="sticky-actions">
         <button class="btn primary huge" disabled={saving} onClick={save}>

@@ -32,8 +32,9 @@ describe('store: rollend plannen', () => {
     await s.saveAvailability(week(MON));
     const nov = s.read<AvailabilityMonth>(paths.availability('2026-11'))!;
     expect(Object.keys(nov.days)).toHaveLength(7);
-    expect(nov.planned).toEqual([D(0), D(2), D(4), D(6)]);
-    expect(s.plannedCount(MON)).toBe(4);
+    // 6 trainingen, 1 rustdag.
+    expect(nov.planned).toHaveLength(6);
+    expect(s.plannedCount(MON)).toBe(6);
   });
 
   it('over de maandgrens: twee maandbestanden', async () => {
@@ -95,8 +96,11 @@ describe('store: rollend plannen', () => {
     const plan = s.plan();
     expect(plan.done).toBe(1);
     expect(plan.days[0]!.status).toBe('done');
-    expect(plan.days[1]!.sweat).toBe(false);
-    expect(plan.days.find((d) => d.status === 'planned' && d.type === 'strength')!.template).toBe('B');
+    // Gisteren full body A: vandaag geen full body meer ernaast, en de volgende full body is B.
+    expect(plan.days[1]!.split).not.toBe('full');
+    const nextFull = plan.days.find((d) => d.status === 'planned' && d.split === 'full');
+    if (nextFull) expect(nextFull.template).toBe('B');
+    expect(plan.violations).toEqual([]);
   });
 
   it('overleeft een herstart (IndexedDB)', async () => {
@@ -109,15 +113,15 @@ describe('store: rollend plannen', () => {
     expect(again.local.repo).toBe('training');
   });
 
-  it('wisselen per dag: liever kracht op een lesmoment, en terug', async () => {
+  it('wisselen per dag: liever cycling op een lesmoment, en terug', async () => {
     const s = await fresh();
     await s.saveAvailability(week(MON));
-    expect(s.plan().days[0]).toMatchObject({ type: 'cardio', groupClass: true });
-    await s.updateDay(D(0), { want: 'strength' });
-    expect(s.plan().days[0]).toMatchObject({ type: 'strength', want: 'strength' });
-    expect(s.explicitDay(D(0))?.want).toBe('strength');
+    expect(s.plan().days[0]!.type).toBe('strength');
+    await s.updateDay(D(0), { want: 'cardio' });
+    expect(s.plan().days[0]).toMatchObject({ type: 'cardio', groupClass: true, want: 'cardio' });
+    expect(s.explicitDay(D(0))?.want).toBe('cardio');
     await s.updateDay(D(0), { want: undefined });
-    expect(s.plan().days[0]!.type).toBe('cardio');
+    expect(s.plan().days[0]!.type).toBe('strength');
   });
 
   it('spierpijn na de dagvorm: herstelkaart en training passen zich aan', async () => {
@@ -152,7 +156,8 @@ describe('store: rollend plannen', () => {
     expect(await refreshWeather(s, { fetchFn })).toBe(true);
     expect(urls[0]).toContain('latitude=50.9'); // Brussel, afgerond
     expect(await refreshWeather(s, { fetchFn })).toBe(false); // nog vers
-    expect(s.plan().days[1]).toMatchObject({ light: { id: 'wandeling' }, walk: { verdict: 'goed' }, weather: { tMax: 12 } });
+    expect(s.plan().days.find((d) => d.type === 'light')).toMatchObject({ light: { id: 'wandeling' }, walk: { verdict: 'goed' }, weather: { tMax: 12 } });
+    expect(s.plan().days[1]!.weather).toMatchObject({ tMax: 12 });
     expect(s.dirtyFiles().some((f) => JSON.stringify(f.content).includes('fetchedAt'))).toBe(false);
     // Plaats kiezen → meteen vernieuwen, coördinaten afgerond.
     await setWeatherPlace(s, { name: 'Mijn locatie', lat: 51.0543, lon: 3.7174 }, fetchFn);

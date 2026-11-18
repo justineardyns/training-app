@@ -22,23 +22,23 @@ Werkt offline in de gym, draait puur op jouw tikken en kost **€ 0**.
   - **Bij elke dag een korte "waarom".** Tik op een dag om te wisselen tussen kracht en indoor cycling, of om
     ze te schrappen.
   - **Krachttrainingen in drie soorten:**
-    - *Full body* als er geen indoor cycling naast staat.
-    - *Bovenlichaam* de dag voor of na indoor cycling.
+    - *Full body* als de dag ervoor geen indoor cycling was.
+    - *Bovenlichaam* de dag na indoor cycling.
     - *Benen & romp* en *Bovenlichaam* om de beurt als je twee dagen na elkaar kracht doet.
 - **Rollend plannen:** altijd de komende 7 dagen. Je vinkt aan welke avonden passen (in het weekend
   overdag, want Jims sluit dan om 17u), en of je tennist. Alles gebeurt in Jims: geen thuistrainingen.
 - **Harde regels:**
-  - Max 6 trainingen per 7 dagen, één per dag.
+  - 6 trainingen per 7 dagen en 1 rustdag, één training per dag.
   - **Conditie** (indoor cycling, tennis, cardio) is een haarwasdag 🚿: max 4 per 7 dagen en nooit 2 dagen na elkaar.
   - **Kracht**: max 4 per 7 dagen.
-  - Nooit benen naast indoor cycling: de dag ervoor of erna wordt het bovenlichaam.
+  - Je benen krijgen een rustdag na indoor cycling: de dag erna wordt het bovenlichaam.
   - Twee krachtdagen na elkaar wisselen bovenlichaam en benen & romp af.
-- **De coach kiest de mix:** soms wat meer kracht, soms wat meer conditie, afhankelijk van je vorige 7 dagen.
-  Als absolute beginner bouw je op: eerst 4 trainingen, dan 5 en dan 6.
-  - Indoor cycling staat op de lesmomenten: maandag-, woensdag- en donderdagavond, en zaterdag en zondag
-    om 10u (🚴 bij het aanvinken).
-  - Tennis telt als conditie.
-  - Je kan per dag zelf kiezen voor kracht of cycling. Breekt dat een regel, dan zegt de coach het.
+  - Tennis speel je ontspannen: de dag erna mag je gewoon kracht doen.
+- **Mix:** minstens 1×, liefst 2× indoor cycling per week, op de lesmomenten: maandag-, woensdag- en
+  donderdagavond, en zaterdag en zondag om 10u (🚴 bij het aanvinken).
+  - Tennis telt als conditie. De andere trainingen zijn kracht.
+  - Je kan per dag zelf kiezen voor kracht of cycling. Breekt dat een regel, dan zegt de coach het en kan je
+    het met één tik terugdraaien.
 - **Weer:** op rustdagen bij droog weer wandelen, met het beste uur. Regent het, dan doe je binnen mobiliteit of
   stretching. Het weer komt gratis van Open-Meteo, zonder sleutel. Je plaats kies je met één tik in
   **Meer → Weer**; standaard is dat Brussel.
