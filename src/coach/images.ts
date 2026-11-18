@@ -1,0 +1,61 @@
+// Oefenfoto's (start- en eindpositie) uit Free Exercise DB, publiek domein (Unlicense):
+// https://github.com/yuhonas/free-exercise-db. Verkleind tot 480 px en meegeleverd in public/ex/,
+// zodat ze ook offline in de gym werken.
+
+/** Oefeningen met foto's; bron per oefening (voor de credits). */
+export const IMAGE_SOURCES: Record<string, string> = {
+  'back-extension': 'Hyperextensions_Back_Extensions',
+  'barbell-bench': 'Barbell_Bench_Press_-_Medium_Grip',
+  'bent-over-row-db': 'Bent_Over_Two-Dumbbell_Row',
+  'bent-over-row-homebar': 'Bent_Over_Barbell_Row',
+  'bulgarian-split-squat': 'Split_Squat_with_Dumbbells',
+  'chest-press': 'Machine_Bench_Press',
+  'chest-supported-row': 'Dumbbell_Incline_Row',
+  'close-grip-pulldown': 'V-Bar_Pulldown',
+  'db-bench': 'Dumbbell_Bench_Press',
+  'db-curl': 'Dumbbell_Bicep_Curl',
+  'db-floor-press': 'Dumbbell_Floor_Press',
+  'db-pullover': 'Bent-Arm_Dumbbell_Pullover',
+  'db-shoulder-press': 'Seated_Dumbbell_Press',
+  'dead-bug': 'Dead_Bug',
+  'feet-elevated-push-up': 'Decline_Push-Up',
+  'glute-bridge': 'Butt_Lift_Bridge',
+  'goblet-squat': 'Goblet_Squat',
+  'hack-squat': 'Hack_Squat',
+  'half-kneeling-kb-press': 'Alternating_Kettlebell_Press',
+  'hammer-curl': 'Hammer_Curls',
+  'hip-thrust': 'Barbell_Hip_Thrust',
+  'incline-db-press': 'Incline_Dumbbell_Press',
+  'incline-push-up': 'Incline_Push-Up',
+  'kb-goblet-squat': 'Goblet_Squat',
+  'kb-swing': 'One-Arm_Kettlebell_Swings',
+  'lat-pulldown': 'Wide-Grip_Lat_Pulldown',
+  'leg-curl': 'Lying_Leg_Curls',
+  'leg-extension': 'Leg_Extensions',
+  'leg-press': 'Leg_Press',
+  'machine-row': 'Leverage_Iso_Row',
+  'machine-shoulder-press': 'Machine_Shoulder_Military_Press',
+  'one-arm-db-row': 'One-Arm_Dumbbell_Row',
+  'overhead-triceps': 'Standing_Dumbbell_Triceps_Extension',
+  'pallof-press': 'Pallof_Press',
+  'plank': 'Plank',
+  'push-up': 'Pushups',
+  'rdl-barbell': 'Romanian_Deadlift',
+  'rdl-db': 'Stiff-Legged_Dumbbell_Deadlift',
+  'rdl-homebar': 'Romanian_Deadlift',
+  'reverse-lunge': 'Dumbbell_Rear_Lunge',
+  'seated-cable-row': 'Seated_Cable_Rows',
+  'side-plank': 'Side_Bridge',
+  'single-leg-hip-thrust': 'Single_Leg_Glute_Bridge',
+  'single-leg-rdl': 'Kettlebell_One-Legged_Deadlift',
+  'smith-squat': 'Smith_Machine_Squat',
+  'standing-db-press': 'Standing_Dumbbell_Press',
+  'step-up': 'Dumbbell_Step_Ups',
+  'suitcase-carry': 'Farmers_Walk',
+  'triceps-pushdown': 'Triceps_Pushdown',
+};
+
+/** Paden (relatief aan de app) van de start- en eindfoto, of undefined. */
+export function imagesFor(id: string): [string, string] | undefined {
+  return id in IMAGE_SOURCES ? [`ex/${id}-0.jpg`, `ex/${id}-1.jpg`] : undefined;
+}

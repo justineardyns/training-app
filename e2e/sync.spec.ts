@@ -35,7 +35,6 @@ test('koppelen, training bewaren en naar de privé-repo pushen; herstellen op ee
   await page.getByRole('button', { name: 'Verder' }).click();
   await page.getByRole('button', { name: 'Verder' }).click();
   await page.getByRole('button', { name: 'Klaar' }).click();
-  await page.getByRole('button', { name: /Beschikbaarheid ingeven/ }).click();
   await page.getByRole('button', { name: 'Bewaar en plan' }).click();
 
   // Snelle groepsles loggen → wordt gesynct
@@ -44,7 +43,7 @@ test('koppelen, training bewaren en naar de privé-repo pushen; herstellen op ee
   await page.getByRole('button', { name: 'Bewaar' }).click();
 
   await expect.poll(() => Object.keys(gh.files()).sort(), { timeout: 10_000 }).toEqual(
-    expect.arrayContaining(['data/profile.json', 'data/availability/2026-W48.json', 'data/log/2026-W48.json']),
+    expect.arrayContaining(['data/profile.json', 'data/availability/2026-11.json', 'data/log/2026-W48.json']),
   );
   await expect.poll(() => JSON.parse(gh.files()['data/log/2026-W48.json'] ?? '{"sessions":[]}').sessions.length, { timeout: 10_000 }).toBe(1);
 

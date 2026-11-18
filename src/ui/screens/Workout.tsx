@@ -28,6 +28,7 @@ import {
   type WorkoutState,
 } from '../../data/workout.ts';
 import { Sheet, Stepper, WeightWheel } from '../components.tsx';
+import { ExerciseDemo, Thumb } from '../Demo.tsx';
 import { useNow, useStore, useWakeLock } from '../hooks.ts';
 import { go } from '../router.ts';
 import { cancelBeep, scheduleBeep } from '../sound.ts';
@@ -102,6 +103,7 @@ function ItemCard(props: { w: WorkoutState; i: number }) {
   const ex = getExercise(it.exerciseId);
   const p = it.prescription;
   const [tips, setTips] = useState(false);
+  const [showDemo, setShowDemo] = useState(true);
   const [wheelFor, setWheelFor] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const profile = store.profile() ?? defaultProfile();
@@ -132,6 +134,7 @@ function ItemCard(props: { w: WorkoutState; i: number }) {
           {it.superset && <span class="pill">{it.superset}</span>} {ex.name}
         </h2>
       </div>
+      {showDemo && <ExerciseDemo id={ex.id} />}
       <p class="muted small">
         {p.sets} × {ex.timed ? `${p.targetReps} s` : `${p.targetReps} reps`}
         {ex.unilateral ? ' per kant' : ''} · bereik {p.repRange[0]}–{p.repRange[1]} · rust {p.restSec} s
@@ -191,8 +194,8 @@ function ItemCard(props: { w: WorkoutState; i: number }) {
       {it.feel && <p class="muted small">Gevoel: {FEELS.find((f) => f.value === it.feel)?.label}</p>}
 
       <div class="row tools">
-        <button class="btn small" onClick={() => setTips(!tips)}>
-          ⓘ Tips
+        <button class="btn small" onClick={() => setTips(!tips)} aria-expanded={tips}>
+          ⓘ Uitleg
         </button>
         <button class="btn small" onClick={() => setBusy(true)}>
           {w.location === 'gym' ? 'Toestel bezet' : 'Andere oefening'}
@@ -203,14 +206,24 @@ function ItemCard(props: { w: WorkoutState; i: number }) {
       </div>
       {tips && (
         <div class="tips">
+          {ex.setup && (
+            <p>
+              <strong>Toestel:</strong> {ex.setup}
+            </p>
+          )}
           <ul>
             {ex.tips.map((t) => (
               <li key={t}>{t}</li>
             ))}
           </ul>
-          <a href={videoUrl(ex)} target="_blank" rel="noopener">
-            ▶ Uitlegvideo
-          </a>
+          <div class="row">
+            <a href={videoUrl(ex)} target="_blank" rel="noopener">
+              ▶ Uitlegvideo
+            </a>
+            <button class="link" onClick={() => setShowDemo(!showDemo)}>
+              {showDemo ? "Verberg foto's" : "Toon foto's"}
+            </button>
+          </div>
         </div>
       )}
 
@@ -240,9 +253,12 @@ function ItemCard(props: { w: WorkoutState; i: number }) {
                 setBusy(false);
               }}
             >
-              <span>{a.exercise.name}</span>
-              <span class="muted small">
-                {a.prescription.sets}×{a.prescription.targetReps} · {formatLoad(a.exercise, a.prescription.load)}
+              <Thumb id={a.exercise.id} />
+              <span class="alt-text">
+                <span>{a.exercise.name}</span>
+                <span class="muted small">
+                  {a.prescription.sets}×{a.prescription.targetReps} · {formatLoad(a.exercise, a.prescription.load)}
+                </span>
               </span>
             </button>
           ))}

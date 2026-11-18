@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { addDays } from './dates.ts';
+import { defaultDay } from './availability.ts';
 import { DEFAULT_PREFS, planWeek } from './planner.ts';
 import { buildReport, coachMessage, reportMarkdown, streakWeeks } from './report.ts';
 import type { ExerciseLog, HealthDay, SessionLog } from './types.ts';
@@ -82,7 +83,7 @@ describe('weekrapport', () => {
   });
 
   it('plan voor volgende week zit erbij', () => {
-    const next = planWeek({ monday: addDays(MON, 7), today: addDays(MON, 6), history, prefs: DEFAULT_PREFS });
+    const next = planWeek({ today: addDays(MON, 6), start: addDays(MON, 7), availability: (d) => defaultDay(d, 45), history, prefs: DEFAULT_PREFS });
     const withNext = buildReport({ monday: MON, history, health, planned: 3, nextWeek: next });
     expect(withNext.nextWeek).toHaveLength(7);
     expect(reportMarkdown(withNext)).toMatch(/## Volgende week/);

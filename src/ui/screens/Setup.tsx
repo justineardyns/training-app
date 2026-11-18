@@ -1,10 +1,11 @@
 import { useState } from 'preact/hooks';
 import type { Profile } from '../../data/schema.ts';
 import { defaultProfile, store } from '../../data/store.ts';
-import { Chips } from '../components.tsx';
 import { go } from '../router.ts';
 import { GymEditor, HomeEquipmentEditor } from './Equipment.tsx';
 import { ConnectRepo } from './Connect.tsx';
+import { PrefsEditor } from './Prefs.tsx';
+import { normalizePrefs } from '../../coach/planner.ts';
 
 type Step = 'welkom' | 'repo' | 'thuis' | 'jims' | 'voorkeuren';
 const STEPS: Step[] = ['welkom', 'repo', 'thuis', 'jims', 'voorkeuren'];
@@ -17,8 +18,8 @@ export function Setup() {
   const back = () => setStep(STEPS[idx - 1] ?? 'welkom');
 
   const finish = async () => {
-    await store.saveProfile({ ...profile, setupDone: true });
-    go('week');
+    await store.saveProfile({ ...profile, prefs: normalizePrefs(profile.prefs), setupDone: true });
+    go('beschikbaarheid');
   };
 
   return (
@@ -95,29 +96,7 @@ export function Setup() {
         {step === 'voorkeuren' && (
           <>
             <h1>Je week</h1>
-            <div class="card">
-              <h3>Sessies per week</h3>
-              <p class="muted small">Normaal 2–3. Nooit meer dan 4, groepslessen inbegrepen.</p>
-              <Chips
-                options={[
-                  { value: 2, label: '2' },
-                  { value: 3, label: '3 (aanrader)' },
-                ]}
-                value={profile.prefs.targetPerWeek}
-                onChange={(v) => setProfile({ ...profile, prefs: { ...profile.prefs, targetPerWeek: v } })}
-              />
-            </div>
-            <div class="card">
-              <h3>Je derde sessie</h3>
-              <Chips
-                options={[
-                  { value: 'cardio', label: 'Conditie / groepsles' },
-                  { value: 'strength', label: 'Kracht' },
-                ]}
-                value={profile.prefs.thirdSession}
-                onChange={(v) => setProfile({ ...profile, prefs: { ...profile.prefs, thirdSession: v } })}
-              />
-            </div>
+            <PrefsEditor value={normalizePrefs(profile.prefs)} onChange={(prefs) => setProfile({ ...profile, prefs })} full />
             <div class="row sticky-actions">
               <button class="btn ghost" onClick={back}>
                 Terug

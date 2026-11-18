@@ -20,15 +20,16 @@ test('eerste opstart → plannen → trainen → bewaren', async ({ page }) => {
   await page.getByRole('button', { name: 'Verder' }).click();
   await page.getByRole('button', { name: 'Klaar' }).click();
 
-  // Week → beschikbaarheid
-  await expect(page.getByRole('heading', { name: 'Week', exact: true })).toBeVisible();
-  await page.getByRole('button', { name: /Beschikbaarheid ingeven/ }).click();
+  // Meteen: dagen aanvinken (komende 7 dagen)
   await expect(page.getByRole('heading', { name: 'Wanneer kan je?' })).toBeVisible();
-  // Dinsdag kan niet
-  await page.getByRole('group', { name: 'Waar op di 24/11' }).getByRole('button', { name: 'Kan niet' }).click();
+  await page.getByRole('group', { name: 'Momenten op di 24/11' }).getByRole('button', { name: /Avond/ }).click();
+  await page.getByRole('group', { name: 'Tennis op do 26/11' }).getByRole('button', { name: /1u/ }).click();
   await snap(page, '02-beschikbaarheid');
   await page.getByRole('button', { name: 'Bewaar en plan' }).click();
+  await expect(page.getByRole('heading', { name: 'Komende 7 dagen' })).toBeVisible();
+  // ma kracht, do tennis, za kracht (wo/vr kunnen niet naast tennis, zo niet na za)
   await expect(page.locator('.plan-day.sweat')).toHaveCount(3);
+  await expect(page.locator('.plan-day.sweat').nth(1)).toContainText('Tennis');
   await snap(page, '03-week');
 
   // Vandaag
@@ -49,19 +50,20 @@ test('eerste opstart → plannen → trainen → bewaren', async ({ page }) => {
   while ((await checks.count()) > 0) await checks.first().click();
   await page.getByRole('button', { name: 'Goed', exact: true }).click();
 
-  // Tweede oefening: gewicht kiezen met het draaiwiel
-  await expect(page.locator('.item-name').first()).toContainText('Dumbbell bench press');
+  // Tweede oefening (beginner: eerst het toestel): gewicht kiezen met het draaiwiel
+  await expect(page.locator('.item-name').first()).toContainText('Chest press');
+  await expect(page.locator('.demo').first()).toBeVisible();
   await page.getByRole('button', { name: 'Gewicht set 1' }).click();
   await snap(page, '06-draaiwiel');
-  await page.getByRole('button', { name: /2 × 12 kg/ }).click();
-  await expect(page.getByRole('button', { name: 'Gewicht set 1' })).toHaveText('2 × 12 kg');
+  await page.getByRole('button', { name: /^20 kg$/ }).click();
+  await expect(page.getByRole('button', { name: 'Gewicht set 1' })).toHaveText('20 kg');
   await page.getByRole('button', { name: 'plus' }).first().click();
 
   // Toestel bezet → alternatief
   await page.getByRole('button', { name: 'Toestel bezet' }).click();
   await snap(page, '07-bezet');
   await page.locator('.sheet .btn.alt').first().click();
-  await expect(page.locator('.item-name').first()).not.toContainText('Dumbbell bench press');
+  await expect(page.locator('.item-name').first()).not.toContainText('Chest press');
   await snap(page, '08-training');
 
   // Stoppen en bewaren
@@ -77,4 +79,5 @@ test('eerste opstart → plannen → trainen → bewaren', async ({ page }) => {
   await expect(page.locator('.card.done')).toBeVisible();
   await page.getByRole('link', { name: /Week/ }).click();
   await expect(page.locator('.plan-day.done')).toHaveCount(1);
+  await expect(page.locator('.plan-day').first()).toContainText('vandaag');
 });

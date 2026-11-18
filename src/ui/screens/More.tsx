@@ -6,6 +6,7 @@ import { useStore } from '../hooks.ts';
 import { go } from '../router.ts';
 import { GymEditor, HomeEquipmentEditor } from './Equipment.tsx';
 import { SyncSettings } from './Connect.tsx';
+import { PrefsEditor } from './Prefs.tsx';
 import { InjuryCard } from './Injury.tsx';
 import { HealthSettings } from './Health.tsx';
 import { NotificationSettings } from './Notifications.tsx';
@@ -74,25 +75,8 @@ export function More(props: { sub?: string }) {
       <SyncSettings />
 
       <h2>Voorkeuren</h2>
+      <PrefsEditor value={s.prefs()} onChange={(prefs) => saveProfile({ ...profile, prefs })} full />
       <div class="card">
-        <h3>Sessies per week</h3>
-        <Chips
-          options={[
-            { value: 2, label: '2' },
-            { value: 3, label: '3' },
-          ]}
-          value={profile.prefs.targetPerWeek}
-          onChange={(v) => saveProfile({ ...profile, prefs: { ...profile.prefs, targetPerWeek: v } })}
-        />
-        <h3>Derde sessie</h3>
-        <Chips
-          options={[
-            { value: 'cardio', label: 'Conditie' },
-            { value: 'strength', label: 'Kracht' },
-          ]}
-          value={profile.prefs.thirdSession}
-          onChange={(v) => saveProfile({ ...profile, prefs: { ...profile.prefs, thirdSession: v } })}
-        />
         <h3>Deload</h3>
         <Chips
           options={[
@@ -100,8 +84,8 @@ export function More(props: { sub?: string }) {
             { value: 6, label: 'elke 6e week' },
             { value: 8, label: 'elke 8e week' },
           ]}
-          value={profile.prefs.deloadEvery}
-          onChange={(v) => saveProfile({ ...profile, prefs: { ...profile.prefs, deloadEvery: v } })}
+          value={s.prefs().deloadEvery}
+          onChange={(v) => saveProfile({ ...profile, prefs: { ...s.prefs(), deloadEvery: v } })}
         />
       </div>
 

@@ -82,6 +82,8 @@ export interface Exercise {
   tips: string[];
   /** Zoekterm voor de uitlegvideo. */
   video: string;
+  /** Zo herken je het toestel en stel je het in (voor beginners). */
+  setup?: string;
   /** Voorzichtig startgewicht (kg) als er nog geen historiek is. */
   start: number;
   /** Zwaardere variant voor thuis als het gewicht op is (progressieladder). */
@@ -116,13 +118,33 @@ export interface GymConfig {
   cableStep: number;
 }
 
+/** Moment van de dag: overdag (enkel in het weekend) of 's avonds. */
+export type Slot = 'day' | 'evening';
+
+/** Vast lesmoment (bv. indoor cycling op maandagavond). day: 0 = maandag … 6 = zondag. */
+export interface ClassSlot {
+  day: number;
+  slot: Slot;
+}
+
+export type Experience = 'beginner' | 'returning';
+
 export interface Prefs {
-  /** Normaal 2 of 3 sessies per week (absoluut max 4). */
+  /** Zweetsessies per 7 dagen (rollend). Absoluut max 4. */
   targetPerWeek: number;
-  /** Wat de derde sessie is. */
-  thirdSession: 'cardio' | 'strength';
-  /** Elke hoeveelste week een deload (standaard 6). */
+  /** Waarvan krachttrainingen; de rest is conditie (groepsles, cardio of tennis). */
+  strengthPerWeek: number;
+  /** Elke hoeveelste trainingsweek een deload (standaard 6). */
   deloadEvery: number;
+  /** Absolute beginner: lichtere start, eerst kennismaken, toestellen eerst. */
+  experience: Experience;
+  /** Groepslessen die je graag doet en wanneer ze doorgaan. */
+  className: string;
+  classSlots: ClassSlot[];
+  /** Dagen waarop je soms tennist (0 = maandag). */
+  tennisDays: number[];
+  /** Standaardduur van een training. */
+  minutes: Minutes;
 }
 
 export type ProgressionChange =
@@ -200,9 +222,13 @@ export interface SessionLog {
 
 export interface DayAvailability {
   date: ISODate;
-  available: boolean;
-  location: Location;
+  /** Aangevinkte momenten; leeg = kan niet. */
+  slots: Slot[];
+  /** Thuis i.p.v. Jims, ook als Jims open is. */
+  home?: boolean;
   minutes: Minutes;
+  /** Tennis die dag (minuten, bv. 60 of 120). Telt als zweetsessie. */
+  tennis?: number;
 }
 
 export interface HealthDay {
@@ -236,7 +262,8 @@ export interface CoachAdjustments {
   /** Vanaf welke maandag dit geldt. */
   validFrom?: ISODate;
   targetSessions?: number;
-  thirdSession?: 'cardio' | 'strength';
+  /** Krachttrainingen per 7 dagen (rest = conditie). */
+  strengthSessions?: number;
   forceDeload?: boolean;
   swaps?: { from: string; to: string; reason?: string }[];
   repRangeOverrides?: Record<string, [number, number]>;

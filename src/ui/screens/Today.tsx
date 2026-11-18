@@ -1,5 +1,5 @@
 import { useState } from 'preact/hooks';
-import { dayName, isoWeek, weekStart } from '../../coach/dates.ts';
+import { dayName, isoWeek } from '../../coach/dates.ts';
 import { formatLoad } from '../../coach/loads.ts';
 import { ADVICE, LEVEL_LABEL } from '../../coach/readiness.ts';
 import type { CardioSession, StrengthSession } from '../../coach/session.ts';
@@ -7,9 +7,10 @@ import type { Energy, Location, Minutes } from '../../coach/types.ts';
 import { newId } from '../../data/store.ts';
 import { startWorkout } from '../../data/workout.ts';
 import { Chips, Messages, Pill, Sheet } from '../components.tsx';
+import { Thumb } from '../Demo.tsx';
 import { useStore } from '../hooks.ts';
 import { go } from '../router.ts';
-import { dayLabel, needsNextWeek } from './Week.tsx';
+import { dayLabel, untickedDays } from './Week.tsx';
 import { SyncWarning } from './Connect.tsx';
 import { InjuryCard } from './Injury.tsx';
 import { HealthButton } from './Health.tsx';
@@ -29,9 +30,12 @@ export function StrengthPreview(props: { session: StrengthSession }) {
     <ul class="preview">
       {props.session.exercises.map((p) => (
         <li key={p.exercise.id}>
-          <span>
-            {p.superset && <span class="pill">{p.superset}</span>} {p.exercise.name}
-          </span>
+          <a class="preview-name" href={`#/oefening/${p.exercise.id}`}>
+            <Thumb id={p.exercise.id} />
+            <span>
+              {p.superset && <span class="pill">{p.superset}</span>} {p.exercise.name}
+            </span>
+          </a>
           <span class="muted">
             {p.prescription.sets}×{repsText(p.prescription, p.exercise.timed)}
             {p.exercise.unilateral ? '/kant' : ''} · {formatLoad(p.exercise, p.prescription.load)}
@@ -123,10 +127,10 @@ export function Today() {
   const s = useStore();
   const today = s.today();
   const day = s.todayPlan();
-  const plan = s.plan(weekStart(today));
+  const plan = s.plan();
   const session = s.sessionFor(day) as StrengthSession | CardioSession | undefined;
   const [quick, setQuick] = useState(false);
-  const missingNext = needsNextWeek(today, (p) => !!s.read(p));
+  const unticked = untickedDays(today, (d) => !!s.explicitDay(d));
   const nextSweat = plan.days.find((d) => d.date > today && d.status === 'planned');
   const w = s.workout;
 
@@ -151,10 +155,10 @@ export function Today() {
         </button>
       )}
 
-      {missingNext && (
-        <button class="card cta" onClick={() => go(`beschikbaarheid/${missingNext}`)}>
-          <strong>Plan volgende week</strong>
-          <span class="muted small">Tik welke dagen je kan. 20 seconden.</span>
+      {unticked >= 3 && (
+        <button class="card cta" onClick={() => go('beschikbaarheid')}>
+          <strong>Vink je komende dagen aan</strong>
+          <span class="muted small">Welke avonden (en weekenddagen) passen? 20 seconden.</span>
         </button>
       )}
 
@@ -173,12 +177,14 @@ export function Today() {
         <div class="card today-card">
           <h2>{day.title}</h2>
           <div class="stack">
-            <Chips<Location>
-              label="Waar"
-              options={[{ value: 'gym', label: 'Jims' }, { value: 'home', label: 'Thuis' }]}
-              value={day.location}
-              onChange={(v) => s.updateDay(today, { location: v })}
-            />
+            {!day.groupClass && (
+              <Chips<Location>
+                label="Waar"
+                options={[{ value: 'gym', label: 'Jims' }, { value: 'home', label: 'Thuis' }]}
+                value={day.location}
+                onChange={(v) => s.updateDay(today, { home: v === 'home' })}
+              />
+            )}
             <Chips<Minutes>
               label="Tijd"
               options={[{ value: 30, label: '30' }, { value: 45, label: '45' }, { value: 60, label: '60 min' }]}
@@ -203,6 +209,19 @@ export function Today() {
           </button>
           <button class="btn ghost small" onClick={() => s.postpone(today)}>
             Vandaag lukt niet
+          </button>
+        </div>
+      )}
+
+      {day.type === 'tennis' && day.status === 'planned' && (
+        <div class="card today-card">
+          <h2>🎾 {day.title}</h2>
+          <p class="muted">Telt als conditiesessie. Start een workout "Tennis" op je Watch, dan komt hij vanzelf binnen.</p>
+          <button class="btn primary huge" onClick={() => s.quickLog(today, 'cardio', 'gym', (day.minutes ?? 60) as Minutes, 'Tennis')}>
+            Tennis gedaan ✓
+          </button>
+          <button class="btn ghost small" onClick={() => s.updateDay(today, { tennis: undefined })}>
+            Gaat niet door
           </button>
         </div>
       )}

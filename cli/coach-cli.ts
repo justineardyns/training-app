@@ -130,7 +130,7 @@ export function context(store: Store, monday: string) {
     nextWeek: {
       target: next.target,
       deload: next.deload,
-      days: next.days.map((d) => ({ date: d.date, type: d.type, title: d.title })),
+      days: next.days.map((d) => ({ date: d.date, type: d.type, title: d.title, slot: d.slot, location: d.location })),
       messages: next.messages,
       violations: next.violations,
     },
@@ -153,7 +153,8 @@ export function context(store: Store, monday: string) {
     readiness: store.checks().filter((c) => c.date >= addDays(monday, -7)),
     injuries: store.injuries().map((i) => ({ ...i, referral: referral(i, today) })),
     adjustments: adjRaw ? sanitizeAdjustments(adjRaw) : null,
-    availabilityNextWeek: store.availability(addDays(monday, 7)).source,
+    /** Hoeveel van de 7 dagen na deze week nog niet aangevinkt zijn (patroon of standaard gebruikt). */
+    untickedNextWeek: Array.from({ length: 7 }, (_, i) => addDays(monday, 7 + i)).filter((d) => !store.explicitDay(d)).length,
   };
 }
 
@@ -165,11 +166,11 @@ export function validate(store: Store, log: (s: string) => void = console.log): 
   }
   const { adjustments, errors } = sanitizeAdjustments(raw);
   for (const e of errors) log(`✗ ${e}`);
-  const monday = weekStart(adjustments.validFrom ?? addDays(weekStart(store.today()), 7));
-  const plan = store.plan(monday);
+  const from = adjustments.validFrom ?? addDays(weekStart(store.today()), 7);
+  const plan = store.plan(from);
   for (const v of plan.violations) log(`✗ Regel: ${v.message}`);
   const ok = errors.length === 0 && plan.violations.length === 0;
-  log(ok ? `✓ Bijsturing geldig. Plan ${isoWeek(monday)}: ${plan.done + plan.planned}/${plan.target} sessies, geen regelbreuken.` : '✗ Pas de bijsturing aan.');
+  log(ok ? `✓ Bijsturing geldig. Plan vanaf ${plan.start}: ${plan.done + plan.planned}/${plan.target} sessies, geen regelbreuken.` : '✗ Pas de bijsturing aan.');
   return ok ? 0 : 1;
 }
 

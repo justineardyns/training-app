@@ -1,16 +1,16 @@
 import { EXERCISES, RELATED } from './catalog.ts';
-import { DAY_NAMES, dayIndex, diffDays, weekDays } from './dates.ts';
-import type { CoachAdjustments, DayAvailability, ISODate } from './types.ts';
+import { addDays, DAY_NAMES, dayIndex, diffDays } from './dates.ts';
+import type { CoachAdjustments, ISODate } from './types.ts';
 
 // De harde regels. Elk plan (ook een bijsturing door /coach) moet hier door.
 
-/** Absoluut maximum zweetsessies per week, inclusief groepslessen. */
+/** Absoluut maximum zweetsessies per 7 dagen (rollend), inclusief groepslessen en tennis. */
 export const MAX_PER_WEEK = 4;
 /** Normaal 2–3 per week. */
 export const NORMAL_MIN = 2;
 export const NORMAL_MAX = 3;
 
-export type RuleId = 'max_per_week' | 'consecutive' | 'unavailable' | 'double_day';
+export type RuleId = 'max_per_7_days' | 'consecutive' | 'unavailable' | 'double_day';
 
 export interface Violation {
   rule: RuleId;
@@ -18,58 +18,55 @@ export interface Violation {
   message: string;
 }
 
-export interface WeekCheck {
-  monday: ISODate;
-  /** Alle zweetsessies van de week (gedaan + gepland), één item per sessie. */
+export interface RollingCheck {
+  /** Alle zweetsessies (gedaan, vaste zoals tennis, en gepland), één item per sessie. */
   sessions: { date: ISODate; planned: boolean }[];
-  /** Zweetdagen buiten deze week (vorige zondag, volgende maandag). */
-  neighbors?: ISODate[];
-  availability?: DayAvailability[];
+  /** Kan je op die dag? (enkel voor geplande sessies gecontroleerd) */
+  available?: (date: ISODate) => boolean;
 }
 
-export function validateWeek(w: WeekCheck): Violation[] {
+/**
+ * Harde regels over een rollend venster:
+ * - in elke 7 opeenvolgende dagen maximaal 4 zweetsessies (groepslessen en tennis inbegrepen)
+ * - nooit twee dagen na elkaar
+ * Gedane sessies zijn een feit; we melden enkel overtredingen waarin een geplande sessie zit.
+ */
+export function validateRolling(c: RollingCheck): Violation[] {
   const out: Violation[] = [];
-  const days = new Set(weekDays(w.monday));
-  const inWeek = w.sessions.filter((s) => days.has(s.date));
-
-  if (inWeek.length > MAX_PER_WEEK) {
-    out.push({
-      rule: 'max_per_week',
-      dates: inWeek.map((s) => s.date),
-      message: `${inWeek.length} zweetsessies in één week: maximum is ${MAX_PER_WEEK}.`,
-    });
-  }
-
-  const planned = inWeek.filter((s) => s.planned);
+  const planned = c.sessions.filter((x) => x.planned);
   const perDay = new Map<ISODate, number>();
-  for (const s of planned) perDay.set(s.date, (perDay.get(s.date) ?? 0) + 1);
+  for (const p of planned) perDay.set(p.date, (perDay.get(p.date) ?? 0) + 1);
   for (const [date, n] of perDay) {
-    if (n > 1) out.push({ rule: 'double_day', dates: [date], message: `Twee sessies gepland op ${DAY_NAMES[dayIndex(date)]}.` });
+    if (n > 1) out.push({ rule: 'double_day', dates: [date], message: `Twee sessies gepland op ${DAY_NAMES[dayIndex(date)]} ${date}.` });
   }
 
-  const all = [...new Set([...inWeek.map((s) => s.date), ...(w.neighbors ?? [])])].sort();
-  for (let i = 1; i < all.length; i++) {
-    const a = all[i - 1]!;
-    const b = all[i]!;
-    if (diffDays(b, a) === 1 && (days.has(a) || days.has(b))) {
-      // Alleen melden als minstens één van beide gepland is (gedane sessies zijn een feit).
-      const involvesPlan = planned.some((p) => p.date === a || p.date === b);
-      if (involvesPlan) {
-        out.push({
-          rule: 'consecutive',
-          dates: [a, b],
-          message: `Zweettraining op ${DAY_NAMES[dayIndex(a)]} én ${DAY_NAMES[dayIndex(b)]}: nooit twee dagen na elkaar.`,
-        });
+  const dates = [...new Set(c.sessions.map((x) => x.date))].sort();
+  const plannedDates = new Set(planned.map((p) => p.date));
+  for (let i = 1; i < dates.length; i++) {
+    const a = dates[i - 1]!;
+    const b = dates[i]!;
+    if (diffDays(b, a) === 1 && (plannedDates.has(a) || plannedDates.has(b))) {
+      out.push({ rule: 'consecutive', dates: [a, b], message: `Zweettraining op ${a} én ${b}: nooit twee dagen na elkaar.` });
+    }
+  }
+
+  const seen = new Set<ISODate>();
+  for (const p of plannedDates) {
+    for (let k = 0; k < 7; k++) {
+      const from = addDays(p, -k);
+      if (seen.has(from)) continue;
+      const to = addDays(from, 6);
+      const n = c.sessions.filter((x) => x.date >= from && x.date <= to).length;
+      if (n > MAX_PER_WEEK) {
+        seen.add(from);
+        out.push({ rule: 'max_per_7_days', dates: [from, to], message: `${n} zweetsessies tussen ${from} en ${to}: maximum is ${MAX_PER_WEEK} per 7 dagen.` });
       }
     }
   }
 
-  if (w.availability) {
-    const avail = new Map(w.availability.map((d) => [d.date, d.available]));
-    for (const p of planned) {
-      if (avail.get(p.date) === false) {
-        out.push({ rule: 'unavailable', dates: [p.date], message: `Gepland op ${DAY_NAMES[dayIndex(p.date)]}, maar dan kan je niet.` });
-      }
+  if (c.available) {
+    for (const p of plannedDates) {
+      if (!c.available(p)) out.push({ rule: 'unavailable', dates: [p], message: `Gepland op ${DAY_NAMES[dayIndex(p)]} ${p}, maar dan kan je niet.` });
     }
   }
   return out;
@@ -98,7 +95,11 @@ export function sanitizeAdjustments(raw: unknown): { adjustments: CoachAdjustmen
       if (t > MAX_PER_WEEK) errors.push(`targetSessions ${t} > ${MAX_PER_WEEK}: begrensd`);
     }
   }
-  if (r.thirdSession === 'cardio' || r.thirdSession === 'strength') a.thirdSession = r.thirdSession;
+  if (r.strengthSessions !== undefined) {
+    const n = Number(r.strengthSessions);
+    if (Number.isInteger(n) && n >= 1 && n <= 3) a.strengthSessions = n;
+    else errors.push('strengthSessions moet 1, 2 of 3 zijn');
+  }
   if (typeof r.forceDeload === 'boolean') a.forceDeload = r.forceDeload;
   if (typeof r.focus === 'string') a.focus = r.focus.slice(0, 280);
   if (typeof r.message === 'string') a.message = r.message.slice(0, 600);

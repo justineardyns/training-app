@@ -7,6 +7,7 @@ import { generateRequestDetails } from 'web-push';
 // @ts-expect-error: geen types voor http_ece
 import ece from 'http_ece';
 import { weekDays } from '../src/coach/dates.ts';
+import { defaultDay } from '../src/coach/availability.ts';
 import { makeVapidKeys, b64url } from '../src/data/push.ts';
 import { defaultProfile } from '../src/data/store.ts';
 import { context, pickMessage, validate } from './coach-cli.ts';
@@ -24,7 +25,7 @@ function repo(files: Record<string, unknown>): string {
 const MON = '2026-11-23';
 const base = {
   'data/profile.json': { ...defaultProfile(), setupDone: true, notifyHour: 7 },
-  'data/availability/2026-W48.json': { week: '2026-W48', days: weekDays(MON).map((date) => ({ date, available: true, location: 'gym', minutes: 45 })), planned: [MON, '2026-11-25', '2026-11-27'], savedAt: '' },
+  'data/availability/2026-11.json': { month: '2026-11', days: Object.fromEntries(weekDays(MON).map((date) => [date, defaultDay(date, 45)])), planned: [MON, '2026-11-25', '2026-11-27', '2026-11-29'], savedAt: '' },
 };
 
 describe('pushmeldingen: sleutels en versleuteling', () => {
@@ -49,17 +50,17 @@ describe('pushmeldingen: sleutels en versleuteling', () => {
 describe('welke melding wanneer', () => {
   it('ochtend: enkel op het ingestelde uur (Brussel, ook in zomertijd)', () => {
     const dir = repo(base);
-    expect(pickMessage(loadRepo(dir, { now: new Date('2026-11-23T06:07:00Z') }), { mode: 'morning' }).msg?.title).toBe('Vandaag: Full body A · Jims');
+    expect(pickMessage(loadRepo(dir, { now: new Date('2026-11-23T06:07:00Z') }), { mode: 'morning' }).msg?.title).toBe("Vandaag: Full body A · Jims 's avonds");
     expect(pickMessage(loadRepo(dir, { now: new Date('2026-11-23T05:07:00Z') }), { mode: 'morning' }).msg).toBeNull();
     // Zomer: 7u lokaal = 05u UTC
-    const summer = repo({ ...base, 'data/availability/2026-W27.json': { ...base['data/availability/2026-W48.json'], week: '2026-W27', days: weekDays('2026-06-29').map((date) => ({ date, available: true, location: 'gym', minutes: 45 })) } });
+    const summer = repo({ ...base, 'data/availability/2026-06.json': { month: '2026-06', days: Object.fromEntries(weekDays('2026-06-29').map((date) => [date, defaultDay(date, 45)])), planned: [], savedAt: '' } });
     expect(pickMessage(loadRepo(summer, { now: new Date('2026-06-29T05:07:00Z') }), { mode: 'morning' }).msg).not.toBeNull();
   });
 
-  it('zondag 19u: herinnering als volgende week nog leeg is', () => {
+  it('zondag 19u: herinnering als je de komende dagen nog niet aanvinkte', () => {
     const dir = repo(base);
     const r = pickMessage(loadRepo(dir, { now: new Date('2026-11-29T18:07:00Z') }), { mode: 'sunday' });
-    expect(r.msg?.title).toBe('Plan volgende week');
+    expect(r.msg?.title).toBe('Vink je komende dagen aan');
     expect(pickMessage(loadRepo(dir, { now: new Date('2026-11-28T18:07:00Z') }), { mode: 'sunday' }).msg).toBeNull();
   });
 });

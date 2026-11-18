@@ -118,10 +118,32 @@ describe('krachtsessie', () => {
   });
 });
 
+describe('absolute beginner', () => {
+  it('start licht, max 2 sets de eerste 2 keer, toestellen eerst', () => {
+    const normal = buildStrengthSession(ctx());
+    const beg = buildStrengthSession(ctx({ beginner: true }));
+    expect(beg.exercises.map((e) => e.exercise.id)).toContain('chest-press');
+    expect(beg.exercises.map((e) => e.exercise.id)).toContain('machine-shoulder-press');
+    for (const p of beg.exercises) expect(p.prescription.sets).toBeLessThanOrEqual(2);
+    const lp = (s: typeof normal) => s.exercises.find((e) => e.exercise.id === 'leg-press')!.prescription.load;
+    expect(lp(beg)).toBeLessThan(lp(normal));
+    expect(beg.exercises[0]!.prescription.note).toMatch(/Kennismaking/);
+  });
+
+  it('na 2 keer: gewone sets', () => {
+    const history = [session('2026-11-16', 'gym', [log('leg-press', 35, [12, 12])]), session('2026-11-19', 'gym', [log('leg-press', 35, [13, 13])])];
+    const s = buildStrengthSession(ctx({ beginner: true, history }));
+    expect(s.exercises.find((e) => e.exercise.id === 'leg-press')!.prescription.sets).toBe(3);
+  });
+});
+
 describe('conditiesessie', () => {
-  it('Jims 45 min: groepsles of intervallen', () => {
-    const c = buildCardioSession({ date: '2026-11-25', location: 'gym', minutes: 45, equipment: DEFAULT_HOME });
+  it('op een lesmoment: indoor cycling (met tips voor je eerste les), anders intervallen', () => {
+    const c = buildCardioSession({ date: '2026-11-25', location: 'gym', minutes: 45, equipment: DEFAULT_HOME, groupClass: 'Indoor cycling' });
     expect(c.options.map((o) => o.title)).toEqual(['Indoor cycling (groepsles)', 'Intervallen op fiets of roeier']);
+    expect(c.options[0]!.steps.join(' ')).toMatch(/zadelhoogte/);
+    const free = buildCardioSession({ date: '2026-11-26', location: 'gym', minutes: 45, equipment: DEFAULT_HOME });
+    expect(free.options.map((o) => o.title)).toEqual(['Intervallen op fiets of roeier']);
   });
   it('oranje: geen intervallen', () => {
     const c = buildCardioSession({ date: '2026-11-25', location: 'gym', minutes: 45, readiness: 'orange', equipment: DEFAULT_HOME });

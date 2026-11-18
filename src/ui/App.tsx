@@ -9,6 +9,7 @@ import { Cardio } from './screens/Cardio.tsx';
 import { More } from './screens/More.tsx';
 import { Report } from './screens/Report.tsx';
 import { InjuryReport } from './screens/Injury.tsx';
+import { ExerciseInfo } from './screens/ExerciseInfo.tsx';
 
 const TABS = [
   { route: 'vandaag', label: 'Vandaag', ico: '◉' },
@@ -35,13 +36,16 @@ export function App() {
       page = <Week />;
       break;
     case 'beschikbaarheid':
-      page = <Availability key={params[0]} monday={params[0] ?? ''} />;
+      page = <Availability />;
       break;
     case 'training':
       page = <Workout />;
       break;
     case 'cardio':
       page = <Cardio />;
+      break;
+    case 'oefening':
+      page = <ExerciseInfo key={params[0]} id={params[0] ?? ''} />;
       break;
     case 'blessure':
       page = <InjuryReport />;

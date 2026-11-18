@@ -27,24 +27,26 @@ interface Slot {
   role: Role;
   gym: string[];
   home: string[];
+  /** Voor absolute beginners in Jims: toestellen en eenvoudige varianten eerst. */
+  beginnerGym?: string[];
 }
 
 /** Full body A/B. Volgorde = prioriteit (bij weinig tijd vallen de laatste weg). */
 export const TEMPLATES: Record<Template, Slot[]> = {
   A: [
     { role: 'main', pattern: 'squat', gym: ['leg-press', 'goblet-squat'], home: ['goblet-squat', 'kb-goblet-squat'] },
-    { role: 'main', pattern: 'push_h', gym: ['db-bench', 'chest-press'], home: ['push-up', 'db-floor-press'] },
+    { role: 'main', pattern: 'push_h', gym: ['db-bench', 'chest-press'], beginnerGym: ['chest-press', 'db-bench'], home: ['incline-push-up', 'db-floor-press'] },
     { role: 'main', pattern: 'pull_v', gym: ['lat-pulldown', 'close-grip-pulldown'], home: ['bent-over-row-homebar', 'bent-over-row-db'] },
     { role: 'main', pattern: 'hinge', gym: ['rdl-db', 'rdl-barbell'], home: ['rdl-homebar', 'rdl-db'] },
-    { role: 'accessory', pattern: 'push_v', gym: ['db-shoulder-press', 'machine-shoulder-press'], home: ['standing-db-press', 'half-kneeling-kb-press'] },
+    { role: 'accessory', pattern: 'push_v', gym: ['db-shoulder-press', 'machine-shoulder-press'], beginnerGym: ['machine-shoulder-press', 'db-shoulder-press'], home: ['standing-db-press', 'half-kneeling-kb-press'] },
     { role: 'core', pattern: 'core', gym: ['dead-bug'], home: ['dead-bug'] },
     { role: 'accessory', pattern: 'arms', gym: ['db-curl'], home: ['db-curl'] },
   ],
   B: [
-    { role: 'main', pattern: 'hinge', gym: ['hip-thrust', 'glute-bridge'], home: ['glute-bridge', 'kb-deadlift'] },
+    { role: 'main', pattern: 'hinge', gym: ['hip-thrust', 'glute-bridge'], beginnerGym: ['glute-bridge', 'hip-thrust'], home: ['glute-bridge', 'kb-deadlift'] },
     { role: 'main', pattern: 'pull_h', gym: ['seated-cable-row', 'machine-row'], home: ['one-arm-db-row', 'bent-over-row-db'] },
     { role: 'main', pattern: 'lunge', gym: ['reverse-lunge', 'step-up'], home: ['reverse-lunge', 'step-up'] },
-    { role: 'main', pattern: 'push_h', gym: ['incline-db-press', 'chest-press'], home: ['db-floor-press', 'push-up'] },
+    { role: 'main', pattern: 'push_h', gym: ['incline-db-press', 'chest-press'], beginnerGym: ['chest-press', 'incline-db-press'], home: ['db-floor-press', 'incline-push-up'] },
     { role: 'accessory', pattern: 'legs_iso', gym: ['leg-curl'], home: ['single-leg-rdl'] },
     { role: 'core', pattern: 'core', gym: ['pallof-press', 'side-plank'], home: ['side-plank', 'plank'] },
     { role: 'accessory', pattern: 'arms', gym: ['triceps-pushdown'], home: ['overhead-triceps'] },
@@ -75,6 +77,8 @@ export interface SessionContext {
   deload?: boolean;
   injuries?: Injury[];
   adjustments?: CoachAdjustments;
+  /** Absolute beginner: lichtere start, kennismaking, toestellen eerst. */
+  beginner?: boolean;
 }
 
 export interface PlannedExercise {
@@ -133,7 +137,8 @@ function currentVariant(defaultId: string, ctx: SessionContext): string {
 
 function pickForSlot(slot: Slot, ctx: SessionContext, used: Set<string>): Exercise | undefined {
   const gym = ctx.gym ?? DEFAULT_GYM;
-  for (const id of slot[ctx.location]) {
+  const list = ctx.location === 'gym' && ctx.beginner && slot.beginnerGym ? slot.beginnerGym : slot[ctx.location];
+  for (const id of list) {
     let pick = id;
     const swap = ctx.adjustments?.swaps?.find((s) => s.from === id);
     if (swap && isAvailable(getExercise(swap.to), ctx.location, ctx.equipment, gym)) pick = swap.to;
@@ -175,13 +180,17 @@ export function buildPrescription(ex: Exercise, role: Role, ctx: SessionContext,
   const run = (e: Exercise) => {
     const options = loadOptions(e, ctx.location, ctx.equipment, gym);
     const history = exposures(ctx.history.filter((s) => s.date < ctx.date), e.id);
+    const real = history.filter((h) => !h.deload).length;
+    const baseSets = sets ?? vol.sets[role];
     const result = nextPrescription({
       exercise: e,
       options,
       history,
-      sets: sets ?? vol.sets[role],
+      // Kennismaking: de eerste 2 keer maximaal 2 sets.
+      sets: ctx.beginner && real < 2 ? Math.min(2, baseSets) : baseSets,
       restSec: vol.rest[role],
       repRange: ctx.adjustments?.repRangeOverrides?.[e.id],
+      beginner: ctx.beginner,
     });
     return { e, options, history, result };
   };
@@ -325,7 +334,9 @@ export interface CardioSession {
   notes: string[];
 }
 
-export function buildCardioSession(ctx: Pick<SessionContext, 'date' | 'location' | 'minutes' | 'readiness' | 'equipment' | 'gym'>): CardioSession {
+export function buildCardioSession(
+  ctx: Pick<SessionContext, 'date' | 'location' | 'minutes' | 'readiness' | 'equipment' | 'gym'> & { groupClass?: string },
+): CardioSession {
   const { minutes: min, location } = ctx;
   const lighter = ctx.readiness === 'orange' || ctx.readiness === 'red';
   const notes: string[] = [];
@@ -337,7 +348,17 @@ export function buildCardioSession(ctx: Pick<SessionContext, 'date' | 'location'
       options.push({ title: 'Rustige cardio (zone 2)', steps: [`${min - 5} min fiets, roeier of crosstrainer in een tempo waarbij je nog kan praten`, '5 min uitbollen'] });
       notes.push('Dagvorm oranje: geen intervallen vandaag, rustig tempo.');
     } else {
-      if (min >= 45) options.push({ title: 'Indoor cycling (groepsles)', steps: ['Kies een les in het rooster van je Jims', 'Start een workout "Indoor fietsen" op je Watch: dan telt ze automatisch mee'] });
+      if (ctx.groupClass) {
+        options.push({
+          title: `${ctx.groupClass} (groepsles)`,
+          steps: [
+            'Reserveer je plaats in de Jims-app als dat nodig is',
+            'Eerste keer? Kom 10 min vroeger: vraag de lesgever om je fiets af te stellen (zadelhoogte = heupbeen)',
+            'Absolute beginner: draai mee op je eigen tempo, je hoeft niet alle sprints voluit te doen',
+            'Start een workout "Indoor fietsen" op je Watch: dan telt ze automatisch mee',
+          ],
+        });
+      }
       options.push({
         title: 'Intervallen op fiets of roeier',
         steps: ['5 min opwarmen', `${intervals}× (30 s stevig / 90 s rustig)`, `${Math.max(0, min - 10 - intervals * 2)} min rustig (zone 2)`, '5 min uitbollen'].filter((s) => !s.startsWith('0 min')),
@@ -364,7 +385,7 @@ export function buildCardioSession(ctx: Pick<SessionContext, 'date' | 'location'
   return {
     kind: 'cardio',
     date: ctx.date,
-    title: lighter ? 'Rustige cardio' : 'Conditie',
+    title: lighter ? 'Rustige cardio' : ctx.groupClass ? ctx.groupClass : 'Conditie',
     location,
     minutes: min,
     options,

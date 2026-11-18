@@ -11,6 +11,7 @@ const E: Exercise[] = [
     stress: { knie: 2, onderrug: 1, heup: 1 },
     tips: ['Voeten heupbreed midden op het platform.', 'Zak tot je knieën ±90° zijn; je onderrug blijft tegen de rugleuning.', 'Knieën niet op slot duwen bovenaan.'],
     video: 'leg press proper form',
+    setup: 'Schuine slede met een groot voetplatform; je zit half liggend. Rugleuning zo dat je knieën ±90° buigen. Ontgrendel met de hendels naast je heupen, vergrendel ze weer na je laatste rep.',
   },
   {
     id: 'goblet-squat', name: 'Goblet squat', pattern: 'squat', muscles: ['quadriceps', 'bilspieren', 'core'],
@@ -32,6 +33,7 @@ const E: Exercise[] = [
     stress: { knie: 3, onderrug: 1, heup: 1 },
     tips: ['Rug volledig tegen het kussen.', 'Gecontroleerd zakken, krachtig omhoog.', 'Hielen blijven op het platform.'],
     video: 'hack squat machine form',
+    setup: 'Schuine slede waarbij je rechtop staat met kussens op je schouders. Ontgrendel met de hendels aan de zijkant.',
   },
   {
     id: 'smith-squat', name: 'Squat in smith-machine', pattern: 'squat', muscles: ['quadriceps', 'bilspieren'],
@@ -39,6 +41,7 @@ const E: Exercise[] = [
     stress: { knie: 2, onderrug: 2, heup: 1 },
     tips: ['Voeten iets voor de stang.', 'Zak tot je dijen horizontaal zijn.', 'Span je buik aan voor elke rep.'],
     video: 'smith machine squat form',
+    setup: 'Rek met een stang die in vaste rails op en neer glijdt. Draai de stang een kwartslag om ze los of vast te haken.',
   },
   // ── Lunge / eenzijdig been ───────────────────────────────────────────
   {
@@ -97,6 +100,7 @@ const E: Exercise[] = [
     stress: { heup: 1, onderrug: 1 },
     tips: ['Schouderbladen op de rand van een bank, kussen op je heupen.', 'Kin naar je borst, ribben laag.', 'Bovenaan 1 tel je bilspieren aanspannen.'],
     video: 'barbell hip thrust form',
+    setup: 'Vlakke bank + stang met een kussen (vraag een \'barbell pad\'). Rug tegen de rand van de bank, stang over je heupen.',
   },
   {
     id: 'glute-bridge', name: 'Glute bridge met dumbbell', pattern: 'hinge', muscles: ['bilspieren', 'hamstrings'],
@@ -118,6 +122,7 @@ const E: Exercise[] = [
     stress: { onderrug: 2, heup: 1 },
     tips: ['Kussen net onder je heupbeenderen.', 'Buig vanuit de heupen, niet vanuit je rug.', 'Stop bovenaan in een rechte lijn, niet overstrekken.'],
     video: '45 degree back extension glute focus',
+    setup: 'Schuine bank met een kussen voor je heupen en een rol achter je enkels. Kussen net onder je heupbeenderen.',
   },
   {
     id: 'kb-deadlift', name: 'Kettlebell deadlift', pattern: 'hinge', muscles: ['bilspieren', 'hamstrings'],
@@ -132,6 +137,7 @@ const E: Exercise[] = [
     stress: { knie: 1 },
     tips: ['Knie in lijn met het draaipunt van het toestel.', 'Rustig terug, 2 tellen.', 'Heupen blijven op het kussen.'],
     video: 'seated leg curl form',
+    setup: 'Toestel waarbij je op je buik ligt (of zit) met een rol achter je enkels. Rol net boven je hielen, knie ter hoogte van het draaipunt.',
   },
   {
     id: 'leg-extension', name: 'Leg extension (toestel)', pattern: 'legs_iso', muscles: ['quadriceps'],
@@ -139,6 +145,7 @@ const E: Exercise[] = [
     stress: { knie: 2 },
     tips: ['Knie in lijn met het draaipunt.', 'Bovenaan 1 tel vasthouden.', 'Gecontroleerd zakken.'],
     video: 'leg extension machine form',
+    setup: 'Zittoestel met een rol vóór je onderbenen. Rugleuning zo dat je knie bij het draaipunt zit, rol net boven je enkels.',
   },
   // ── Duwen horizontaal ───────────────────────────────────────────────
   {
@@ -147,6 +154,7 @@ const E: Exercise[] = [
     stress: { schouder: 2, elleboog: 1, pols: 1 },
     tips: ['Schouderbladen samen en laag op de bank.', 'Ellebogen ±45° van je lichaam.', 'Zak tot de dumbbells op borsthoogte.'],
     video: 'dumbbell bench press form',
+    setup: 'Vlakke bank en een paar dumbbells uit het rek. Ga zitten met de dumbbells op je dijen en rol dan rustig naar achter.',
   },
   {
     id: 'incline-db-press', name: 'Schuine dumbbell press', pattern: 'push_h', muscles: ['borst', 'schouders', 'triceps'],
@@ -154,6 +162,7 @@ const E: Exercise[] = [
     stress: { schouder: 2, elleboog: 1, pols: 1 },
     tips: ['Bank op 30°.', 'Dumbbells boven je bovenborst.', 'Gecontroleerd zakken, 2 tellen.'],
     video: 'incline dumbbell press form',
+    setup: 'Verstelbare bank op ±30° (eerste of tweede gaatje) en een paar dumbbells.',
   },
   {
     id: 'chest-press', name: 'Chest press (toestel)', pattern: 'push_h', muscles: ['borst', 'triceps', 'schouders'],
@@ -161,6 +170,7 @@ const E: Exercise[] = [
     stress: { schouder: 1, elleboog: 1 },
     tips: ['Handgrepen op borsthoogte.', 'Schouderbladen tegen de leuning.', 'Niet volledig op slot duwen.'],
     video: 'chest press machine form',
+    setup: 'Zittoestel met twee handgrepen naast je borst; je duwt naar voren. Zithoogte zo dat de handgrepen op borsthoogte zitten.',
   },
   {
     id: 'barbell-bench', name: 'Bankdrukken (stang)', pattern: 'push_h', muscles: ['borst', 'triceps', 'schouders'],
@@ -168,6 +178,7 @@ const E: Exercise[] = [
     stress: { schouder: 3, elleboog: 1, pols: 1 },
     tips: ['Ogen onder de stang, schouderbladen samen.', 'Stang raakt je onderborst.', 'Train zwaar enkel met een spotter of veiligheidsarmen.'],
     video: 'bench press form beginner',
+    setup: 'Vlakke bank met een rek voor de stang. Train zwaar enkel met veiligheidsarmen of iemand die helpt.',
   },
   {
     id: 'incline-push-up', name: 'Push-up met handen verhoogd', pattern: 'push_h', muscles: ['borst', 'triceps', 'schouders'],
@@ -204,6 +215,7 @@ const E: Exercise[] = [
     stress: { schouder: 3, elleboog: 1, nek: 1 },
     tips: ['Rugleuning bijna rechtop.', 'Dumbbells starten op oorhoogte.', 'Duw omhoog zonder je rug hol te trekken.'],
     video: 'seated dumbbell shoulder press form',
+    setup: 'Verstelbare bank bijna rechtop (één gaatje onder verticaal) en een paar dumbbells.',
   },
   {
     id: 'machine-shoulder-press', name: 'Schouderpress (toestel)', pattern: 'push_v', muscles: ['schouders', 'triceps'],
@@ -211,6 +223,7 @@ const E: Exercise[] = [
     stress: { schouder: 2, elleboog: 1 },
     tips: ['Handgrepen op schouderhoogte.', 'Rug tegen de leuning.', 'Niet op slot duwen bovenaan.'],
     video: 'machine shoulder press form',
+    setup: 'Zittoestel met handgrepen naast je schouders; je duwt omhoog. Zithoogte zo dat de handgrepen op schouderhoogte starten.',
   },
   {
     id: 'standing-db-press', name: 'Staande schouderpress (dumbbells)', pattern: 'push_v', muscles: ['schouders', 'triceps', 'core'],
@@ -240,6 +253,7 @@ const E: Exercise[] = [
     stress: { schouder: 2, elleboog: 1 },
     tips: ['Grip iets breder dan schouders.', 'Trek de stang naar je bovenborst, ellebogen naar je zij.', 'Niet achteroverhangen.'],
     video: 'lat pulldown proper form',
+    setup: 'Kabeltoestel met een lange stang boven je hoofd en kussens over je dijen. Kussens zo dat je dijen vastzitten; pak de stang staand en ga dan zitten.',
   },
   {
     id: 'close-grip-pulldown', name: 'Pulldown met smalle greep', pattern: 'pull_v', muscles: ['rug', 'biceps'],
@@ -247,6 +261,7 @@ const E: Exercise[] = [
     stress: { schouder: 1, elleboog: 1 },
     tips: ['V-greep of smalle handgreep.', 'Trek naar je borstbeen.', 'Schouders laag houden.'],
     video: 'close grip lat pulldown form',
+    setup: 'Hetzelfde toestel als de lat pulldown, maar met een V-vormige handgreep (vraag er eentje of neem hem uit de bak met handgrepen).',
   },
   {
     id: 'db-pullover', name: 'Dumbbell pullover', pattern: 'pull_v', muscles: ['rug', 'borst'],
@@ -262,6 +277,7 @@ const E: Exercise[] = [
     stress: { onderrug: 1, elleboog: 1 },
     tips: ['Rechte rug, borst omhoog.', 'Trek je ellebogen naar achter, schouderbladen samen.', 'Niet met je romp mee zwaaien.'],
     video: 'seated cable row form',
+    setup: 'Lage kabel met een bankje en voetsteunen; vaak met een V-handgreep. Voeten op de steunen, knieën licht gebogen.',
   },
   {
     id: 'machine-row', name: 'Roeien (toestel)', pattern: 'pull_h', muscles: ['rug', 'biceps'],
@@ -269,6 +285,7 @@ const E: Exercise[] = [
     stress: { elleboog: 1 },
     tips: ['Borst tegen het kussen.', 'Trek de ellebogen voorbij je romp.', 'Rustig terug, schouders naar voren laten komen.'],
     video: 'machine row form',
+    setup: 'Zittoestel met een borstkussen en handgrepen voor je; je trekt naar achter. Borstkussen zo dat je de handgrepen net kan vastnemen.',
   },
   {
     id: 'chest-supported-row', name: 'Roeien op schuine bank (dumbbells)', pattern: 'pull_h', muscles: ['rug', 'biceps'],
@@ -276,6 +293,7 @@ const E: Exercise[] = [
     stress: { elleboog: 1, schouder: 1 },
     tips: ['Borst op de schuine bank (30–45°).', 'Ellebogen naar je heupen trekken.', 'Even vasthouden bovenaan.'],
     video: 'chest supported dumbbell row form',
+    setup: 'Verstelbare bank op ±30–45°; je ligt met je borst op de leuning.',
   },
   {
     id: 'one-arm-db-row', name: 'Eenarmig roeien (dumbbell)', pattern: 'pull_h', muscles: ['rug', 'biceps'],
@@ -326,6 +344,7 @@ const E: Exercise[] = [
     stress: {},
     tips: ['Zijwaarts naast de kabel, handgreep tegen je borst.', 'Duw recht vooruit en weersta het draaien.', '2 tellen vasthouden met gestrekte armen.'],
     video: 'pallof press form',
+    setup: 'Kabelkolom met een losse handgreep op borsthoogte. Ga zijwaarts staan, één tot twee stappen van de kabel.',
   },
   {
     id: 'bird-dog', name: 'Bird dog', pattern: 'core', muscles: ['core', 'bilspieren'],
@@ -362,6 +381,7 @@ const E: Exercise[] = [
     stress: { elleboog: 2 },
     tips: ['Ellebogen tegen je zij.', 'Strek volledig, hou 1 tel vast.', 'Enkel je onderarmen bewegen.'],
     video: 'triceps pushdown form',
+    setup: 'Kabelkolom met een korte stang of touw bovenaan. Sta er recht voor, ellebogen tegen je zij.',
   },
   {
     id: 'overhead-triceps', name: 'Triceps extensie boven het hoofd', pattern: 'arms', muscles: ['triceps'],

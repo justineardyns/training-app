@@ -63,7 +63,12 @@ export interface ProgressionInput {
   sets: number;
   restSec: number;
   repRange?: [number, number];
+  /** Absolute beginner: lichter starten en eerst de beweging leren. */
+  beginner?: boolean;
 }
+
+/** Absolute beginners starten op ±60% van het gewone startgewicht. */
+export const BEGINNER_START = 0.6;
 
 export interface ProgressionResult extends Prescription {
   /** Overstappen naar een zwaardere (of lichtere) variant. */
@@ -110,13 +115,17 @@ export function nextPrescription(input: ProgressionInput): ProgressionResult {
 
   // Eerste keer: voorzichtig starten, jij kalibreert met het draaiwiel.
   if (!last) {
-    const load = ex.load === 'bodyweight' ? 0 : snapLoad(ex.start, options);
+    const load = ex.load === 'bodyweight' ? 0 : snapLoad(ex.start * (input.beginner ? BEGINNER_START : 1), options, input.beginner ? 'down' : 'nearest');
+    const keep = input.beginner ? 3 : 2;
     return make({
       load,
       targetReps: lo + 2,
       change: 'new',
-      note:
-        ex.load === 'bodyweight'
+      note: input.beginner
+        ? ex.load === 'bodyweight'
+          ? `Kennismaking: leer de beweging rustig. ${lo + 2}${unit}, hou ${keep} reps over. Bekijk eerst de foto's.`
+          : `Kennismaking: start licht met ${formatLoad(ex, load)}. Leer de beweging, hou ${keep} reps over. Te licht? Dan gaat het volgende keer omhoog.`
+        : ex.load === 'bodyweight'
           ? `Eerste keer: ${lo + 2}${unit} met goede techniek. Hou 2 reps over.`
           : `Eerste keer: start met ${formatLoad(ex, load)}. Kies een gewicht waarmee je ${lo + 2}${unit} haalt met 2 reps over.`,
     });
