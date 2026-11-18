@@ -2,7 +2,7 @@ import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { idb } from './db.ts';
 import { processHealthInbox } from './healthInbox.ts';
-import { reportInjury, updateInjury } from './injuries.ts';
+import { reportIllness, reportInjury, updateIllness, updateInjury } from './injuries.ts';
 import { paths, type HealthMonthFile } from './schema.ts';
 import { defaultProfile, Store } from './store.ts';
 
@@ -89,5 +89,35 @@ describe('blessures melden', () => {
     const after = s.sessionFor(s.todayPlan());
     expect(before && 'exercises' in before && before.exercises[0]!.exercise.id).toBe('leg-press');
     expect(after && 'exercises' in after && after.exercises.some((e) => e.exercise.id === 'leg-press')).toBe(false);
+  });
+});
+
+describe('ziek melden', () => {
+  beforeEach(() => idb.reset());
+
+  it('koorts → rust; een blessure melden wist je ziekte niet; genezen → rustig terug', async () => {
+    const s = await fresh();
+    const ill = await reportIllness(s, 'koorts');
+    expect(s.illness().status).toBe('rest');
+    expect(s.plan().days.every((d) => !d.sweat)).toBe(true);
+    await reportInjury(s, 'knie', 1, false);
+    expect(s.illnesses()).toHaveLength(1);
+    await updateInjury(s, s.injuries()[0]!.id, 'beter');
+    expect(s.illnesses()).toHaveLength(1);
+    await updateIllness(s, ill.id, 'weg');
+    expect(s.illness().status).toBe('return');
+    const first = s.plan().days.find((d) => d.status === 'planned' && d.sweat)!;
+    expect(first.lighter).toBe(true);
+    const session = s.sessionFor(first);
+    if (session?.kind === 'strength') expect(session.notes.join(' ')).toMatch(/1 set minder/);
+  });
+
+  it('verkouden → lichter; toch koorts → rust', async () => {
+    const s = await fresh();
+    const ill = await reportIllness(s, 'verkouden');
+    expect(s.illness().status).toBe('light');
+    expect(s.plan().days.filter((d) => d.sweat).every((d) => d.lighter)).toBe(true);
+    await updateIllness(s, ill.id, 'erger', 'koorts');
+    expect(s.illness().status).toBe('rest');
   });
 });

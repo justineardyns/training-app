@@ -1,3 +1,4 @@
+import type { Illness, IllnessKind } from '../coach/illness.ts';
 import type { Injury, Severity, Zone } from '../coach/types.ts';
 import { paths, type InjuriesFile } from './schema.ts';
 import { newId, type Store } from './store.ts';
@@ -14,7 +15,7 @@ export async function reportInjury(store: Store, zone: Zone, severity: Severity,
   } else {
     injury = { id: newId(), zone, severity, startedOn: today, sharp, updates: [] };
   }
-  await store.write(paths.injuries, { injuries: [...file.injuries.filter((i) => i.id !== injury.id), injury] });
+  await store.write(paths.injuries, { ...file, injuries: [...file.injuries.filter((i) => i.id !== injury.id), injury] });
   return injury;
 }
 
@@ -22,6 +23,7 @@ export async function updateInjury(store: Store, id: string, trend: 'beter' | 'z
   const today = store.today();
   const file = store.read<InjuriesFile>(paths.injuries) ?? { injuries: [] };
   await store.write(paths.injuries, {
+    ...file,
     injuries: file.injuries.map((i) => {
       if (i.id !== id) return i;
       const last = i.updates.at(-1)?.severity ?? i.severity;
@@ -32,5 +34,35 @@ export async function updateInjury(store: Store, id: string, trend: 'beter' | 'z
         resolvedOn: trend === 'weg' ? today : i.resolvedOn,
       };
     }),
+  });
+}
+
+/** "Ik ben ziek": één actieve ziekte tegelijk. */
+export async function reportIllness(store: Store, kind: IllnessKind): Promise<Illness> {
+  const today = store.today();
+  const file = store.read<InjuriesFile>(paths.injuries) ?? { injuries: [] };
+  const list = file.illnesses ?? [];
+  const active = list.find((i) => !i.resolvedOn);
+  const illness: Illness = active
+    ? { ...active, updates: [...active.updates.filter((u) => u.date !== today), { date: today, trend: 'zelfde', kind }] }
+    : { id: newId(), kind, startedOn: today, updates: [] };
+  await store.write(paths.injuries, { ...file, illnesses: [...list.filter((i) => i.id !== illness.id), illness] });
+  return illness;
+}
+
+export async function updateIllness(store: Store, id: string, trend: 'beter' | 'zelfde' | 'erger' | 'weg', kind?: IllnessKind): Promise<void> {
+  const today = store.today();
+  const file = store.read<InjuriesFile>(paths.injuries) ?? { injuries: [] };
+  await store.write(paths.injuries, {
+    ...file,
+    illnesses: (file.illnesses ?? []).map((i) =>
+      i.id !== id
+        ? i
+        : {
+            ...i,
+            updates: [...i.updates.filter((u) => u.date !== today), kind ? { date: today, trend, kind } : { date: today, trend }],
+            resolvedOn: trend === 'weg' ? today : i.resolvedOn,
+          },
+    ),
   });
 }

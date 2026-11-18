@@ -2,7 +2,7 @@ import type { WalkAdvice } from './weather.ts';
 
 // Zweetvrije activiteiten voor de dagen tussen je trainingen. Allemaal optioneel.
 
-export type LightId = 'mobiliteit' | 'wandeling' | 'core' | 'stretching';
+export type LightId = 'mobiliteit' | 'wandeling' | 'core' | 'stretching' | 'rust';
 
 export interface LightActivity {
   id: LightId;
@@ -40,6 +40,13 @@ export const LIGHT: Record<LightId, LightActivity> = {
     minutes: 8,
     why: 'Sterke romp, rustig tempo: je zweet niet.',
     steps: ['Dead bug: 2× 8 per kant', 'Bird dog: 2× 8 per kant', 'Zijplank: 2× 20 s per kant', 'Rustig ademen, geen haast'],
+  },
+  rust: {
+    id: 'rust',
+    title: 'Rust en herstel',
+    minutes: 0,
+    why: 'Ziek: je lichaam heeft zijn energie nu nodig om te genezen. Rust is vandaag je training.',
+    steps: ['Veel drinken (water, thee, soep)', 'Extra slapen', 'Geen training, ook geen zware wandeling', 'Voel je je 24 uur zonder koorts of klachten: tik "Genezen"'],
   },
   stretching: {
     id: 'stretching',

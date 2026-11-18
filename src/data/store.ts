@@ -22,6 +22,7 @@ import { eventFromSession, recoveryAt, type Group, type GroupRecovery } from '..
 import { SWEAT_KINDS } from '../coach/planner.ts';
 import { isWeekend } from '../coach/availability.ts';
 import type { DayWeather } from '../coach/weather.ts';
+import { illnessState, type Illness, type IllnessState } from '../coach/illness.ts';
 import type {
   CoachAdjustments,
   DayAvailability,
@@ -284,6 +285,15 @@ export class Store {
     return this.read<InjuriesFile>(paths.injuries)?.injuries ?? [];
   }
 
+  illnesses(): Illness[] {
+    return this.read<InjuriesFile>(paths.injuries)?.illnesses ?? [];
+  }
+
+  /** Ziek? Rust, lichter of net genezen. */
+  illness(): IllnessState {
+    return this.cached('illness', () => illnessState(this.illnesses(), this.today(), this.sessions()));
+  }
+
   adjustments(): CoachAdjustments | undefined {
     const raw = this.read<unknown>(paths.adjustments);
     return raw ? sanitizeAdjustments(raw).adjustments : undefined;
@@ -401,6 +411,7 @@ export class Store {
       weakGroup: this.insights().weakGroup,
       soreToday: this.checkFor(today)?.sore,
       novice: this.novice(),
+      illness: this.illness(),
     };
   }
 
@@ -429,7 +440,7 @@ export class Store {
         history: this.sessions(),
         equipment: profile.equipment,
         gym: profile.gym,
-        readiness: day.date === this.today() ? readiness : undefined,
+        readiness: day.date === this.today() && readiness ? readiness : day.lighter ? 'orange' : undefined,
         deload: day.deload,
         injuries: this.injuries(),
         adjustments: activeAdjustments(this.adjustments(), day.date),
@@ -442,7 +453,7 @@ export class Store {
       date: day.date,
       location: day.location,
       minutes: day.minutes,
-      readiness: day.date === this.today() ? readiness : undefined,
+      readiness: day.date === this.today() && readiness ? readiness : day.lighter ? 'orange' : undefined,
       equipment: profile.equipment,
       gym: profile.gym,
       groupClass: day.groupClass ? this.prefs().className : undefined,

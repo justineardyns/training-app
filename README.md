@@ -154,6 +154,7 @@ stuurt volgende week bij en pusht. Dat kan ook automatisch als geplande taak elk
 | **Gewicht** | De app stelt het voor. Na de oefening: *Gelukt*, of *Ik nam meer/minder* + welk gewicht. |
 | **Lukt vandaag niet** | **Vandaag lukt niet**: het plan schuift op, zonder sessies op te stapelen. |
 | **Pijntje** | **Ik heb last van…** → zone + ernst. Oefeningen worden vervangen of lichter, daarna rustig opbouwen. |
+| **Ziek** | **Ik heb last van… → 🤒 Ik ben ziek** (of via dagvorm *Ziek of op*). Verkouden (enkel boven de nek): lichter trainen, geen intervallen of les. Griep, koorts of maag-darm: rust tot je *Genezen* tikt. Daarna zijn je eerste 2 trainingen lichter. Lang ziek of erger: de coach raadt je huisarts aan. |
 | **Groepsles of tennis** | Tik na afloop op *Gedaan* (of *Groepsles of cardio gedaan?* als het niet gepland was). |
 
 ## Problemen oplossen

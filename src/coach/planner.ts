@@ -14,6 +14,7 @@ import {
   type StrengthFocus,
 } from './recovery.ts';
 import { walkAdvice, weatherIcon, weatherText, type DayWeather, type WalkAdvice } from './weather.ts';
+import { RETURN_SESSIONS, type IllnessState } from './illness.ts';
 import {
   clampTarget,
   DEFAULT_TARGET,
@@ -135,6 +136,8 @@ export interface PlanInput {
   soreToday?: Group[];
   /** Nog nieuw voor je spieren (eerste weken): iets meer hersteltijd. */
   novice?: boolean;
+  /** Ziek: rust (koorts, griep, maag-darm), lichter (verkouden) of terug na ziekte (eerste trainingen lichter). */
+  illness?: IllnessState;
 }
 
 export const SWEAT_KINDS = new Set(['strength', 'cardio', 'class']);
@@ -277,8 +280,10 @@ export function planWeek(input: PlanInput): WeekPlan {
   const doneOn = new Map<ISODate, SessionLog[]>();
   for (const s of sweat) doneOn.set(s.date, [...(doneOn.get(s.date) ?? []), s]);
 
+  // Ziek met koorts, griep of maag-darm: rust, geen enkele training (ook geen tennis).
+  const sickRest = input.illness?.status === 'rest';
   // Tennis: jouw vaste afspraak (conditie, haarwasdag), zolang die dag nog niets gedaan is.
-  const tennis = days.filter((d) => (av.get(d)!.tennis ?? 0) > 0 && !doneOn.has(d) && !postponed.has(d));
+  const tennis = sickRest ? [] : days.filter((d) => (av.get(d)!.tennis ?? 0) > 0 && !doneOn.has(d) && !postponed.has(d));
   const tennisSet = new Set(tennis);
 
   // Vaste trainingen per dag (gedaan + tennis), zoals de regels ze zien.
@@ -297,6 +302,7 @@ export function planWeek(input: PlanInput): WeekPlan {
 
   // Welke keuzes per dag?
   const candidate = (d: ISODate) =>
+    !sickRest &&
     resolveDay(av.get(d)!, prefs.trainAtHome).available && !fixed.has(d) && !postponed.has(d) && !(d === today && input.readinessToday === 'red');
   const options: Choice[][] = days.map((d) => {
     if (!candidate(d)) return ['rest'];
@@ -504,6 +510,10 @@ export function planWeek(input: PlanInput): WeekPlan {
   });
 
   // Herstel: wat je spieren nog meedragen (voor de focus binnen een training en de uitleg).
+  // Verkouden: alles lichter. Terug na ziekte: de eerste trainingen lichter.
+  let returnLeft = input.illness?.status === 'return' ? RETURN_SESSIONS : 0;
+  const illWhy = input.illness?.status === 'light' ? 'Verkouden: lichter, geen intervallen.' : 'Terug na ziekte: lichter, rustig opbouwen.';
+
   const timeline: LoadEvent[] = [
     ...sweat.filter((s) => s.date >= addDays(start, -4) && s.date <= addDays(start, horizon)).map((s) => eventFromSession(s, novice)),
     ...tennis.map((d) => {
@@ -576,7 +586,8 @@ export function planWeek(input: PlanInput): WeekPlan {
     }
     if (assign[idx(d)] !== 'rest') {
       const r = resolveDay(a, prefs.trainAtHome);
-      const lighter = d === today && input.readinessToday === 'orange';
+      const illLighter = input.illness?.status === 'light' || returnLeft-- > 0;
+      const lighter = (d === today && input.readinessToday === 'orange') || illLighter;
       const cls = classSlotFor(a, prefs.classSlots, prefs.trainAtHome);
       const k = kindOf(d);
       const slot = (k === 'cardio' ? cls?.slot : undefined) ?? r.slot;
@@ -606,7 +617,7 @@ export function planWeek(input: PlanInput): WeekPlan {
           date: d, type: 'strength', sweat: true, status: 'planned', template: t, location: r.location, minutes: a.minutes, slot: r.slot,
           title: `${templateTitle(t)} · ${LOC[r.location]} · ${a.minutes} min${deload.deload ? ' · deload' : ''}`, lighter, deload: deload.deload,
           focus, split, classSlot: !!cls, want: a.want, weather,
-          why: [kindWhy, splitWhy, focus.why ?? (splitWhy ? '' : sinceText(d))].filter(Boolean).join(' '),
+          why: [illLighter ? illWhy : '', kindWhy, splitWhy, focus.why ?? (splitWhy ? '' : sinceText(d))].filter(Boolean).join(' '),
         });
       } else {
         const location: Location = cls ? 'gym' : r.location;
@@ -618,7 +629,9 @@ export function planWeek(input: PlanInput): WeekPlan {
             : legs.state === 'herstelt'
               ? 'Benen herstellen nog: neem de zware stukken rustig.'
               : 'Morgen geen benen: die krijgen een rustdag.';
-        const kindWhy = lighter
+        const kindWhy = illLighter
+          ? `${illWhy} Rustig fietsen in zone 2 in plaats van ${cls ? 'de les' : 'intervallen'}.`
+          : lighter
           ? 'Dagvorm oranje: rustig tempo, geen intervallen.'
           : a.booked && cls
             ? `Gereserveerd: ${prefs.className.toLowerCase()}${cls.time ? ` om ${hourText(cls.time)}` : ''}.`
@@ -639,14 +652,16 @@ export function planWeek(input: PlanInput): WeekPlan {
     }
     const moved = (postponed.has(d) || (d === today && input.readinessToday === 'red')) && original.has(d);
     const walk = wx ? walkAdvice(wx) : undefined;
-    const picked = moved ? { light: LIGHT.mobiliteit } : chooseLight(prevStrength, dayIndex(d), walk);
+    const picked = sickRest ? { light: LIGHT.rust } : moved ? { light: LIGHT.mobiliteit } : chooseLight(prevStrength, dayIndex(d), walk);
     const light = picked.light;
     const yesterday = labelOn.get(addDays(d, -1));
     const tomorrow = labelOn.get(addDays(d, 1));
     result.push({
-      date: d, type: 'light', sweat: false, status: moved ? 'moved' : 'free', title: `${light.title} (${light.minutes} min, zweetvrij)`, light,
+      date: d, type: 'light', sweat: false, status: moved ? 'moved' : 'free', title: light.minutes ? `${light.title} (${light.minutes} min, zweetvrij)` : light.title, light,
       note: moved ? 'Verplaatst: vandaag herstel.' : undefined, weather, walk, want: wish(d),
-      why: moved
+      why: sickRest
+        ? 'Ziek: rust tot je beter bent.'
+        : moved
         ? undefined
         : yesterday
           ? `Rustdag na ${yesterday} gisteren: je spieren bouwen nu op.`
@@ -665,7 +680,11 @@ export function planWeek(input: PlanInput): WeekPlan {
   const messages: string[] = [];
   const unticked = input.explicit ? days.filter((d) => d > today && !input.explicit!(d)).length : 0;
   if (unticked >= 3) messages.push(`${unticked} van de komende dagen heb je nog niet aangevinkt. Ik ging uit van je vaste patroon. Tik op Week om aan te passen.`);
-  if (ct.note) messages.push(ct.note);
+  if (input.illness && input.illness.status !== 'none') {
+    messages.push(input.illness.message);
+    if (input.illness.refer) messages.push(input.illness.referMessage);
+  }
+  if (ct.note && !sickRest) messages.push(ct.note);
   if (deload.deload) messages.push(deload.message);
   const missed = [...original].filter((d) => d < today && d >= addDays(today, -3) && !doneOn.has(d));
   if (missed.length) messages.push(`Je miste ${missed.length === 1 ? 'een training' : `${missed.length} trainingen`}. Geen inhaalrace: we stapelen niet, het plan schuift op.`);
@@ -679,13 +698,13 @@ export function planWeek(input: PlanInput): WeekPlan {
     }
   }
   const total = chosen.length + tennis.length + doneTodayCount;
-  if (total < T) {
+  if (total < T && !sickRest) {
     const why = `In de komende 7 dagen passen ${total} van de ${T} trainingen binnen je beschikbaarheid en de regels (conditie nooit 2 dagen na elkaar, max 4 kracht en 4 conditie, geen benen de dag na ${prefs.className.toLowerCase()}).`;
     messages.push(total < NORMAL_MIN ? `${why} Kan je ergens een extra avond vrijmaken?` : why);
   }
   // Indoor cycling: minstens 1×, liefst 2×. Lukt dat niet, eerlijk zeggen hoe je ze toch krijgt.
   const cycling = result.filter((r) => r.groupClass || (r.status === 'done' && r.sessions?.some((x) => x.kind === 'class'))).length;
-  if (prefs.className && cycling < WANT_CYCLING) {
+  if (prefs.className && cycling < WANT_CYCLING && !input.illness?.status.match(/rest|light/)) {
     const swap = result.find((r) => r.status === 'planned' && r.type === 'strength' && r.classSlot && !r.want && r.date !== today);
     const how = swap ? `Tik op ${dayName(swap.date)} in Week voor een les` : 'Maak een lesmoment groen in de Agenda';
     messages.push(
@@ -752,6 +771,8 @@ export function planTwoWeeks(input: PlanInput): TwoWeekPlan {
     history: [...input.history, ...ahead],
     originalPlan: (input.originalPlan ?? []).filter((d) => d >= from),
   };
+  // Ziek met rust: ook de week erna voorlopig rust. Verkouden of net genezen: de week erna gewoon.
+  if (input.illness?.status !== 'rest') delete secondInput.illness;
   delete secondInput.explicit;
   delete secondInput.readinessToday;
   delete secondInput.soreToday;

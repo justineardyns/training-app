@@ -462,3 +462,7 @@ p.why { font-size: 15px; margin: 4px 0 10px; }
 .tabbar a .ico { position: relative; }
 .tabbar .badge { position: absolute; top: -2px; right: -8px; width: 10px; height: 10px; border-radius: 50%; background: var(--orange); }
 .cal-cell.provisional .cal-ico { opacity: 0.55; }
+
+.btn.sick { margin-bottom: 12px; }
+.card.illness { border-left: 4px solid var(--orange); }
+.card.illness.rest { border-left-color: var(--red); }

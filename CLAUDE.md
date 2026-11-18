@@ -35,6 +35,9 @@ Tests gebruiken verzonnen data (`e2e/seed.ts`, `FakeGitHub`).
   (`src/coach/health.ts` en `src/data/healthInbox.ts` blijven slapend klaar; niet aanroepen).
 - Enkel gratis diensten. Weer: Open-Meteo vanop de iPhone (afgeronde coördinaten, cache enkel lokaal in IndexedDB,
   nooit in de privé-repo). Het weer beïnvloedt enkel zweetvrije dagen, nooit de keuze van zweetdagen.
+- Ziek zijn (`src/coach/illness.ts`, nekregel): verkouden → alles lichter (geen les/intervallen); griep, koorts of
+  maag-darm → rust (geen enkele training); genezen → eerste 2 trainingen lichter. Huisarts bij > 7 dagen, ≥ 3 dagen
+  koorts of erger. Bewaard in `data/injuries.json` (`illnesses`).
 - Herstel (`src/coach/recovery.ts`) en sterke/werkpunten (`src/coach/insights.ts`) sturen de planner en de sessies;
   elke geplande dag krijgt een `why`.
 

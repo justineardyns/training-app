@@ -163,6 +163,9 @@ export function context(store: Store, monday: string) {
     /** Herstel per spiergroep vandaag. */
     recovery: store.recovery(),
     injuries: store.injuries().map((i) => ({ ...i, referral: referral(i, today) })),
+    /** Ziek: rust (koorts/griep/maag-darm), lichter (verkouden) of terug na ziekte, met huisarts-advies. */
+    illness: store.illness(),
+    illnesses: store.illnesses().filter((i) => !i.resolvedOn || i.resolvedOn >= addDays(monday, -14)),
     adjustments: adjRaw ? sanitizeAdjustments(adjRaw) : null,
     /** Hoeveel van de 7 dagen na deze week nog niet aangevinkt zijn (patroon of standaard gebruikt). */
     untickedNextWeek: Array.from({ length: 7 }, (_, i) => addDays(monday, 7 + i)).filter((d) => !store.explicitDay(d)).length,

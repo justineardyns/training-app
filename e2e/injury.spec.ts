@@ -21,3 +21,25 @@ test('"Ik heb last van…" past de training aan en volgt op', async ({ page }) =
   await page.locator('.card.injuries').getByRole('button', { name: 'Weg' }).click();
   await expect(page.locator('.card.injuries')).toContainText('hersteld, we bouwen op');
 });
+
+test('"Ik ben ziek": koorts = rust, genezen = rustig terug', async ({ page }) => {
+  await quickSetup(page);
+  await page.getByRole('link', { name: /Vandaag/ }).click();
+  await page.getByRole('button', { name: 'Ik heb last van…' }).click();
+  await page.getByRole('button', { name: /Ik ben ziek/ }).click();
+  if (process.env.SHOTS_DIR) await page.screenshot({ path: `${process.env.SHOTS_DIR}/16-ziek.png`, fullPage: true });
+  await page.getByRole('button', { name: /^Koorts/ }).click();
+  await expect(page.getByRole('heading', { name: 'Beterschap' })).toBeVisible();
+  await expect(page.getByText(/Geen training tot je beter bent/).first()).toBeVisible();
+  await page.getByRole('button', { name: 'Naar vandaag' }).click();
+  await expect(page.locator('.card.illness')).toContainText('Koorts');
+  await expect(page.getByRole('heading', { name: 'Rust en herstel' })).toBeVisible();
+  if (process.env.SHOTS_DIR) await page.screenshot({ path: `${process.env.SHOTS_DIR}/17-ziek-vandaag.png`, fullPage: true });
+  await page.getByRole('link', { name: /Week/ }).click();
+  await expect(page.locator('.plan-day.sweat')).toHaveCount(0);
+  await page.getByRole('link', { name: /Vandaag/ }).click();
+  await page.locator('.card.illness').getByRole('button', { name: 'Genezen' }).click();
+  await expect(page.locator('.card.illness')).toContainText('genezen, we bouwen rustig op');
+  await page.getByRole('link', { name: /Week/ }).click();
+  await expect(page.locator('.plan-day.sweat').first()).toContainText(/lichter|Terug na ziekte/);
+});

@@ -13,6 +13,7 @@ import type {
 } from '../coach/types.ts';
 import type { LightId } from '../coach/light.ts';
 import type { Group } from '../coach/recovery.ts';
+import type { Illness } from '../coach/illness.ts';
 import type { WatchWorkout } from '../coach/health.ts';
 
 export type { WatchWorkout };
@@ -62,6 +63,8 @@ export interface LogFile {
 
 export interface InjuriesFile {
   injuries: Injury[];
+  /** Ziek zijn (verkouden, griep, koorts, maag-darm). */
+  illnesses?: Illness[];
 }
 
 export interface HealthMonthFile {

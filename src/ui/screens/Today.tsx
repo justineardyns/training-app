@@ -89,6 +89,11 @@ function ReadinessCard() {
       <p>{ADVICE[tone]}</p>
       {check.reasons.length > 0 && <p class="muted small">{check.reasons.join(' · ')}</p>}
       {tone !== 'red' && <SoreChips />}
+      {check.energy === 'sick' && s.illness().status !== 'rest' && s.illness().status !== 'light' && (
+        <button class="btn small" onClick={() => go('blessure')}>
+          🤒 Ben je ziek? Duid aan wat je hebt
+        </button>
+      )}
     </div>
   );
 }
@@ -225,11 +230,16 @@ export function Today() {
 
       {!day.sweat && day.light && (
         <div class="card light-card">
-          <h2>{day.status === 'moved' ? 'Herstel vandaag' : 'Zweetvrije dag'}</h2>
+          <h2>{day.light.id === 'rust' ? 'Rustdag' : day.status === 'moved' ? 'Herstel vandaag' : 'Zweetvrije dag'}</h2>
           {day.note && <p>{day.note}</p>}
           {day.why && <p class="why">{day.why}</p>}
           <h3>
-            {day.light.title} · {day.light.minutes} min <span class="muted small">(optioneel)</span>
+            {day.light.title}
+            {day.light.minutes ? (
+              <>
+                {' '}· {day.light.minutes} min <span class="muted small">(optioneel)</span>
+              </>
+            ) : null}
           </h3>
           <p class="muted small">{day.light.why}</p>
           {day.walk && (
@@ -243,7 +253,7 @@ export function Today() {
               <li key={st}>{st}</li>
             ))}
           </ul>
-          {s.log(isoWeek(today)).light.some((l) => l.date === today) ? (
+          {day.light.id === 'rust' ? null : s.log(isoWeek(today)).light.some((l) => l.date === today) ? (
             <p>✓ Gedaan</p>
           ) : (
             <button class="btn" onClick={() => s.logLight(today, day.light!.id)}>
@@ -258,11 +268,12 @@ export function Today() {
         </div>
       )}
 
-      <RecoveryCard recovery={s.recovery()} />
+      {s.illness().status !== 'rest' && <RecoveryCard recovery={s.recovery()} />}
 
       <InsightsCard insights={s.insights()} />
 
-      <Messages messages={plan.messages} />
+      {/* De ziektekaart staat al bovenaan: niet dubbel tonen. */}
+      <Messages messages={plan.messages.filter((m) => m !== s.illness().message && m !== s.illness().referMessage)} />
 
       {nextSweat && (
         <p class="muted">

@@ -29,7 +29,13 @@ export function morningMessage(store: Store): PushMessage | null {
   const ask = unticked(store) >= 5 ? ' Vink ook je komende dagen aan.' : '';
   if (!day || day.status === 'done') return null;
   const injury = store.injuries().find((i) => !i.resolvedOn);
-  const injuryAsk = injury ? ` Hoe is je ${ZONE_LABEL[injury.zone].toLowerCase()}?` : '';
+  const ill = store.illness();
+  const injuryAsk =
+    ill.status === 'rest' || ill.status === 'light'
+      ? ' Beterschap! Voel je je beter? Tik het aan in de app.'
+      : injury
+        ? ` Hoe is je ${ZONE_LABEL[injury.zone].toLowerCase()}?`
+        : '';
 
   if (day.type === 'tennis') {
     return { title: `Vandaag: ${day.title.toLowerCase()} 🎾`, body: `Telt als conditiesessie. Tik na het spelen op Gedaan.${injuryAsk}${ask}`, url: '#/vandaag', tag: 'vandaag' };
@@ -57,6 +63,9 @@ export function morningMessage(store: Store): PushMessage | null {
 
   const next = plan.days.find((d) => d.date > today && d.status === 'planned');
   const light = day.light;
+  if (ill.status === 'rest') {
+    return { title: 'Ziek: vandaag rust 🤒', body: `Veel drinken en slapen, geen training.${injuryAsk}`, url: '#/vandaag', tag: 'vandaag' };
+  }
   return {
     title: 'Zweetvrije dag',
     body: `${light ? `Optioneel: ${light.title.toLowerCase()} (${light.minutes} min).` : 'Rust.'}${next ? ` Volgende training: ${dayName(next.date)}.` : ''}${injuryAsk}${ask}`,
