@@ -28,6 +28,9 @@ Werkt offline in de gym, draait puur op jouw tikken en kost **€ 0**.
 - **14 dagen vooruit:** de komende 7 dagen vast gepland, dag 8–14 voorlopig (zelfde regels, bouwt verder op de
   eerste week). Je vinkt aan welke avonden passen (in het weekend overdag, want Jims sluit dan om 17u), en of je
   tennist. Alles gebeurt in Jims: geen thuistrainingen.
+- **Agenda:** een maandkalender (**Week → 📅 Agenda**). Eén tik per dag: groen = kan, rood = kan niet, tot 2 maanden
+  vooruit. Je ziet meteen wat er gepland staat (🏋️ 🚴 🎾 🎟️). Tik op een dag voor tennis of om een les als gereserveerd
+  aan te duiden. Met één knop bevestig je dat de komende 14 dagen kloppen.
 - **Lessen reserveren:** indoor cycling zit snel vol. Bovenaan **Week** zie je de lessen van de komende 14 dagen;
   reserveer in de Jims-app en tik aan wat lukte (🎟️). Een gereserveerde les blijft vast staan. Zondag krijg je
   een herinnering voor de lessen die nog niet gereserveerd zijn.
@@ -138,7 +141,7 @@ stuurt volgende week bij en pusht. Dat kan ook automatisch als geplande taak elk
 
 | Wanneer | Wat |
 |---|---|
-| **Zondag** (of wanneer je wil) | Melding "Vink je komende dagen aan" → avonden (en weekend overdag) aanvinken, tennis aanduiden. 20 seconden. |
+| **Zondag** (of wanneer je wil) | Melding "Vink je komende dagen aan" → **Agenda**: tik rood wat niet kan, tennis aanduiden, *De komende 14 dagen kloppen*. 20 seconden. Of de lijst via *Dagen aanvinken*. |
 | **'s Ochtends** | Melding met je plan. Open de app → tik hoe je je voelt (en optioneel: spierpijn in benen of bovenlijf) → groen/oranje/rood advies, training past zich aan je herstel aan. |
 | **Les gereserveerd** | **Week** → tik op de les bovenaan (of op de dag → *Les gereserveerd*). |
 | **Liever cycling dan kracht** (of omgekeerd) | **Week** → tik op de dag → *Liever indoor cycling* / *Liever kracht*. Past het niet binnen de regels, dan zegt de coach waarom. |

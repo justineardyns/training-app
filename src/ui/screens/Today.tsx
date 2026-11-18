@@ -156,7 +156,7 @@ export function Today() {
       )}
 
       {unticked >= 3 && (
-        <button class="card cta" onClick={() => go('beschikbaarheid')}>
+        <button class="card cta" onClick={() => go('agenda')}>
           <strong>Vink je komende dagen aan</strong>
           <span class="muted small">Welke avonden (en weekenddagen) passen? 20 seconden.</span>
         </button>

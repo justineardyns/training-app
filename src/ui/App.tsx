@@ -4,6 +4,7 @@ import { useStore } from './hooks.ts';
 import { Setup } from './screens/Setup.tsx';
 import { Today } from './screens/Today.tsx';
 import { Availability, Week } from './screens/Week.tsx';
+import { Agenda } from './screens/Agenda.tsx';
 import { Workout } from './screens/Workout.tsx';
 import { Cardio } from './screens/Cardio.tsx';
 import { More } from './screens/More.tsx';
@@ -38,6 +39,9 @@ export function App() {
     case 'beschikbaarheid':
       page = <Availability />;
       break;
+    case 'agenda':
+      page = <Agenda />;
+      break;
     case 'training':
       page = <Workout />;
       break;
@@ -66,7 +70,7 @@ export function App() {
       {!focus && (
         <nav class="tabbar">
           {TABS.map((t) => (
-            <a key={t.route} href={`#/${t.route}`} class={route === t.route || (t.route === 'week' && route === 'beschikbaarheid') ? 'on' : ''}>
+            <a key={t.route} href={`#/${t.route}`} class={route === t.route || (t.route === 'week' && (route === 'beschikbaarheid' || route === 'agenda')) ? 'on' : ''}>
               <span class="ico" aria-hidden="true">
                 {t.ico}
               </span>

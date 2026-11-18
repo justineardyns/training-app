@@ -154,7 +154,7 @@ export function Week() {
       <h1>Komende 14 dagen</h1>
       <BookingCard />
       {unticked >= 3 && (
-        <button class="card cta" onClick={() => go('beschikbaarheid')}>
+        <button class="card cta" onClick={() => go('agenda')}>
           <strong>Vink je komende dagen aan</strong>
           <span class="muted small">Welke avonden (en weekenddagen) passen? 20 seconden.</span>
         </button>
@@ -180,9 +180,14 @@ export function Week() {
       </p>
       <PlanList plan={ahead.second} today={today} className={s.prefs().className} onChange={(date, patch) => s.updateDay(date, patch)} />
       <Messages messages={ahead.second.messages} />
-      <button class="btn primary" onClick={() => go('beschikbaarheid')}>
-        Dagen aanvinken
-      </button>
+      <div class="row">
+        <button class="btn primary" onClick={() => go('agenda')}>
+          📅 Agenda
+        </button>
+        <button class="btn" onClick={() => go('beschikbaarheid')}>
+          Dagen aanvinken
+        </button>
+      </div>
       {past.length > 0 && (
         <>
           <h2>Afgelopen 7 dagen</h2>

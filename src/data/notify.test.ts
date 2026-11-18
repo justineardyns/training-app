@@ -60,7 +60,7 @@ describe('zondagherinnering', () => {
 
   it('niet aangevinkt → aanvinken; daarna: reserveer je lessen (tot ze allemaal gereserveerd zijn)', async () => {
     const s = await at('2026-11-29T18:07:00Z');
-    expect(sundayMessage(s)).toMatchObject({ title: 'Vink je komende dagen aan', url: '#/beschikbaarheid' });
+    expect(sundayMessage(s)).toMatchObject({ title: 'Vink je komende dagen aan', url: '#/agenda' });
     await s.saveAvailability(days7('2026-11-29').concat([defaultDay('2026-12-06', 45)]));
     const book = sundayMessage(s)!;
     expect(book).toMatchObject({ title: 'Reserveer je indoor cycling 🎟️', url: '#/week' });

@@ -77,7 +77,7 @@ export function sundayMessage(store: Store): PushMessage | null {
     return {
       title: 'Vink je komende dagen aan',
       body: `Welke avonden (en weekenddagen) passen de komende week? Tik en vink aan: 20 seconden.${toBook.length ? ` Daarna: reserveer je ${cls}.` : ''}`,
-      url: '#/beschikbaarheid',
+      url: '#/agenda',
       tag: 'plan',
     };
   }
