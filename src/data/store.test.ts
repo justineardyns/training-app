@@ -62,11 +62,11 @@ describe('store: rollend plannen', () => {
     expect(legPress?.prescription.sets).toBe(2);
   });
 
-  it('dagvorm rood → sessie van vandaag verplaatst', async () => {
+  it('dagvorm (jouw tik): moe = oranje, ziek of op = rood → sessie verplaatst', async () => {
     const s = await fresh();
     await s.saveAvailability(week(MON));
-    await s.write(paths.health('2026-11'), { month: '2026-11', days: [{ date: MON, sleepHours: 4 }], workouts: [] });
-    expect((await s.recordCheck('low')).level).toBe('red');
+    expect((await s.recordCheck('low')).level).toBe('orange');
+    expect((await s.recordCheck('sick')).level).toBe('red');
     expect(s.todayPlan()).toMatchObject({ status: 'moved', sweat: false });
   });
 

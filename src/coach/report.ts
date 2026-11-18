@@ -4,8 +4,7 @@ import { kg } from './loads.ts';
 import type { WeekPlan } from './planner.ts';
 import { SWEAT_KINDS } from './planner.ts';
 import { e1rm } from './progression.ts';
-import { stats } from './readiness.ts';
-import type { HealthDay, ISODate, Muscle, SessionLog } from './types.ts';
+import type { ISODate, Muscle, ReadinessLevel, SessionLog } from './types.ts';
 
 // Weekrapport: cijfers + korte, eerlijke coachboodschap.
 
@@ -19,12 +18,11 @@ export interface PR {
   reps: number;
 }
 
-export type Trend = 'beter' | 'slechter' | 'stabiel' | null;
-
-export interface RecoveryMetric {
-  week: number | null;
-  baseline: number | null;
-  trend: Trend;
+/** Je dagvorm-tikken van de week (puur jouw input). */
+export interface ReadinessSummary {
+  green: number;
+  orange: number;
+  red: number;
 }
 
 export interface WeeklyReport {
@@ -39,7 +37,7 @@ export interface WeeklyReport {
   trend: { exerciseId: string; name: string; points: { week: string; e1rm: number }[] }[];
   volume: Partial<Record<Muscle, number>>;
   cardioMinutes: number;
-  recovery: { hrv: RecoveryMetric; rhr: RecoveryMetric; sleep: RecoveryMetric };
+  readiness: ReadinessSummary;
   streak: number;
   nextWeek?: { date: ISODate; title: string; sweat: boolean }[];
   /** De week loopt nog (rapport vóór zondagavond). */
@@ -50,7 +48,8 @@ export interface WeeklyReport {
 export interface ReportInput {
   monday: ISODate;
   history: SessionLog[];
-  health: HealthDay[];
+  /** Je dagvorm-tikken (datum + groen/oranje/rood). */
+  checks?: { date: ISODate; level: ReadinessLevel }[];
   /** Aantal geplande sessies (momentopname bij de start van de week). */
   planned: number;
   nextWeek?: WeekPlan;
@@ -72,20 +71,6 @@ function bestPerExercise(sessions: SessionLog[]): Map<string, { e1rm: number; re
     }
   }
   return best;
-}
-
-function recovery(values: (d: HealthDay) => number | undefined, health: HealthDay[], monday: ISODate, higherIsBetter: boolean): RecoveryMetric {
-  const sunday = addDays(monday, 6);
-  const week = stats(health.filter((h) => inRange(h.date, monday, sunday)).map(values));
-  const base = stats(health.filter((h) => inRange(h.date, addDays(monday, -28), addDays(monday, -1))).map(values));
-  const w = week.n ? Math.round(week.mean * 10) / 10 : null;
-  const b = base.n >= 5 ? Math.round(base.mean * 10) / 10 : null;
-  let trend: Trend = null;
-  if (w !== null && b !== null) {
-    const rel = (w - b) / Math.max(Math.abs(b), 1e-6);
-    trend = Math.abs(rel) < 0.03 ? 'stabiel' : rel > 0 === higherIsBetter ? 'beter' : 'slechter';
-  }
-  return { week: w, baseline: b, trend };
 }
 
 export function sweatCount(history: SessionLog[], monday: ISODate): number {
@@ -160,6 +145,8 @@ export function buildReport(input: ReportInput): WeeklyReport {
     week.filter((s) => s.kind === 'cardio' || s.kind === 'class').reduce((a, s) => a + (s.durationMin ?? 0), 0),
   );
 
+  const weekChecks = (input.checks ?? []).filter((c) => inRange(c.date, monday, sunday));
+
   const report: WeeklyReport = {
     week: isoWeek(monday),
     monday,
@@ -172,10 +159,10 @@ export function buildReport(input: ReportInput): WeeklyReport {
     trend,
     volume,
     cardioMinutes,
-    recovery: {
-      hrv: recovery((h) => h.hrvMs, input.health, monday, true),
-      rhr: recovery((h) => h.restingHr, input.health, monday, false),
-      sleep: recovery((h) => h.sleepHours, input.health, monday, true),
+    readiness: {
+      green: weekChecks.filter((c) => c.level === 'green').length,
+      orange: weekChecks.filter((c) => c.level === 'orange').length,
+      red: weekChecks.filter((c) => c.level === 'red').length,
     },
     streak: streakWeeks(history, monday),
     nextWeek: input.nextWeek?.days.map((d) => ({ date: d.date, title: d.title, sweat: d.sweat })),
@@ -213,10 +200,8 @@ export function coachMessage(r: WeeklyReport, next?: WeekPlan): string {
         : `Nieuw record op ${p.name.toLowerCase()}: ${p.reps} reps.`,
     );
   }
-  if (r.recovery.hrv.trend === 'slechter' && r.recovery.rhr.trend === 'slechter') {
-    parts.push('Je herstel liep wat terug: slaap en rustige dagen zijn ook training.');
-  } else if (r.recovery.sleep.trend === 'slechter') {
-    parts.push('Je sliep minder dan normaal. Mik op een vast bedtijdstip.');
+  if (r.readiness.orange + r.readiness.red >= 2) {
+    parts.push('Je voelde je deze week vaak moe: neem je rustdagen echt als rust, ook dat is training.');
   }
   if (r.streak >= 3) parts.push(`${r.streak} weken op rij consequent. Dat is waar resultaat vandaan komt.`);
   if (next?.deload.deload) parts.push('Volgende week is een lichtere deloadweek.');
@@ -228,8 +213,6 @@ const MUSCLE_LABEL: Record<Muscle, string> = {
   quadriceps: 'Quadriceps', hamstrings: 'Hamstrings', bilspieren: 'Bilspieren', kuiten: 'Kuiten', core: 'Core',
 };
 export { MUSCLE_LABEL };
-
-const TREND_ICON: Record<Exclude<Trend, null>, string> = { beter: '↗ beter', slechter: '↘ slechter', stabiel: '→ stabiel' };
 
 /** Markdownversie (basis voor /coach en het archief in de privé-repo). */
 export function reportMarkdown(r: WeeklyReport): string {
@@ -246,12 +229,9 @@ export function reportMarkdown(r: WeeklyReport): string {
   lines.push('', '## Volume (harde sets)', '');
   const vol = Object.entries(r.volume).sort((a, b) => b[1] - a[1]);
   lines.push(vol.length ? vol.map(([m, v]) => `${MUSCLE_LABEL[m as Muscle]} ${nf.format(v)}`).join(' · ') : 'Geen krachtsessies.');
-  lines.push('', '## Conditie en herstel', '', `- Cardiominuten: ${r.cardioMinutes}`);
-  const rec = (label: string, m: RecoveryMetric, unit: string) =>
-    lines.push(`- ${label}: ${m.week === null ? '–' : `${nf.format(m.week)}${unit}`}${m.baseline === null ? '' : ` (normaal ${nf.format(m.baseline)}${unit})`}${m.trend ? ` ${TREND_ICON[m.trend]}` : ''}`);
-  rec('HRV', r.recovery.hrv, ' ms');
-  rec('Rusthartslag', r.recovery.rhr, ' bpm');
-  rec('Slaap', r.recovery.sleep, ' u');
+  lines.push('', '## Conditie en dagvorm', '', `- Cardiominuten: ${r.cardioMinutes}`);
+  const checks = r.readiness.green + r.readiness.orange + r.readiness.red;
+  lines.push(checks ? `- Dagvorm: ${r.readiness.green}× groen · ${r.readiness.orange}× oranje · ${r.readiness.red}× rood` : '- Dagvorm: niet ingevuld');
   if (r.nextWeek) {
     lines.push('', '## Volgende week', '');
     for (const d of r.nextWeek.filter((x) => x.sweat)) lines.push(`- ${DAY_SHORT[dayIndex(d.date)]}: ${d.title}`);

@@ -390,3 +390,5 @@ p { margin: 0 0 12px; }
 .chip.mini { min-height: 36px; padding: 4px 10px; font-size: 14px; }
 .avail-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .chip:disabled { opacity: 0.35; }
+
+.energy-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 0; }

@@ -30,7 +30,7 @@ export function morningMessage(store: Store): PushMessage | null {
   const injuryAsk = injury ? ` Hoe is je ${ZONE_LABEL[injury.zone].toLowerCase()}?` : '';
 
   if (day.type === 'tennis') {
-    return { title: `Vandaag: ${day.title.toLowerCase()} 🎾`, body: `Telt als conditiesessie. Start "Tennis" op je Watch.${injuryAsk}${ask}`, url: '#/vandaag', tag: 'vandaag' };
+    return { title: `Vandaag: ${day.title.toLowerCase()} 🎾`, body: `Telt als conditiesessie. Tik na het spelen op Gedaan.${injuryAsk}${ask}`, url: '#/vandaag', tag: 'vandaag' };
   }
   if (day.sweat && day.status === 'planned') {
     const where = day.location === 'home' ? 'thuis' : 'Jims';

@@ -10,7 +10,8 @@ export type Template = 'A' | 'B';
 
 /** Gevoel na een oefening: te licht / goed / zwaar. */
 export type Feel = 'light' | 'good' | 'hard';
-export type Energy = 'low' | 'ok' | 'high';
+/** Hoe je je voelt (één tik): ziek of op / moe / oké / top. */
+export type Energy = 'sick' | 'low' | 'ok' | 'high';
 export type ReadinessLevel = 'green' | 'orange' | 'red';
 
 export type Zone =

@@ -1,10 +1,12 @@
 import { mergeDays, parseInbox, summarize, integrateWorkouts, type WatchWorkout } from '../coach/health.ts';
 import { isoWeek } from '../coach/dates.ts';
-import type { HealthDay, Injury, Severity, Zone } from '../coach/types.ts';
-import { paths, type HealthMonthFile, type InjuriesFile } from './schema.ts';
-import { newId, type Store } from './store.ts';
+import type { HealthDay } from '../coach/types.ts';
+import { paths, type HealthMonthFile } from './schema.ts';
+import type { Store } from './store.ts';
 
 // Verwerkt wat de Opdracht "Training Sync" in data/health/inbox/ zette.
+// VOORLOPIG UITGESCHAKELD: de app werkt puur op jouw input. Deze module wordt niet aangeroepen;
+// ze blijft (met tests) klaar om Apple Health later weer aan te zetten.
 
 export function localTimeZone(): string {
   return Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Brussels';
@@ -76,37 +78,4 @@ function importSummary(raw: ReturnType<typeof parseInbox>, day: HealthDay | unde
   ];
   if (raw.skipped) parts.push(`${raw.skipped} onleesbare regels`);
   return parts.join(' · ');
-}
-
-// ── Blessures ───────────────────────────────────────────────────────────
-
-export async function reportInjury(store: Store, zone: Zone, severity: Severity, sharp: boolean): Promise<Injury> {
-  const today = store.today();
-  const file = store.read<InjuriesFile>(paths.injuries) ?? { injuries: [] };
-  const active = file.injuries.find((i) => i.zone === zone && !i.resolvedOn);
-  let injury: Injury;
-  if (active) {
-    injury = { ...active, sharp: active.sharp || sharp, updates: [...active.updates, { date: today, trend: severity > active.severity ? 'erger' : 'zelfde', severity }] };
-  } else {
-    injury = { id: newId(), zone, severity, startedOn: today, sharp, updates: [] };
-  }
-  await store.write(paths.injuries, { injuries: [...file.injuries.filter((i) => i.id !== injury.id), injury] });
-  return injury;
-}
-
-export async function updateInjury(store: Store, id: string, trend: 'beter' | 'zelfde' | 'erger' | 'weg'): Promise<void> {
-  const today = store.today();
-  const file = store.read<InjuriesFile>(paths.injuries) ?? { injuries: [] };
-  await store.write(paths.injuries, {
-    injuries: file.injuries.map((i) => {
-      if (i.id !== id) return i;
-      const last = i.updates.at(-1)?.severity ?? i.severity;
-      const severity = (trend === 'beter' ? Math.max(1, last - 1) : trend === 'erger' ? Math.min(3, last + 1) : last) as Severity;
-      return {
-        ...i,
-        updates: [...i.updates.filter((u) => u.date !== today), { date: today, trend, severity }],
-        resolvedOn: trend === 'weg' ? today : i.resolvedOn,
-      };
-    }),
-  });
 }

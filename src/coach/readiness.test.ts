@@ -52,10 +52,15 @@ describe('dagvorm', () => {
     expect(r.level).toBe('green');
   });
 
-  it('geen Watch-data → enkel energie', () => {
-    const r = assessReadiness({ history: [], energy: 'ok' });
-    expect(r.level).toBe('green');
-    expect(r.reasons[0]).toMatch(/Geen Watch-data/);
+  it('zonder Watch-data: puur je tik (top/oké = groen, moe = oranje, ziek of op = rood)', () => {
+    expect(assessReadiness({ history: [], energy: 'high' }).level).toBe('green');
+    const ok = assessReadiness({ history: [], energy: 'ok' });
+    expect(ok.level).toBe('green');
+    expect(ok.reasons).toEqual([]);
+    expect(assessReadiness({ history: [], energy: 'low' }).level).toBe('orange');
+    const sick = assessReadiness({ history: [], energy: 'sick' });
+    expect(sick.level).toBe('red');
+    expect(sick.reasons[0]).toMatch(/ziek/);
   });
 
   it('basislijn in opbouw: HRV en rusthartslag tellen nog niet mee', () => {

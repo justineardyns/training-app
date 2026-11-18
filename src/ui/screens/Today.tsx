@@ -13,12 +13,12 @@ import { go } from '../router.ts';
 import { dayLabel, untickedDays } from './Week.tsx';
 import { SyncWarning } from './Connect.tsx';
 import { InjuryCard } from './Injury.tsx';
-import { HealthButton } from './Health.tsx';
 
 const ENERGY: { value: Energy; label: string }[] = [
-  { value: 'low', label: '😴 Laag' },
-  { value: 'ok', label: '🙂 Oké' },
   { value: 'high', label: '💪 Top' },
+  { value: 'ok', label: '🙂 Oké' },
+  { value: 'low', label: '😴 Moe' },
+  { value: 'sick', label: '🤒 Ziek of op' },
 ];
 
 function repsText(p: { targetReps: number; repRange: [number, number] }, timed?: boolean) {
@@ -50,14 +50,13 @@ function ReadinessCard() {
   const s = useStore();
   const today = s.today();
   const check = s.checkFor(today);
-  const health = s.healthDays().find((h) => h.date === today);
   const [redo, setRedo] = useState(false);
 
   if (!check || redo) {
     return (
       <div class="card">
-        <h3>Hoe is je energie vandaag?</h3>
-        <div class="row">
+        <h3>Hoe voel je je vandaag?</h3>
+        <div class="energy-grid">
           {ENERGY.map((e) => (
             <button
               key={e.value}
@@ -71,12 +70,7 @@ function ReadinessCard() {
             </button>
           ))}
         </div>
-        <p class="muted small">
-          {health
-            ? `Watch: ${health.sleepHours !== undefined ? `${health.sleepHours.toFixed(1).replace('.', ',')} u slaap` : ''}${health.hrvMs !== undefined ? ` · HRV ${Math.round(health.hrvMs)}` : ''}${health.restingHr !== undefined ? ` · rust ${Math.round(health.restingHr)}` : ''}`
-            : 'Nog geen Watch-data van vannacht: je energie telt dan alleen.'}
-        </p>
-        {!health && <HealthButton />}
+        <p class="muted small">Eén tik. Moe → ik maak de training lichter. Ziek of op → we verplaatsen ze.</p>
       </div>
     );
   }
@@ -117,7 +111,6 @@ function QuickLogSheet(props: { open: boolean; onClose: () => void; date: string
         >
           Bewaar
         </button>
-        <p class="muted small">Start je een workout op je Watch, dan komt dit later automatisch binnen.</p>
       </div>
     </Sheet>
   );
@@ -216,7 +209,7 @@ export function Today() {
       {day.type === 'tennis' && day.status === 'planned' && (
         <div class="card today-card">
           <h2>🎾 {day.title}</h2>
-          <p class="muted">Telt als conditiesessie. Start een workout "Tennis" op je Watch, dan komt hij vanzelf binnen.</p>
+          <p class="muted">Telt als conditiesessie. Tik na het spelen op "Tennis gedaan".</p>
           <button class="btn primary huge" onClick={() => s.quickLog(today, 'cardio', 'gym', (day.minutes ?? 60) as Minutes, 'Tennis')}>
             Tennis gedaan ✓
           </button>

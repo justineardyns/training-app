@@ -3,7 +3,7 @@ import { diffDays } from '../../coach/dates.ts';
 import { currentSeverity, isResolved, referral, relevantInjuries, SEVERITY_LABEL, ZONE_LABEL } from '../../coach/injury.ts';
 import { EXERCISES } from '../../coach/catalog.ts';
 import type { Severity, Zone } from '../../coach/types.ts';
-import { reportInjury, updateInjury } from '../../data/healthInbox.ts';
+import { reportInjury, updateInjury } from '../../data/injuries.ts';
 import { Chips } from '../components.tsx';
 import { useStore } from '../hooks.ts';
 import { go } from '../router.ts';

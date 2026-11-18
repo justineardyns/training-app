@@ -355,7 +355,7 @@ export function buildCardioSession(
             'Reserveer je plaats in de Jims-app als dat nodig is',
             'Eerste keer? Kom 10 min vroeger: vraag de lesgever om je fiets af te stellen (zadelhoogte = heupbeen)',
             'Absolute beginner: draai mee op je eigen tempo, je hoeft niet alle sprints voluit te doen',
-            'Start een workout "Indoor fietsen" op je Watch: dan telt ze automatisch mee',
+            'Tik na de les op "Groepsles gedaan": dan telt ze mee',
           ],
         });
       }
@@ -381,7 +381,7 @@ export function buildCardioSession(
     });
     if (lighter) notes.push('Dagvorm oranje: halve reps en extra rust waar nodig.');
   }
-  notes.push('Start een workout op je Watch: hartslag en duur komen dan automatisch in je log.');
+  notes.push('Tik na afloop op "Gedaan": dan telt de sessie mee voor je week.');
   return {
     kind: 'cardio',
     date: ctx.date,

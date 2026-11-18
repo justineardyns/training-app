@@ -293,7 +293,6 @@ function Finish(props: { w: WorkoutState }) {
           </ul>
         </div>
       )}
-      <p class="muted small">Stop ook je workout op je Watch: hartslag en duur worden later gekoppeld.</p>
       <button
         class="btn primary huge"
         onClick={async () => {

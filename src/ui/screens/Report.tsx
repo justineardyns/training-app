@@ -1,36 +1,11 @@
 import { useState } from 'preact/hooks';
 import { addDays, DAY_SHORT, dayIndex, isoWeek, weekStart } from '../../coach/dates.ts';
-import { buildReport, MUSCLE_LABEL, type RecoveryMetric } from '../../coach/report.ts';
+import { buildReport, MUSCLE_LABEL } from '../../coach/report.ts';
 import type { Muscle } from '../../coach/types.ts';
 import { paths } from '../../data/schema.ts';
-import { BarList, DataTable, fmt, LineChart, Sparkline, StatTile } from '../charts.tsx';
+import { BarList, DataTable, fmt, LineChart, StatTile } from '../charts.tsx';
 import { useStore } from '../hooks.ts';
 import { Markdown } from '../markdown.tsx';
-
-const TREND_TEXT = { beter: '↗ beter', slechter: '↘ slechter', stabiel: '→ stabiel' } as const;
-
-function RecoveryTile(props: { label: string; unit: string; m: RecoveryMetric; values: (number | undefined)[] }) {
-  const { m } = props;
-  return (
-    <StatTile
-      label={props.label}
-      value={m.week === null ? '–' : `${fmt(m.week)}${props.unit}`}
-      sub={
-        m.baseline !== null ? (
-          <>
-            normaal {fmt(m.baseline)}
-            {props.unit}
-            {m.trend && <span class={`trend ${m.trend}`}> {TREND_TEXT[m.trend]}</span>}
-          </>
-        ) : (
-          'basislijn in opbouw'
-        )
-      }
-    >
-      <Sparkline values={props.values} baseline={m.baseline} label={`${props.label}, laatste 28 dagen`} />
-    </StatTile>
-  );
-}
 
 export function Report() {
   const s = useStore();
@@ -42,7 +17,7 @@ export function Report() {
   const report = buildReport({
     monday,
     history: s.sessions(),
-    health: s.healthDays(),
+    checks: s.checks().map((c) => ({ date: c.date, level: c.level })),
     planned: s.plannedCount(monday),
     nextWeek: s.plan(addDays(monday, 7)),
     today,
@@ -51,14 +26,9 @@ export function Report() {
   const volume = (Object.entries(report.volume) as [Muscle, number][])
     .sort((a, b) => b[1] - a[1])
     .map(([m, v]) => ({ label: MUSCLE_LABEL[m], value: v }));
-  const health = s.healthDays();
-  const last28 = Array.from({ length: 28 }, (_, i) => addDays(addDays(monday, 6), -27 + i));
-  const series = (fn: (d: (typeof health)[number]) => number | undefined) => last28.map((d) => {
-    const h = health.find((x) => x.date === d);
-    return h ? fn(h) : undefined;
-  });
-  const steps = health.filter((h) => h.date >= monday && h.date <= addDays(monday, 6) && h.steps !== undefined);
-  const avgSteps = steps.length ? Math.round(steps.reduce((a, h) => a + h.steps!, 0) / steps.length) : undefined;
+  const weekChecks = s.checks().filter((c) => c.date >= monday && c.date <= addDays(monday, 6));
+  const LEVEL = { green: 'groen', orange: 'oranje', red: 'rood' } as const;
+  const ENERGY = { high: 'top', ok: 'oké', low: 'moe', sick: 'ziek of op' } as const;
 
   return (
     <>
@@ -117,13 +87,13 @@ export function Report() {
         <p class="muted">Nog geen krachtsessies deze week.</p>
       )}
 
-      <h2>Herstel</h2>
+      <h2>Dagvorm</h2>
       <div class="tiles">
-        <RecoveryTile label="HRV" unit=" ms" m={report.recovery.hrv} values={series((h) => h.hrvMs)} />
-        <RecoveryTile label="Rusthartslag" unit="" m={report.recovery.rhr} values={series((h) => h.restingHr)} />
-        <RecoveryTile label="Slaap" unit=" u" m={report.recovery.sleep} values={series((h) => h.sleepHours)} />
+        <StatTile label="● Groen" value={`${report.readiness.green}`} sub="gewoon getraind" />
+        <StatTile label="▲ Oranje" value={`${report.readiness.orange}`} sub="lichter" />
+        <StatTile label="■ Rood" value={`${report.readiness.red}`} sub="verplaatst" />
       </div>
-      {avgSteps !== undefined && <p class="muted small">Gemiddeld {avgSteps.toLocaleString('nl-BE')} stappen per dag.</p>}
+      {weekChecks.length === 0 && <p class="muted small">Tik op een trainingsdag hoe je je voelt; dan zie je hier je week.</p>}
 
       {back === 0 && report.nextWeek && (
         <>
@@ -157,11 +127,8 @@ export function Report() {
           <DataTable head={['Oefening', ...new Set(report.trend.flatMap((t) => t.points.map((p) => p.week.slice(5))))]} rows={report.trend.map((t) => [t.name, ...t.points.map((p) => Math.round(p.e1rm * 10) / 10)])} />
           <DataTable head={['Spiergroep', 'Sets']} rows={volume.map((v) => [v.label, v.value])} />
           <DataTable
-            head={['Dag', 'Slaap (u)', 'HRV', 'Rust']}
-            rows={last28.slice(-7).map((d) => {
-              const h = health.find((x) => x.date === d);
-              return [`${DAY_SHORT[dayIndex(d)]} ${d.slice(8)}/${d.slice(5, 7)}`, h?.sleepHours ?? '–', h?.hrvMs ?? '–', h?.restingHr ?? '–'];
-            })}
+            head={['Dag', 'Gevoel', 'Dagvorm']}
+            rows={weekChecks.map((c) => [`${DAY_SHORT[dayIndex(c.date)]} ${c.date.slice(8)}/${c.date.slice(5, 7)}`, ENERGY[c.energy], LEVEL[c.level]])}
           />
         </div>
       )}

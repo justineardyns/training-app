@@ -3,7 +3,7 @@ import { addDays } from './dates.ts';
 import { defaultDay } from './availability.ts';
 import { DEFAULT_PREFS, planWeek } from './planner.ts';
 import { buildReport, coachMessage, reportMarkdown, streakWeeks } from './report.ts';
-import type { ExerciseLog, HealthDay, SessionLog } from './types.ts';
+import type { ExerciseLog, SessionLog } from './types.ts';
 
 const MON = '2026-11-16';
 
@@ -27,14 +27,16 @@ const history: SessionLog[] = [
   strength(addDays(MON, 4), [ex('leg-press', 70, [12, 12, 12])], 'B'),
 ];
 
-const health: HealthDay[] = Array.from({ length: 35 }, (_, i) => {
-  const date = addDays(MON, -28 + i);
-  const thisWeek = date >= MON;
-  return { date, hrvMs: thisWeek ? 50 : 60, restingHr: thisWeek ? 60 : 55, sleepHours: 7.5 };
-});
+// Dagvorm-tikken: deze week 2× oranje → coach zegt iets over rust.
+const checks = [
+  { date: MON, level: 'green' as const },
+  { date: addDays(MON, 2), level: 'orange' as const },
+  { date: addDays(MON, 4), level: 'orange' as const },
+  { date: addDays(MON, -5), level: 'red' as const },
+];
 
 describe('weekrapport', () => {
-  const r = buildReport({ monday: MON, history, health, planned: 3 });
+  const r = buildReport({ monday: MON, history, checks, planned: 3 });
 
   it('gepland vs gedaan', () => {
     expect(r).toMatchObject({ week: '2026-W47', planned: 3, done: 3, strength: 2, cardio: 1 });
@@ -58,11 +60,10 @@ describe('weekrapport', () => {
     expect(r.cardioMinutes).toBe(50);
   });
 
-  it('hersteltrend t.o.v. je basislijn', () => {
-    expect(r.recovery.hrv.trend).toBe('slechter');
-    expect(r.recovery.rhr.trend).toBe('slechter');
-    expect(r.recovery.sleep.trend).toBe('stabiel');
-    expect(r.message).toMatch(/herstel/);
+  it('dagvorm van de week (jouw tikken), met een eerlijk woordje bij vaak moe', () => {
+    expect(r.readiness).toEqual({ green: 1, orange: 2, red: 0 });
+    expect(r.message).toMatch(/vaak moe/);
+    expect(reportMarkdown(r)).toMatch(/Dagvorm: 1× groen · 2× oranje · 0× rood/);
   });
 
   it('streak: weken op rij met minstens 2 sessies', () => {
@@ -84,7 +85,7 @@ describe('weekrapport', () => {
 
   it('plan voor volgende week zit erbij', () => {
     const next = planWeek({ today: addDays(MON, 6), start: addDays(MON, 7), availability: (d) => defaultDay(d, 45), history, prefs: DEFAULT_PREFS });
-    const withNext = buildReport({ monday: MON, history, health, planned: 3, nextWeek: next });
+    const withNext = buildReport({ monday: MON, history, checks, planned: 3, nextWeek: next });
     expect(withNext.nextWeek).toHaveLength(7);
     expect(reportMarkdown(withNext)).toMatch(/## Volgende week/);
   });
@@ -92,14 +93,14 @@ describe('weekrapport', () => {
 
 describe('coachboodschap', () => {
   it('tussenstand tijdens de week, geen oordeel', () => {
-    const r = buildReport({ monday: MON, history, health, planned: 3, today: addDays(MON, 4) });
+    const r = buildReport({ monday: MON, history, checks, planned: 3, today: addDays(MON, 4) });
     expect(r.inProgress).toBe(true);
     expect(r.message).toMatch(/^Weekdoel al gehaald|^Tussenstand/);
-    const early = buildReport({ monday: MON, history: [], health: [], planned: 3, today: addDays(MON, 1) });
+    const early = buildReport({ monday: MON, history: [], checks: [], planned: 3, today: addDays(MON, 1) });
     expect(early.message).toMatch(/Tussenstand: 0\/3\. Nog 3 sessies/);
   });
 
-  const base = buildReport({ monday: MON, history: [], health: [], planned: 3 });
+  const base = buildReport({ monday: MON, history: [], checks: [], planned: 3 });
   it('eerlijk bij te weinig', () => {
     expect(coachMessage({ ...base, done: 1, planned: 3 })).toMatch(/te weinig/);
     expect(coachMessage({ ...base, done: 2, planned: 3 })).toMatch(/net niet/);

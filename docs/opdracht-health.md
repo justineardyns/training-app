@@ -1,5 +1,8 @@
 # Opdracht "Training Sync": Apple Health → je coach
 
+> ⏸️ **Voorlopig uitgeschakeld.** De app werkt nu puur op jouw input (dagvorm met één tik, groepslessen
+> en tennis met *Gedaan*). Deze handleiding en de verwerking in de code blijven klaar voor later.
+
 Met deze opdracht stuurt je iPhone elke dag je slaap, HRV, rusthartslag, stappen, hartslag en
 Watch-workouts naar je **privé-repo**. De app gebruikt dat voor je dagvorm, en je groepslessen en
 cardio tellen automatisch mee. Alles gratis, met de ingebouwde **Opdrachten**-app.

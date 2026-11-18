@@ -397,8 +397,8 @@ export class Store {
 
   async recordCheck(energy: Energy): Promise<ReadinessCheck> {
     const date = this.today();
-    const health = this.healthDays();
-    const r = assessReadiness({ today: health.find((h) => h.date === date), history: health, energy });
+    // Puur op jouw tik (Apple Health staat voorlopig uit).
+    const r = assessReadiness({ history: [], energy });
     const check: ReadinessCheck = { date, energy, level: r.level, score: r.score, reasons: r.reasons, at: this.now().toISOString() };
     await this.updateLog(date, (l) => ({ ...l, checks: [...l.checks.filter((c) => c.date !== date), check] }));
     return check;

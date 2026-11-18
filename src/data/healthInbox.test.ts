@@ -1,7 +1,8 @@
 import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { idb } from './db.ts';
-import { processHealthInbox, reportInjury, updateInjury } from './healthInbox.ts';
+import { processHealthInbox } from './healthInbox.ts';
+import { reportInjury, updateInjury } from './injuries.ts';
 import { paths, type HealthMonthFile } from './schema.ts';
 import { defaultProfile, Store } from './store.ts';
 
@@ -37,7 +38,7 @@ async function fresh() {
   return s;
 }
 
-describe('Health-inbox verwerken', () => {
+describe('Health-inbox verwerken (voorlopig uitgeschakeld in de app)', () => {
   beforeEach(() => idb.reset());
 
   it('maakt maandbestanden, logt de groepsles, ruimt de inbox op', async () => {
@@ -55,16 +56,6 @@ describe('Health-inbox verwerken', () => {
     await s.putRemote('data/health/inbox/2026-11-23T09-00-00.txt', INBOX, 'sha2');
     await processHealthInbox(s, 'Europe/Brussels');
     expect(s.log('2026-W47').sessions).toHaveLength(1);
-  });
-
-  it('herberekent de dagvorm van vandaag als de Watch-data later binnenkomt', async () => {
-    const s = await fresh();
-    const before = await s.recordCheck('ok');
-    expect(before.level).toBe('green');
-    await s.putRemote('data/health/inbox/x.txt', INBOX, 'sha1');
-    await processHealthInbox(s, 'Europe/Brussels');
-    // 4u slaap → oranje
-    expect(s.checkFor('2026-11-23')!.level).toBe('orange');
   });
 });
 

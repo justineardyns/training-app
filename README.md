@@ -1,20 +1,25 @@
 # Coach – je gratis personal trainer op je iPhone
 
 Een app op je beginscherm die je trainingen plant, elke set vooraf invult en zelf bijstuurt.
-Werkt offline in de gym, gebruikt je Apple Watch en kost **€ 0**.
+Werkt offline in de gym, draait puur op jouw tikken en kost **€ 0**.
 
-- **Vandaag:** wat je doet, één knop **Start**. Dagvorm-check met één tik (groen / oranje / rood).
+- **Vandaag:** wat je doet, één knop **Start**. Dagvorm met één tik: top / oké / moe / ziek of op.
 - **Trainen:** gewicht en reps staan klaar, per set één tik ✓, rusttimer start vanzelf, draaiwiel met
   enkel geldige gewichten (thuis: enkel wat je met je eigen schijven kan maken), "Toestel bezet",
-  techniektips en uitlegvideo.
+  **foto's van elke oefening en elk toestel** (start- en eindpositie, ook offline), techniektips en uitlegvideo.
+- **Absolute beginner:** lichte start, de eerste 2 keer per oefening max 2 sets om de beweging te leren,
+  in Jims eerst de toestellen.
 - **Slimme coach:** dubbele progressie, thuisladder als zwaarder niet kan, deloads, blessures
   ("Ik heb last van…"), flexibel herplannen bij een gemiste training, minder tijd of thuis i.p.v. Jims.
-- **Harde regels:** 2–3 sessies per week (max 4 met groepslessen), nooit twee zweetdagen na elkaar
-  (ook niet zondag → maandag), zweetvrije suggesties op de tussendagen.
-- **Apple Watch:** slaap, HRV, rusthartslag, stappen en workouts via de Opdrachten-app. Groepslessen
-  tellen automatisch mee.
+- **Rollend plannen:** altijd de komende 7 dagen. Je vinkt aan welke avonden passen (in het weekend
+  ook overdag; Jims sluit dan om 17u, dus een weekendavond is thuis), en of je tennist.
+- **Harde regels:** max 4 zweetsessies per 7 dagen (groepslessen en tennis inbegrepen), nooit twee dagen
+  na elkaar. Bij 4: 2× kracht + 2× conditie, met indoor cycling op de lesmomenten. Zweetvrije suggesties
+  op de tussendagen.
+- **Puur op jouw input:** geen Apple Health nodig. (Een koppeling via de Opdrachten-app ligt klaar voor later,
+  zie `docs/opdracht-health.md`, maar staat uit.)
 - **Weekrapport** in de app en een wekelijkse **coachsessie met Claude Code** (`/coach`).
-- **Meldingen** op iPhone en Watch: 's ochtends je plan, zondag een herinnering om je week te plannen.
+- **Meldingen** op iPhone en Watch: 's ochtends je plan, zondag een herinnering om je komende dagen aan te vinken.
 
 ## Hoe het werkt
 
@@ -22,7 +27,7 @@ Werkt offline in de gym, gebruikt je Apple Watch en kost **€ 0**.
 publieke repo training-app ──GitHub Pages──▶ app op je iPhone (offline)
    (enkel code, deze repo)                      │  GitHub API + jouw token
                                                 ▼
-Opdrachten-app (Health) ──upload──▶  privé-repo training  (al je data)
+                                     privé-repo training  (al je data)
                                          ├─ GitHub Action: pushmeldingen
                                          └─ Claude Code: /coach elke zondag
 ```
@@ -34,10 +39,9 @@ Geen server, geen database, geen account bij een andere dienst.
 | App hosten | € 0 | GitHub Pages is gratis voor publieke repo's |
 | Data | € 0 | privé-repo op GitHub Free |
 | Meldingen | € 0 | Web Push via een GitHub Action (±150 min/maand van de 2000 gratis minuten voor privé-repo's; zonder betaalkaart kan GitHub niets aanrekenen) |
-| Apple Health | € 0 | ingebouwde Opdrachten-app |
 | Coachsessie | € 0 extra | Claude Code met je bestaand abonnement, geen betalende API |
 
-**Privacy:** deze repo bevat enkel code. Je trainings- en gezondheidsdata gaan rechtstreeks van je
+**Privacy:** deze repo bevat enkel code. Je trainingsdata gaan rechtstreeks van je
 iPhone naar je **privé**-repo. Je token blijft op je iPhone. Meldingen zijn end-to-end versleuteld.
 
 ---
@@ -80,8 +84,9 @@ Open [github.com/settings/personal-access-tokens/new](https://github.com/setting
 4. Plak je token → **Koppel**. Je gebruikersnaam en `training` staan al ingevuld.
 5. Tik je thuismateriaal aan: gewicht van een lege dumbbell, je schijven (per paar), het
    verbindingsstuk van de stang en je kettlebell. Je ziet meteen wat je ermee kan maken.
-6. Kies de gewichtsstappen in Jims (weet je het niet: laat staan) en je voorkeuren → **Klaar**.
-7. Tik bij **Week** je beschikbaarheid aan → **Bewaar en plan**.
+6. Kies de gewichtsstappen in Jims (weet je het niet: laat staan) en je voorkeuren (ervaring,
+   trainingen per 7 dagen, lesmomenten van indoor cycling, tennisdag) → **Klaar**.
+7. Vink aan welke momenten de komende 7 dagen passen → **Bewaar en plan**.
 
 ### 5. Meldingen
 
@@ -89,12 +94,7 @@ In de app: **Meer → Meldingen → Meldingen aanzetten** → **Sta toe** → **
 Binnen ±1 minuut krijg je een melding (ook op je Watch als je iPhone vergrendeld is).
 Kies er ook het uur van je ochtendmelding (6–9u).
 
-### 6. Apple Watch-data
-
-Volg **[docs/opdracht-health.md](docs/opdracht-health.md)** (±10 min). Daarna: **Meer → Apple Health → Nu ophalen**
-en controleer *Laatste import*.
-
-### 7. Wekelijkse coachsessie
+### 6. Wekelijkse coachsessie
 
 Open Claude Code op je **privé**-repo en typ **`/coach`**. Claude analyseert je week met dezelfde
 coachlogica als de app, schrijft `reports/JJJJ-Www.md` (zichtbaar in de app onder **Rapport**),
@@ -106,13 +106,14 @@ stuurt volgende week bij en pusht. Dat kan ook automatisch als geplande taak elk
 
 | Wanneer | Wat |
 |---|---|
-| **Zondag** | Melding "Plan volgende week" → tik je dagen aan (Jims/thuis, 30/45/60 min). 20 seconden. |
-| **'s Ochtends** | Melding met je plan. Open de app → tik je energie → groen/oranje/rood advies. |
+| **Zondag** (of wanneer je wil) | Melding "Vink je komende dagen aan" → avonden (en weekend overdag) aanvinken, tennis aanduiden. 20 seconden. |
+| **'s Ochtends** | Melding met je plan. Open de app → tik hoe je je voelt → groen/oranje/rood advies. |
+| **Nieuwe oefening** | Tik op de naam: foto's van de beweging en het toestel, hoe je het instelt, techniektips. |
 | **In de gym** | **Start** → per set ✓ → na elke oefening *te licht / goed / zwaar*. Toestel bezet? Eén tik. |
 | **Thuis i.p.v. Jims, of minder tijd** | Op **Vandaag** tik je *Thuis* of *30*: de training past zich aan. |
 | **Lukt vandaag niet** | **Vandaag lukt niet**: het plan schuift op, zonder sessies op te stapelen. |
 | **Pijntje** | **Ik heb last van…** → zone + ernst. Oefeningen worden vervangen of lichter, daarna rustig opbouwen. |
-| **Groepsles** | Start een workout op je Watch: telt automatisch mee. Of tik *Groepsles of cardio gedaan?* |
+| **Groepsles of tennis** | Tik na afloop op *Gedaan* (of *Groepsles of cardio gedaan?* als het niet gepland was). |
 
 ## Problemen oplossen
 
@@ -122,7 +123,6 @@ stuurt volgende week bij en pusht. Dat kan ook automatisch als geplande taak elk
 | "Repo niet gevonden" | Klopt de naam van je privé-repo? Heeft het token toegang tot precies die repo? |
 | "Deze repo is publiek" | Je data-repo moet privé zijn: Settings → Danger Zone → Change visibility. |
 | Geen meldingen | App vanaf het beginscherm geopend? Meldingen toegestaan (Instellingen → Meldingen → Coach)? Staat `meldingen.yml` in je privé-repo en is Pages groen? Kijk in **Actions → Meldingen**. |
-| Geen Watch-data | Zie *Laatste import* in **Meer → Apple Health** en de foutcodes in de [handleiding](docs/opdracht-health.md). |
 | Offline in de gym | Geen probleem: alles staat op je iPhone en gaat later mee. |
 | Nieuwe iPhone | App opnieuw op het beginscherm zetten en je token plakken: alles komt terug. |
 
@@ -144,10 +144,14 @@ npm run build      # productie-build + dist/coach-cli.mjs
 | `src/data/` | opslag (IndexedDB), sync met GitHub, Health-inbox, meldingen |
 | `src/ui/` | Preact-schermen en componenten |
 | `cli/` | `coach-cli` voor GitHub Actions en `/coach` |
-| `docs/` | handleiding voor de Opdracht |
+| `docs/` | handleiding voor een latere Apple Health-koppeling (staat uit) |
+| `public/ex/` | oefenfoto's |
 
 Alle beslissingen (plannen, progressie, deload, dagvorm) zijn pure functies met tests, zodat de app,
 de meldingen en `/coach` altijd hetzelfde beslissen.
+
+**Oefenfoto's:** [Free Exercise DB](https://github.com/yuhonas/free-exercise-db) (publiek domein, Unlicense),
+verkleind tot 480 px.
 
 ### Meldingen-workflow
 

@@ -38,6 +38,13 @@ test('eerste opstart → plannen → trainen → bewaren', async ({ page }) => {
   await page.getByRole('button', { name: /Oké/ }).click();
   await expect(page.locator('.card.readiness.green')).toBeVisible();
   await snap(page, '04-vandaag');
+  // Oefening bekijken: foto's van het toestel + uitleg
+  await page.locator('.preview-name').first().click();
+  await expect(page.getByRole('heading', { name: 'Leg press' })).toBeVisible();
+  await expect(page.locator('.demo img').first()).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Het toestel' })).toBeVisible();
+  await snap(page, '04b-oefening');
+  await page.getByRole('button', { name: 'Terug' }).click();
   await page.getByRole('button', { name: 'Start', exact: true }).click();
 
   // Training: eerste oefening, alle sets afvinken

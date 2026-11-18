@@ -51,7 +51,7 @@ function report(store: Store, monday: string) {
   return buildReport({
     monday,
     history: store.sessions(),
-    health: store.healthDays(),
+    checks: store.checks().map((c) => ({ date: c.date, level: c.level })),
     planned: store.plannedCount(monday),
     nextWeek: store.plan(addDays(monday, 7)),
   });
@@ -125,7 +125,7 @@ export function context(store: Store, monday: string) {
     report: r,
     previousWeeks: [1, 2, 3].map((n) => {
       const p = report(store, addDays(monday, -7 * n));
-      return { week: p.week, planned: p.planned, done: p.done, cardioMinutes: p.cardioMinutes, prs: p.prs.length, recovery: p.recovery };
+      return { week: p.week, planned: p.planned, done: p.done, cardioMinutes: p.cardioMinutes, prs: p.prs.length, readiness: p.readiness };
     }),
     nextWeek: {
       target: next.target,

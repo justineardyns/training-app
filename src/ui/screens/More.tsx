@@ -8,7 +8,6 @@ import { GymEditor, HomeEquipmentEditor } from './Equipment.tsx';
 import { SyncSettings } from './Connect.tsx';
 import { PrefsEditor } from './Prefs.tsx';
 import { InjuryCard } from './Injury.tsx';
-import { HealthSettings } from './Health.tsx';
 import { NotificationSettings } from './Notifications.tsx';
 
 export function More(props: { sub?: string }) {
@@ -68,8 +67,6 @@ export function More(props: { sub?: string }) {
       <h2>Meldingen</h2>
       <NotificationSettings />
 
-      <h2>Apple Health</h2>
-      <HealthSettings />
 
       <h2>Privé-repo</h2>
       <SyncSettings />

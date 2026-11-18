@@ -101,18 +101,19 @@ export function assessReadiness(input: ReadinessInput): ReadinessResult {
     }
   }
 
-  if (input.energy === 'low') {
+  if (input.energy === 'sick') {
+    score -= 4;
+    reasons.push('Je voelt je ziek of helemaal op');
+  } else if (input.energy === 'low') {
     score -= 2;
-    reasons.push('Je energie is laag');
+    reasons.push('Je bent moe');
   } else if (input.energy === 'high') {
     score += 1;
   }
 
-  if (!t || (t.hrvMs === undefined && t.restingHr === undefined && t.sleepHours === undefined)) {
-    reasons.push('Geen Watch-data van vannacht: enkel je energie telt');
-  } else if (learning) {
-    reasons.push(`Je basislijn wordt nog opgebouwd (${baselineDays}/${MIN_BASELINE} dagen)`);
-  }
+  // Watch-data is optioneel (de app werkt op jouw tik); enkel als ze er is, zeggen we iets over de basislijn.
+  const hasHealth = !!t && (t.hrvMs !== undefined || t.restingHr !== undefined || t.sleepHours !== undefined);
+  if (hasHealth && learning) reasons.push(`Je basislijn wordt nog opgebouwd (${baselineDays}/${MIN_BASELINE} dagen)`);
 
   const level: ReadinessLevel = score >= -1 ? 'green' : score >= -3 ? 'orange' : 'red';
   return { level, score, reasons, advice: ADVICE[level], learning, baselineDays };
