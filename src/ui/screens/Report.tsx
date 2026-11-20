@@ -6,7 +6,7 @@ import { paths } from '../../data/schema.ts';
 import { BarList, DataTable, fmt, LineChart, StatTile } from '../charts.tsx';
 import { useStore } from '../hooks.ts';
 import { Markdown } from '../markdown.tsx';
-import { InsightsCard } from './CoachCards.tsx';
+import { InsightsCard, MilestonesList, StrengthCheckCard } from './CoachCards.tsx';
 
 export function Report() {
   const s = useStore();
@@ -49,6 +49,8 @@ export function Report() {
       </div>
 
       {back === 0 && <InsightsCard insights={s.insights()} full />}
+      {back === 0 && <MilestonesList />}
+      {back === 0 && <StrengthCheckCard />}
 
       <div class="tiles">
         <StatTile label="Sessies" value={`${report.done}/${report.planned}`} sub={`${report.strength}× kracht · ${report.cardio}× conditie`} />

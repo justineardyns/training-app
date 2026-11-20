@@ -132,12 +132,14 @@ export function eventFromSession(s: SessionLog, novice = false): LoadEvent {
 }
 
 /**
- * Herstel per groep op een moment. `sore`: groepen waar je zelf spierpijn aangaf (die dag) → minstens "moe".
+ * Herstel per groep op een moment. Jouw tik "spierpijn" (die dag) telt altijd mee:
+ * `sore` = echt (→ minstens "moe"), `soreLight` = een beetje (→ minstens "herstelt").
  */
 export function recoveryAt(
   when: { date: ISODate; slot?: Slot },
   events: LoadEvent[],
   sore: Group[] = [],
+  soreLight: Group[] = [],
 ): Record<Group, GroupRecovery> {
   const now = hoursAt(when);
   const out = {} as Record<Group, GroupRecovery>;
@@ -158,6 +160,9 @@ export function recoveryAt(
     if (sore.includes(g)) {
       state = 'moe';
       cause = 'spierpijn';
+    } else if (soreLight.includes(g) && state === 'fris') {
+      state = 'herstelt';
+      cause = 'een beetje stijf';
     }
     out[g] = { group: g, state, residual: Math.round(residual * 10) / 10, cause: state === 'fris' ? undefined : cause };
   }

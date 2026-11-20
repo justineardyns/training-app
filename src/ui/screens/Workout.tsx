@@ -1,9 +1,9 @@
-import { useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { alternativesFor, getExercise, videoUrl } from '../../coach/catalog.ts';
 import { acceptableFor } from '../../coach/injury.ts';
 import { formatLoad, isAvailable } from '../../coach/loads.ts';
 import { activeAdjustments } from '../../coach/planner.ts';
-import { buildPrescription, type SessionContext } from '../../coach/session.ts';
+import { buildPrescription, warmupFor, type SessionContext } from '../../coach/session.ts';
 import type { Feel } from '../../coach/types.ts';
 import { weekStart } from '../../coach/dates.ts';
 import { defaultProfile, store } from '../../data/store.ts';
@@ -90,6 +90,80 @@ function RestBar(props: { w: WorkoutState }) {
   );
 }
 
+/** Begeleide opwarming: een timer die zelf doorloopt, met een piepje bij elke wissel. */
+function Warmup(props: { w: WorkoutState }) {
+  const steps = warmupFor(props.w.template);
+  const [step, setStep] = useState(-1);
+  const [startedAt, setStartedAt] = useState(0);
+  const now = useNow(250, step >= 0);
+  const total = steps.reduce((n, x) => n + x.seconds, 0);
+  const cur = steps[step];
+  const left = cur ? Math.max(0, Math.ceil((startedAt + cur.seconds * 1000 - now) / 1000)) : 0;
+  const finish = () => {
+    cancelBeep();
+    act((w) => ({ ...w, warmupDone: true }));
+  };
+  const go = (k: number) => {
+    if (k >= steps.length) return finish();
+    setStep(k);
+    setStartedAt(Date.now());
+    scheduleBeep(steps[k]!.seconds);
+  };
+  useEffect(() => {
+    if (cur && left === 0) {
+      try {
+        navigator.vibrate?.(200);
+      } catch {
+        /* geen trilling */
+      }
+      go(step + 1);
+    }
+  }, [left, step]);
+
+  if (step < 0) {
+    return (
+      <section class="card warmup">
+        <h2>Opwarming · {Math.round(total / 60)} min</h2>
+        <ol class="steps">
+          {steps.map((x) => (
+            <li key={x.title}>
+              {x.title} <span class="muted small">({x.seconds >= 60 ? `${x.seconds / 60} min` : `${x.seconds} s`})</span>
+            </li>
+          ))}
+        </ol>
+        <p class="muted small">Daarna 1–2 lichte opwarmsets van je eerste oefening.</p>
+        <button class="btn primary huge" onClick={() => go(0)}>
+          Start opwarming
+        </button>
+        <button class="btn ghost small" onClick={finish}>
+          Overslaan
+        </button>
+      </section>
+    );
+  }
+  return (
+    <section class="card warmup" role="timer" aria-live="polite">
+      <p class="muted small">
+        Opwarming {step + 1}/{steps.length}
+      </p>
+      <h2>{cur!.title}</h2>
+      {cur!.how && <p>{cur!.how}</p>}
+      <p class="warmup-time">
+        {Math.floor(left / 60)}:{String(left % 60).padStart(2, '0')}
+      </p>
+      {steps[step + 1] && <p class="muted small">Hierna: {steps[step + 1]!.title.toLowerCase()}</p>}
+      <div class="row">
+        <button class="btn" onClick={() => go(step + 1)}>
+          Volgende
+        </button>
+        <button class="btn ghost" onClick={finish}>
+          Klaar
+        </button>
+      </div>
+    </section>
+  );
+}
+
 function ItemCard(props: { w: WorkoutState; i: number }) {
   const { w, i } = props;
   const it: WorkoutItem = w.items[i]!;
@@ -133,6 +207,7 @@ function ItemCard(props: { w: WorkoutState; i: number }) {
         <h2 class="item-name">
           {it.superset && <span class="pill">{it.superset}</span>} {ex.name}
         </h2>
+        {p.test && <span class="pill green">💪 Krachtcheck</span>}
       </div>
       {showDemo && <ExerciseDemo id={ex.id} />}
       <p class="muted small">
@@ -345,6 +420,34 @@ export function Workout() {
     );
   }
   if (isFinished(w)) return <Finish w={w} />;
+  // Eerst opwarmen (tenzij je al bezig bent of het oversloeg).
+  const started = w.items.some((it) => it.sets.some((x) => x.done));
+  if (!w.warmupDone && !started && w.index === 0) {
+    return (
+      <div class="workout">
+        <div class="row-between workout-top">
+          <span class="muted">{w.items.length} oefeningen</span>
+          <button class="btn small ghost" onClick={() => setStop(true)}>
+            Stop
+          </button>
+        </div>
+        <Warmup w={w} />
+        <Sheet open={stop} onClose={() => setStop(false)} title="Training stoppen?">
+          <button
+            class="btn danger"
+            onClick={async () => {
+              cancelBeep();
+              setStop(false);
+              await store.setWorkout(undefined);
+              go('vandaag');
+            }}
+          >
+            Weggooien (niet bewaren)
+          </button>
+        </Sheet>
+      </div>
+    );
+  }
   const group = currentGroup(w);
   const total = w.items.length;
 

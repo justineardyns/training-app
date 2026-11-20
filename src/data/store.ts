@@ -23,6 +23,8 @@ import { SWEAT_KINDS } from '../coach/planner.ts';
 import { isWeekend } from '../coach/availability.ts';
 import type { DayWeather } from '../coach/weather.ts';
 import { illnessState, type Illness, type IllnessState } from '../coach/illness.ts';
+import { milestones, type Milestone } from '../coach/milestones.ts';
+import { strengthChecks, type StrengthCheck } from '../coach/check.ts';
 import type {
   CoachAdjustments,
   DayAvailability,
@@ -75,6 +77,8 @@ export interface LocalSettings {
   lastImport?: string;
   /** Plaats voor het weerbericht. Blijft op je iPhone (nooit in de repo). */
   weatherPlace?: WeatherPlace;
+  /** Mijlpalen die je al zag (felicitatie niet opnieuw tonen). */
+  seenMilestones?: string[];
 }
 
 export interface WeatherPlace {
@@ -358,6 +362,38 @@ export class Store {
     });
   }
 
+  /** Krachtchecks, nieuwste eerst. */
+  checksStrength(): StrengthCheck[] {
+    return this.cached('strengthChecks', () => strengthChecks(this.sessions()));
+  }
+
+  /** Mijlpalen, nieuwste eerst (met je krachtchecks erbij). */
+  milestones(): Milestone[] {
+    return this.cached('milestones', () => {
+      const extra: Milestone[] = this.checksStrength()
+        .filter((c) => c.change !== undefined && c.change > 0)
+        .map((c) => ({
+          id: `krachtcheck-${c.week}`,
+          icon: '💪',
+          title: `Krachtcheck: +${Math.round(c.change! * 100)}%`,
+          text: 'Sterker dan bij je vorige krachtcheck. Dit is waarom je traint.',
+          date: c.date,
+        }));
+      return milestones(this.sessions(), extra);
+    });
+  }
+
+  /** Nieuwe mijlpalen (laatste 14 dagen) die je nog niet zag. */
+  newMilestones(): Milestone[] {
+    const seen = new Set(this.local.seenMilestones ?? []);
+    const from = addDays(this.today(), -14);
+    return this.milestones().filter((m) => !seen.has(m.id) && m.date >= from);
+  }
+
+  async markMilestonesSeen(ids: string[]): Promise<void> {
+    await this.setLocal({ seenMilestones: [...new Set([...(this.local.seenMilestones ?? []), ...ids])] });
+  }
+
   /** Nog nieuw voor je spieren: de eerste 6 krachttrainingen. */
   novice(): boolean {
     return this.sessions().filter((s) => s.kind === 'strength').length < 6;
@@ -370,7 +406,8 @@ export class Store {
       const events = this.sessions()
         .filter((s) => SWEAT_KINDS.has(s.kind) && s.date >= addDays(date, -4) && s.date < date)
         .map((s) => eventFromSession(s, novice));
-      return recoveryAt({ date, slot: isWeekend(date) ? 'day' : 'evening' }, events, this.checkFor(date)?.sore ?? []);
+      const c = this.checkFor(date);
+      return recoveryAt({ date, slot: isWeekend(date) ? 'day' : 'evening' }, events, c?.sore ?? [], c?.soreLight ?? []);
     });
   }
 
@@ -410,6 +447,7 @@ export class Store {
       avoidWeekdays: this.insights().avoidWeekdays,
       weakGroup: this.insights().weakGroup,
       soreToday: this.checkFor(today)?.sore,
+      soreLightToday: this.checkFor(today)?.soreLight,
       novice: this.novice(),
       illness: this.illness(),
     };
@@ -442,6 +480,8 @@ export class Store {
         gym: profile.gym,
         readiness: day.date === this.today() ? readiness : undefined,
         gentle: !!day.gentle,
+        tennisExtra: !!day.tennisExtra,
+        check: !!day.check,
         deload: day.deload,
         injuries: this.injuries(),
         adjustments: activeAdjustments(this.adjustments(), day.date),
@@ -520,16 +560,17 @@ export class Store {
     const prev = this.checkFor(date);
     const check: ReadinessCheck = { date, energy, level: r.level, score: r.score, reasons: r.reasons, at: this.now().toISOString() };
     if (prev?.sore) check.sore = prev.sore;
+    if (prev?.soreLight) check.soreLight = prev.soreLight;
     await this.updateLog(date, (l) => ({ ...l, checks: [...l.checks.filter((c) => c.date !== date), check] }));
     return check;
   }
 
-  /** Spierpijn vandaag (optioneel). Leeg = geen. */
-  async recordSore(groups: Group[]): Promise<void> {
+  /** Spierpijn vandaag (optioneel), in gradaties: `groups` = echt, `light` = een beetje. Leeg = geen. */
+  async recordSore(groups: Group[], light: Group[] = []): Promise<void> {
     const date = this.today();
     const cur = this.checkFor(date);
     if (!cur) return;
-    await this.updateLog(date, (l) => ({ ...l, checks: l.checks.map((c) => (c.date === date ? { ...c, sore: groups } : c)) }));
+    await this.updateLog(date, (l) => ({ ...l, checks: l.checks.map((c) => (c.date === date ? { ...c, sore: groups, soreLight: light } : c)) }));
   }
 
   async postpone(date: ISODate): Promise<void> {

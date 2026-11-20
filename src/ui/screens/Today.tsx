@@ -15,7 +15,7 @@ import { dayLabel } from './Week.tsx';
 import { SyncWarning } from './Connect.tsx';
 import { InjuryCard } from './Injury.tsx';
 import { reportIllness } from '../../data/injuries.ts';
-import { InsightsCard, RecoveryCard, SoreChips, WeatherBadge } from './CoachCards.tsx';
+import { InsightsCard, MilestoneCard, RecoveryCard, SoreChips, WeatherBadge } from './CoachCards.tsx';
 
 const ENERGY: { value: Energy; label: string }[] = [
   { value: 'high', label: '💪 Top' },
@@ -161,6 +161,7 @@ export function Today() {
         <WeatherBadge day={day} />
       </p>
       <h1>Vandaag</h1>
+      <MilestoneCard />
       <SyncWarning />
 
       {w && (

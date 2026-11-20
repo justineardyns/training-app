@@ -80,6 +80,10 @@ export interface PlannedDay {
   gentle?: boolean;
   /** Droogste dag van de week, maar je traint: wandelen als extraatje. */
   walkExtra?: WalkAdvice;
+  /** Krachttraining met tennis-extra (schouders en romp), ±1× per week. */
+  tennisExtra?: boolean;
+  /** Krachtcheck deze training (elke 6 weken, net voor je lichtere week). */
+  check?: boolean;
   /** Krachttraining: full body, bovenlichaam of benen & romp. */
   split?: Split;
   /** Uur van de groepsles (bv. '10:00'). */
@@ -138,6 +142,8 @@ export interface PlanInput {
   weakGroup?: Group;
   /** Spierpijn die je vandaag aangaf. */
   soreToday?: Group[];
+  /** Een beetje stijf vandaag (in gradaties: lichter dan echte spierpijn). */
+  soreLightToday?: Group[];
   /** Nog nieuw voor je spieren (eerste weken): iets meer hersteltijd. */
   novice?: boolean;
   /** Ziek: rust, of terug na ziekte (eerste trainingen rustiger). */
@@ -531,6 +537,7 @@ export function planWeek(input: PlanInput): WeekPlan {
     }),
   ];
   const soreOn = (d: ISODate) => (d === today ? (input.soreToday ?? []) : []);
+  const soreLightOn = (d: ISODate) => (d === today ? (input.soreLightToday ?? []) : []);
 
   // A/B wisselen voor full body, op basis van de laatste full body.
   let lastFull: Template | undefined = input.history
@@ -599,7 +606,7 @@ export function planWeek(input: PlanInput): WeekPlan {
       const cls = classSlotFor(a, prefs.classSlots, prefs.trainAtHome);
       const k = kindOf(d);
       const slot = (k === 'cardio' ? cls?.slot : undefined) ?? r.slot;
-      const rec = recoveryAt({ date: d, slot }, timeline, soreOn(d));
+      const rec = recoveryAt({ date: d, slot }, timeline, soreOn(d), soreLightOn(d));
       if (k === 'strength') {
         const split = bestSplits.get(d) ?? 'full';
         const t: Template = split === 'upper' ? 'U' : split === 'lower' ? 'L' : lastFull === 'A' ? 'B' : 'A';
@@ -682,6 +689,29 @@ export function planWeek(input: PlanInput): WeekPlan {
     });
   }
 
+  // Krachtcheck: elke 6 weken, de week net voor je lichtere week (op je hoofdoefeningen).
+  const rhythm = Math.max(3, prefs.deloadEvery - 1);
+  if (!deload.deload && deload.weeksSinceDeload === rhythm - 1) {
+    const sameWeek = addDays(weekStart(start), 6);
+    for (const r of result) {
+      if (r.status === 'planned' && r.type === 'strength' && r.date <= sameWeek) {
+        r.check = true;
+        r.why = `💪 Krachtcheck-week: je laatste set op je hoofdoefeningen zoveel mogelijk goede reps. ${r.why ?? ''}`.trim();
+      }
+    }
+  }
+  const checkWeek = result.some((r) => r.check);
+
+  // Tennis-extra: ±1× per 7 dagen, liefst in een bovenlichaamtraining (je speelt tennis op vaste dagen).
+  if (prefs.tennisDays.length > 0) {
+    const strengthDays = result.filter((r) => r.status === 'planned' && r.type === 'strength' && r.location === 'gym');
+    const pick = strengthDays.find((r) => r.split === 'upper') ?? strengthDays.find((r) => r.split === 'full') ?? strengthDays[0];
+    if (pick) {
+      pick.tennisExtra = true;
+      pick.why = `${pick.why ?? ''} + 🎾 tennis-extra: schouders en romp voor je slagen.`.trim();
+    }
+  }
+
   // Rustdagen: één vrij moment voor klusjes (liefst in het weekend), en hoogstens één wandeling.
   if (!sickRest) {
     const free = result.filter((r) => r.type === 'light' && r.status === 'free');
@@ -741,6 +771,7 @@ export function planWeek(input: PlanInput): WeekPlan {
     if (input.illness.refer) messages.push(input.illness.referMessage);
   }
   if (ct.note && !sickRest) messages.push(ct.note);
+  if (checkWeek) messages.push('Krachtcheck deze week: zo zie je zwart op wit hoeveel sterker je werd. Volgende week een lichtere week.');
   if (deload.deload) messages.push(deload.message);
   const missed = [...original].filter((d) => d < today && d >= addDays(today, -3) && !doneOn.has(d));
   if (missed.length) messages.push(`Je miste ${missed.length === 1 ? 'een training' : `${missed.length} trainingen`}. Geen inhaalrace: we stapelen niet, het plan schuift op.`);
@@ -838,6 +869,7 @@ export function planTwoWeeks(input: PlanInput): TwoWeekPlan {
   delete secondInput.explicit;
   delete secondInput.readinessToday;
   delete secondInput.soreToday;
+  delete secondInput.soreLightToday;
   const raw = planWeek(secondInput);
   const second: WeekPlan = {
     ...raw,

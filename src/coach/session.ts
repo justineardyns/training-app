@@ -3,6 +3,8 @@ import { acceptableFor, injuryDecision, relevantInjuries } from './injury.ts';
 import { DEFAULT_GYM, isAvailable, loadOptions, snapLoad } from './loads.ts';
 import { easierVariant, deloadPrescription, exposures, lighterPrescription, nextPrescription, workingLoad } from './progression.ts';
 import { MUSCLE_GROUP, type Group, type StrengthFocus } from './recovery.ts';
+import { CHECK_NOTE } from './check.ts';
+import { addDays } from './dates.ts';
 import type {
   CoachAdjustments,
   Exercise,
@@ -111,6 +113,10 @@ export interface SessionContext {
   focus?: StrengthFocus;
   /** Rustiger (bv. net na ziekte): 1 set minder, niet zwaarder, zonder extra uitleg. */
   gentle?: boolean;
+  /** Tennis-extra: schouders en romp voor je slagen (af en toe). */
+  tennisExtra?: boolean;
+  /** Krachtcheck: laatste set op de hoofdoefeningen zoveel mogelijk goede reps. */
+  check?: boolean;
 }
 
 export interface PlannedExercise {
@@ -125,6 +131,8 @@ export interface PlannedExercise {
   injuryNote?: string;
   /** Uitleg als herstel deze oefening lichter maakt. */
   recoveryNote?: string;
+  /** Hoort bij de tennis-extra. */
+  tennis?: boolean;
 }
 
 export interface StrengthSession {
@@ -293,6 +301,39 @@ export function buildStrengthSession(ctx: SessionContext): StrengthSession {
     });
   }
 
+  // Tennis-extra (af en toe): gezonde schouders en een sterke rotatie voor je slagen. Vóór de armen,
+  // zodat bij weinig tijd eerst de armen wegvallen.
+  if (ctx.tennisExtra && ctx.location === 'gym') {
+    const ids = ctx.template === 'L' ? ['cable-woodchop'] : ctx.template === 'U' ? ['face-pull', 'cable-external-rotation'] : ['face-pull', 'cable-woodchop'];
+    const at = planned.findIndex((p) => p.exercise.pattern === 'arms');
+    const extras: PlannedExercise[] = [];
+    for (const id of ids) {
+      const ex = getExercise(id);
+      if (planned.some((p) => p.exercise.id === id) || !isAvailable(ex, ctx.location, ctx.equipment, ctx.gym) || !acceptableFor(ex, injuries)) continue;
+      const built = buildPrescription(ex, 'accessory', ctx, 2);
+      extras.push({
+        exercise: built.exercise,
+        prescription: { ...built.prescription, note: `🎾 Tennis-extra: ${id === 'cable-woodchop' ? 'rotatie voor krachtige slagen' : 'gezonde, sterke schouders'}. ${built.prescription.note}` },
+        role: 'accessory',
+        options: built.options,
+        tennis: true,
+      });
+    }
+    planned.splice(at >= 0 ? at : planned.length, 0, ...extras);
+  }
+
+  // Krachtcheck: op je hoofdoefeningen (met gewicht en al minstens 2× gedaan), één keer per check-week.
+  if (ctx.check && !ctx.deload) {
+    const weekAgo = addDays(ctx.date, -6);
+    for (const p of planned) {
+      if (p.role !== 'main' || p.exercise.load === 'bodyweight' || p.prescription.load <= 0) continue;
+      const hist = exposures(ctx.history.filter((h) => h.date < ctx.date), p.exercise.id);
+      if (hist.filter((h) => !h.deload).length < 2) continue;
+      if (hist.some((h) => h.date >= weekAgo && h.log.prescription.test)) continue;
+      p.prescription = { ...p.prescription, test: true, note: CHECK_NOTE };
+    }
+  }
+
   // Herstel: moe → 1 set minder en niet zwaarder; wie fris is (of je werkpunt) komt eerst.
   if (ctx.focus) applyFocus(planned, ctx.focus, ctx.history.filter((h) => h.date < ctx.date));
 
@@ -395,6 +436,42 @@ export function applyFocus(planned: PlannedExercise[], focus: StrengthFocus, his
   mainIdx.forEach((i, k) => {
     planned[i] = mains[k]!.p;
   });
+}
+
+export interface WarmupStep {
+  title: string;
+  seconds: number;
+  /** Korte uitleg (hoe). */
+  how?: string;
+}
+
+/** Begeleide opwarming van ±5 minuten, afgestemd op de training van vandaag. */
+export function warmupFor(template: Template): WarmupStep[] {
+  if (template === 'U') {
+    return [
+      { title: 'Roeier, rustig', seconds: 120, how: 'Rustig tempo, je kan nog praten.' },
+      { title: 'Armcirkels', seconds: 30, how: 'Grote cirkels, 15 s vooruit en 15 s achteruit.' },
+      { title: 'Schouders openen', seconds: 30, how: 'Armen gestrekt opzij, schouderbladen naar elkaar.' },
+      { title: 'Push-ups tegen een bank', seconds: 40, how: 'Rustig, volledig bereik.' },
+      { title: 'Borstwervel draaien', seconds: 40, how: 'Op handen en knieën, hand achter je hoofd, open naar het plafond. Wissel halverwege.' },
+    ];
+  }
+  if (template === 'L') {
+    return [
+      { title: 'Fiets, rustig', seconds: 120, how: 'Rustig tempo, je kan nog praten.' },
+      { title: 'Squats zonder gewicht', seconds: 40, how: 'Rustig zakken, borst omhoog.' },
+      { title: 'Heupcirkels', seconds: 30, how: 'Handen op je heupen, grote cirkels beide kanten.' },
+      { title: 'Glute bridges', seconds: 40, how: 'Op je rug, heupen omhoog, 1 tel vasthouden boven.' },
+      { title: 'Achterwaartse lunges', seconds: 40, how: 'Afwisselend links en rechts, zonder gewicht.' },
+    ];
+  }
+  return [
+    { title: 'Fiets of roeier, rustig', seconds: 120, how: 'Rustig tempo, je kan nog praten.' },
+    { title: 'Squats zonder gewicht', seconds: 30, how: 'Rustig zakken, borst omhoog.' },
+    { title: 'Armcirkels', seconds: 30, how: 'Grote cirkels, 15 s vooruit en 15 s achteruit.' },
+    { title: 'Glute bridges', seconds: 30, how: 'Op je rug, heupen omhoog, 1 tel vasthouden boven.' },
+    { title: 'Push-ups tegen een bank', seconds: 30, how: 'Rustig, volledig bereik.' },
+  ];
 }
 
 export interface CardioSession {

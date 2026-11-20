@@ -4,6 +4,8 @@ import type { PlannedDay } from '../../coach/planner.ts';
 import { GROUP_LABEL, GROUPS, STATE_LABEL, type Group, type GroupRecovery } from '../../coach/recovery.ts';
 import { PLACES } from '../../coach/weather.ts';
 import { currentPlace, placeOf, refreshWeather, setWeatherPlace } from '../../data/weather.ts';
+import { Chips } from '../components.tsx';
+import { nextMilestone } from '../../coach/milestones.ts';
 import { useStore } from '../hooks.ts';
 import { go } from '../router.ts';
 
@@ -86,39 +88,40 @@ export function WeatherBadge(props: { day: PlannedDay }) {
   );
 }
 
-/** Optioneel na de dagvorm: spierpijn? Eén tik. */
+/** Optioneel na de dagvorm: spierpijn, in gradaties (een beetje / echt). Eén tik per rij. */
+type SoreLevel = 0 | 1 | 2;
+const AREAS: { label: string; groups: Group[] }[] = [
+  { label: 'Benen', groups: ['benen'] },
+  { label: 'Bovenlijf', groups: ['duwen', 'trekken'] },
+];
+
 export function SoreChips() {
   const s = useStore();
   const check = s.checkFor(s.today());
   if (!check) return null;
-  const sore = check.sore;
-  const upper = sore?.includes('duwen') || sore?.includes('trekken');
-  const legs = sore?.includes('benen');
-  const set = (groups: Group[]) => s.recordSore(groups);
+  const sore = check.sore ?? [];
+  const light = check.soreLight ?? [];
+  const level = (gs: Group[]): SoreLevel => (gs.some((g) => sore.includes(g)) ? 2 : gs.some((g) => light.includes(g)) ? 1 : 0);
+  const set = (gs: Group[], v: SoreLevel) => {
+    const without = (list: Group[]) => list.filter((g) => !gs.includes(g));
+    void s.recordSore(v === 2 ? [...without(sore), ...gs] : without(sore), v === 1 ? [...without(light), ...gs] : without(light));
+  };
   return (
     <div class="sore">
-      <p class="muted small">Spierpijn? (optioneel)</p>
-      <div class="chips" role="group" aria-label="Spierpijn">
-        <button class={`chip ${sore && sore.length === 0 ? 'on' : ''}`} aria-pressed={!!sore && sore.length === 0} onClick={() => set([])}>
-          Nee
-        </button>
-        <button
-          class={`chip ${legs ? 'on orange' : ''}`}
-          aria-pressed={!!legs}
-          onClick={() => set(legs ? (sore ?? []).filter((g) => g !== 'benen') : [...(sore ?? []), 'benen'])}
-        >
-          Benen
-        </button>
-        <button
-          class={`chip ${upper ? 'on orange' : ''}`}
-          aria-pressed={!!upper}
-          onClick={() =>
-            set(upper ? (sore ?? []).filter((g) => g !== 'duwen' && g !== 'trekken') : [...(sore ?? []).filter((g) => g === 'benen'), 'duwen', 'trekken'])
-          }
-        >
-          Bovenlijf
-        </button>
-      </div>
+      <p class="muted small">Spierpijn of stijf? (optioneel)</p>
+      {AREAS.map((a) => (
+        <Chips<SoreLevel>
+          key={a.label}
+          label={`Spierpijn ${a.label.toLowerCase()}`}
+          options={[
+            { value: 0, label: `${a.label}: nee` },
+            { value: 1, label: 'Een beetje', tone: 'orange' },
+            { value: 2, label: 'Echt', tone: 'red' },
+          ]}
+          value={level(a.groups)}
+          onChange={(v) => set(a.groups, v)}
+        />
+      ))}
     </div>
   );
 }
@@ -176,5 +179,93 @@ export function WeatherSettings() {
         ))}
       </div>
     </>
+  );
+}
+
+/** Nieuwe mijlpaal: korte felicitatie (één keer). */
+export function MilestoneCard() {
+  const s = useStore();
+  const fresh = s.newMilestones();
+  if (fresh.length === 0) return null;
+  const m = fresh[0]!;
+  return (
+    <div class="card milestone" role="status">
+      <p class="milestone-icon" aria-hidden="true">
+        {m.icon}
+      </p>
+      <h3>{m.title}</h3>
+      <p>{m.text}</p>
+      {fresh.length > 1 && <p class="muted small">En nog {fresh.length - 1}: {fresh.slice(1).map((x) => x.title.toLowerCase()).join(', ')}.</p>}
+      <button class="btn primary" onClick={() => s.markMilestonesSeen(fresh.map((x) => x.id))}>
+        Top!
+      </button>
+    </div>
+  );
+}
+
+/** Alle mijlpalen tot nu toe + de volgende (Rapport). */
+export function MilestonesList() {
+  const s = useStore();
+  const all = s.milestones();
+  const next = nextMilestone(s.sessions());
+  return (
+    <div class="card">
+      <h3>Mijlpalen</h3>
+      {all.length === 0 && <p class="muted">Je eerste mijlpaal: je eerste training. Daarna 5, 10, 25… en records, lessen en weken op rij.</p>}
+      <ul class="plain milestones">
+        {all.slice(0, 8).map((m) => (
+          <li key={m.id}>
+            <span aria-hidden="true">{m.icon}</span> <strong>{m.title}</strong>{' '}
+            <span class="muted small">{Number(m.date.slice(8))}/{Number(m.date.slice(5, 7))}</span>
+          </li>
+        ))}
+      </ul>
+      {next && (
+        <p class="muted small">
+          Volgende: {next.title} ({next.left}).
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** Krachtcheck: je laatste meting en hoeveel sterker je werd (Rapport). */
+export function StrengthCheckCard() {
+  const s = useStore();
+  const checks = s.checksStrength();
+  const nf = new Intl.NumberFormat('nl-BE', { maximumFractionDigits: 1 });
+  if (checks.length === 0) {
+    return (
+      <div class="card">
+        <h3>Krachtcheck</h3>
+        <p class="muted">Elke 6 weken, net voor je lichtere week, doe je op je hoofdoefeningen één set zoveel mogelijk goede reps. Zo zie je zwart op wit hoeveel sterker je wordt.</p>
+      </div>
+    );
+  }
+  const c = checks[0]!;
+  return (
+    <div class="card">
+      <h3>
+        Krachtcheck{' '}
+        <span class="muted small">
+          {Number(c.date.slice(8))}/{Number(c.date.slice(5, 7))}
+        </span>
+      </h3>
+      {c.change !== undefined && (
+        <p>
+          <strong>{c.change >= 0 ? '+' : ''}{Math.round(c.change * 100)}%</strong> sterker dan je vorige check.
+        </p>
+      )}
+      <ul class="plain">
+        {c.items.map((i) => (
+          <li key={i.exerciseId}>
+            <strong>{i.name}</strong>: {nf.format(i.load)} kg × {i.reps}{' '}
+            <span class="muted small">
+              (geschatte max {nf.format(Math.round(i.e1rm))} kg{i.change !== undefined ? `, ${i.change >= 0 ? '+' : ''}${Math.round(i.change * 100)}%` : ', eerste meting'})
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

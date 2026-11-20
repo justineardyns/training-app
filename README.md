@@ -15,13 +15,20 @@ Werkt offline in de gym, draait puur op jouw tikken en kost **€ 0**.
 - **Denkt mee als een personal coach:**
   - **Herstel in gradaties:** elke training laat per spiergroep een belasting na die over 24 tot 72 uur wegzakt.
     *Fris* = gewoon, *herstelt* (licht stijf) = later in je training en niet zwaarder, *moe* = 1 set minder en niet
-    zwaarder. Je tik "spierpijn" zet een groep altijd op moe.
+    zwaarder. Je tik "spierpijn" kan in gradaties: *een beetje* = herstelt, *echt* = moe.
   - **Herstel per spiergroep:** benen, borst & schouders, rug & armen, romp. Kracht, indoor cycling en tennis
     tellen mee, net als je tik "spierpijn". Wat nog moe is, komt later in je training of krijgt een set minder
     en gaat niet zwaarder.
   - **Sterke punten en werkpunten:** wat gaat vooruit, wat staat stil, welke dagen vallen vaak weg, en neem je
     meer of minder dan voorgesteld. Je traagste spiergroep komt eerst in je training, en dagen die vaak wegvallen
     plant de coach liever niet.
+  - **Krachtcheck elke 6 weken**, net voor je lichtere week: op je hoofdoefeningen één set zoveel mogelijk goede
+    reps (1–2 over). In **Rapport** zie je hoeveel sterker je werd.
+  - **Tennis-extra** ±1× per week (liefst bij bovenlichaam): face pull, externe rotatie en woodchop met de kabel,
+    voor sterke schouders en krachtige slagen. Nooit als vervanger bij "Toestel bezet".
+  - **Begeleide opwarming** van ±5 min bij elke krachttraining, met een timer die zelf doorloopt (of overslaan).
+  - **Mijlpalen:** een korte felicitatie bij je eerste training, 10, 25… trainingen, records, lessen, weken op rij
+    en een betere krachtcheck.
   - **Bij elke dag een korte "waarom".** Tik op een dag om te wisselen tussen kracht en indoor cycling, of om
     ze te schrappen.
   - **Krachttrainingen in drie soorten:**
@@ -32,8 +39,8 @@ Werkt offline in de gym, draait puur op jouw tikken en kost **€ 0**.
   verder op de eerste week). Je vinkt aan welke avonden passen (in het weekend overdag, want Jims sluit dan om 17u), en of je
   tennist. Alles gebeurt in Jims: geen thuistrainingen.
 - **Agenda** (eigen tab onderaan, de enige plek waar je je vrije dagen aanduidt): een maandkalender. Eén tik per dag:
-  groen = kan, rood = kan niet, tot 2 maanden
-  vooruit. Je ziet meteen wat er gepland staat (🏋️ 🚴 🎾 🎟️). Tik op een dag voor tennis of om een les als gereserveerd
+  groen = kan, rood = kan niet, tot 2 maanden vooruit (en terug om je voorbije maanden te zien: gedane trainingen
+  kleuren mee, met een telling per maand). Je ziet meteen wat er gepland staat (🏋️ 🚴 🎾 🎟️). Tik op een dag voor tennis of om een les als gereserveerd
   aan te duiden, of om de duur te kiezen (30/45/60 min). Met één knop bevestig je dat de komende 14 dagen kloppen.
   Een oranje bolletje op de tab = nog aan te duiden.
 - **Lessen reserveren:** indoor cycling zit snel vol. In de **Agenda** zie je de lessen van de komende 14 dagen;

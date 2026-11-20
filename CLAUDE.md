@@ -42,6 +42,12 @@ Tests gebruiken verzonnen data (`e2e/seed.ts`, `FakeGitHub`).
   nooit in de privé-repo). Het weer beïnvloedt enkel zweetvrije dagen, nooit de keuze van zweetdagen.
 - Ziek zijn (`src/coach/illness.ts`): ziek is ziek → rust (geen enkele training) tot "Genezen"; daarna de eerste
   2 trainingen rustiger (`gentle`: zonder extra uitleg). Huisarts bij > 7 dagen of erger. Bewaard in `data/injuries.json` (`illnesses`).
+- Krachtcheck (`src/coach/check.ts`): in de week net voor de ritme-deload (`weeksSinceDeload === deloadEvery − 2`)
+  krijgen hoofdoefeningen met ≥ 2 echte keren `prescription.test` (laatste set zoveel mogelijk reps).
+- Tennis-extra (`tennisExtra`): ±1× per 7 dagen als je tennisdagen hebt, liefst bij `U`; oefeningen met `prehab`
+  zijn nooit een vervanger voor gewone oefeningen.
+- Mijlpalen (`src/coach/milestones.ts`), opwarming (`warmupFor`), spierpijn in gradaties (`sore` = echt,
+  `soreLight` = een beetje).
 - Herstel (`src/coach/recovery.ts`) en sterke/werkpunten (`src/coach/insights.ts`) sturen de planner en de sessies;
   elke geplande dag krijgt een `why`.
 

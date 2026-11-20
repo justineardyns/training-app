@@ -347,6 +347,14 @@ const E: Exercise[] = [
     setup: 'Kabelkolom met een losse handgreep op borsthoogte. Ga zijwaarts staan, één tot twee stappen van de kabel.',
   },
   {
+    id: 'cable-woodchop', name: 'Woodchop met kabel', pattern: 'core', muscles: ['core'], prehab: true,
+    locations: ['gym'], load: 'cable', unilateral: true, repRange: [10, 12], start: 5,
+    stress: { onderrug: 1 },
+    tips: ['Draai vanuit je romp en heupen, niet enkel met je armen.', 'Armen bijna gestrekt, beweeg diagonaal van hoog naar laag.', 'Rustig terug: dat is de helft van de oefening.'],
+    video: 'cable woodchop form',
+    setup: 'Kabelkolom met een losse handgreep bovenaan. Ga zijwaarts staan, één stap van de kabel, voeten op schouderbreedte.',
+  },
+  {
     id: 'bird-dog', name: 'Bird dog', pattern: 'core', muscles: ['core', 'bilspieren'],
     locations: ['home', 'gym'], load: 'bodyweight', unilateral: true, repRange: [6, 12], start: 0,
     stress: {},
@@ -374,6 +382,22 @@ const E: Exercise[] = [
     stress: { elleboog: 1, pols: 1 },
     tips: ['Duimen omhoog.', 'Ellebogen stil.', 'Gecontroleerd zakken.'],
     video: 'hammer curl form',
+  },
+  {
+    id: 'face-pull', name: 'Face pull (kabel)', pattern: 'pull_h', muscles: ['rug', 'schouders'], prehab: true,
+    locations: ['gym'], load: 'cable', repRange: [12, 15], start: 5,
+    stress: { schouder: 1 },
+    tips: ['Trek het touw naar je gezicht, handen naast je oren.', 'Ellebogen hoog, schouderbladen naar elkaar.', 'Licht gewicht: dit is voor gezonde schouders, niet voor zwaar.'],
+    video: 'face pull form',
+    setup: 'Kabelkolom met een touw op ooghoogte. Ga er recht voor staan, één stap achteruit, armen gestrekt.',
+  },
+  {
+    id: 'cable-external-rotation', name: 'Externe rotatie met kabel', pattern: 'pull_h', muscles: ['schouders'], prehab: true,
+    locations: ['gym'], load: 'cable', unilateral: true, repRange: [12, 15], start: 2.5,
+    stress: { schouder: 1 },
+    tips: ['Elleboog tegen je zij (een opgerolde handdoek ertussen helpt).', 'Draai je onderarm naar buiten, je elleboog blijft staan.', 'Heel licht en rustig: dit beschermt je schouder bij het tennissen.'],
+    video: 'cable external rotation form',
+    setup: 'Kabelkolom met een losse handgreep op ellebooghoogte. Ga zijwaarts staan, de kabel aan de kant van je andere arm.',
   },
   {
     id: 'triceps-pushdown', name: 'Triceps pushdown (kabel)', pattern: 'arms', muscles: ['triceps'],
@@ -443,7 +467,7 @@ export function alternativesFor(
   const exclude = new Set([id, ...(opts.exclude ?? [])]);
   const totalStress = (e: Exercise) => Object.values(e.stress).reduce((a, b) => a + (b ?? 0), 0);
   const candidates = (pat: Pattern) =>
-    [...EXERCISES.values()].filter((e) => e.pattern === pat && e.locations.includes(location) && !exclude.has(e.id));
+    [...EXERCISES.values()].filter((e) => e.pattern === pat && e.locations.includes(location) && !exclude.has(e.id) && (!e.prehab || !!ex.prehab));
   let list = candidates(pattern);
   // Niets met hetzelfde patroon (bv. verticaal trekken thuis)? Dan een verwant patroon.
   if (list.length === 0 && RELATED[pattern]) list = candidates(RELATED[pattern]!);

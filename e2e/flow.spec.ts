@@ -54,6 +54,16 @@ test('eerste opstart → plannen → trainen → bewaren', async ({ page }) => {
   await page.getByRole('button', { name: 'Terug' }).click();
   await page.getByRole('button', { name: 'Start', exact: true }).click();
 
+  // Begeleide opwarming: timer die zelf doorloopt, of overslaan.
+  await expect(page.getByRole('heading', { name: /^Opwarming · \d min/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Start opwarming' }).click();
+  await expect(page.locator('.warmup-time')).toHaveText(/^\d:\d\d$/);
+  await expect(page.getByRole('heading', { name: /Fiets of roeier/ })).toBeVisible();
+  await snap(page, '04c-opwarming');
+  await page.getByRole('button', { name: 'Volgende' }).click();
+  await expect(page.getByRole('heading', { name: 'Squats zonder gewicht' })).toBeVisible();
+  await page.getByRole('button', { name: 'Klaar' }).click();
+
   // Training: eerste oefening, alle sets afvinken
   await expect(page.locator('.item-name').first()).toContainText('Leg press');
   const checks = page.getByRole('button', { name: /^Set \d gedaan$/ });
@@ -88,6 +98,16 @@ test('eerste opstart → plannen → trainen → bewaren', async ({ page }) => {
   await expect(page.getByRole('heading', { name: /Klaar/ })).toBeVisible();
   await page.getByRole('button', { name: 'Bewaar training' }).click();
   await expect(page.locator('.card.done')).toBeVisible();
+  // Mijlpaal: je eerste training! Eén keer tonen.
+  await expect(page.locator('.card.milestone')).toContainText('Je eerste training!');
+  await snap(page, '09b-mijlpaal');
+  await page.locator('.card.milestone').getByRole('button', { name: 'Top!' }).click();
+  await expect(page.locator('.card.milestone')).toHaveCount(0);
+  // In de Agenda: vandaag gedaan, telling van de maand.
+  await page.getByRole('link', { name: /Agenda/ }).click();
+  await expect(page.getByRole('gridcell', { name: /^maandag 23 november: gedaan/ })).toContainText('🏋️');
+  await expect(page.getByText(/Deze maand: 1 training · 1× kracht/)).toBeVisible();
+  await page.getByRole('link', { name: /Vandaag/ }).click();
   await snap(page, '09-gedaan');
 
   // Blijft bewaard na herladen

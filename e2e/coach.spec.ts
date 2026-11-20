@@ -103,7 +103,7 @@ test('de coach kiest de mix, wisselt spieren af, laat je kiezen en kijkt naar he
   await page.getByRole('link', { name: /Vandaag/ }).click();
   await expect(page.locator('.eyebrow .wx')).toContainText('11°');
   await page.getByRole('button', { name: /Oké/ }).click();
-  await page.getByRole('group', { name: 'Spierpijn' }).getByRole('button', { name: 'Benen' }).click();
+  await page.getByRole('group', { name: 'Spierpijn benen' }).getByRole('button', { name: 'Echt' }).click();
   await expect(page.locator('.today-card')).toContainText('Benen nog moe (spierpijn)');
   await expect(page.locator('.rec.red')).toContainText('Benen');
   await expect(page.getByRole('heading', { name: 'Sterk en werkpunten' })).toBeVisible();

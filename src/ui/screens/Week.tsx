@@ -40,6 +40,8 @@ export function PlanList(props: { plan: WeekPlan; today: string; className?: str
                 {d.title}
                 {d.slot && d.status === 'planned' && !d.time && <span class="muted small"> · {MOMENT[d.slot]}</span>}
                 {d.lighter && <span class="pill orange">lichter</span>}
+                {d.check && <span class="pill green">krachtcheck</span>}
+                {d.tennisExtra && <span class="pill">🎾 extra</span>}
                 {d.booked ? (
                   <span class="pill green">🎟️ gereserveerd</span>
                 ) : (

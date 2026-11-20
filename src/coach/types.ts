@@ -92,6 +92,8 @@ export interface Exercise {
   harder?: string;
   /** Maximaal gewicht (kg) voor toestellen met een grotere range. */
   maxLoad?: number;
+  /** Extra voor tennis (schouders, rotatie): nooit als vervanger voor een gewone oefening. */
+  prehab?: boolean;
 }
 
 export interface Plate {
@@ -187,6 +189,8 @@ export interface Prescription {
   change: ProgressionChange;
   /** Korte uitleg voor jou (waarom dit doel). */
   note: string;
+  /** Krachtcheck: laatste set zoveel mogelijk goede reps. */
+  test?: boolean;
 }
 
 export interface SetLog {

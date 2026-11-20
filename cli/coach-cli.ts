@@ -162,6 +162,10 @@ export function context(store: Store, monday: string) {
     insights: store.insights(),
     /** Herstel per spiergroep vandaag. */
     recovery: store.recovery(),
+    /** Krachtchecks (elke 6 weken), nieuwste eerst. */
+    strengthChecks: store.checksStrength().slice(0, 3),
+    /** Laatste mijlpalen. */
+    milestones: store.milestones().slice(0, 5),
     injuries: store.injuries().map((i) => ({ ...i, referral: referral(i, today) })),
     /** Ziek: rust (koorts/griep/maag-darm), lichter (verkouden) of terug na ziekte, met huisarts-advies. */
     illness: store.illness(),

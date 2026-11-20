@@ -47,8 +47,10 @@ export interface ReadinessCheck {
   score: number;
   reasons: string[];
   at: string;
-  /** Spierpijn die je aangaf (optioneel, één tik). */
+  /** Spierpijn die je aangaf (optioneel, één tik): echt. */
   sore?: Group[];
+  /** Een beetje stijf. */
+  soreLight?: Group[];
 }
 
 export interface LogFile {

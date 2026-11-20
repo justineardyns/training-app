@@ -1,8 +1,8 @@
 import { useState } from 'preact/hooks';
 import { isWeekend, resolveDay } from '../../coach/availability.ts';
 import { addDays, DAY_SHORT, dayIndex, dayName } from '../../coach/dates.ts';
-import { hourText, type PlannedDay } from '../../coach/planner.ts';
-import type { ISODate, Minutes } from '../../coach/types.ts';
+import { hourText, SWEAT_KINDS, type PlannedDay } from '../../coach/planner.ts';
+import type { ISODate, Minutes, SessionLog } from '../../coach/types.ts';
 import { Chips } from '../components.tsx';
 import { useStore } from '../hooks.ts';
 import { go } from '../router.ts';
@@ -16,6 +16,14 @@ function monthStart(date: ISODate, offset: number): ISODate {
   const [y, m] = date.split('-').map(Number) as [number, number];
   const t = new Date(Date.UTC(y, m - 1 + offset, 1));
   return t.toISOString().slice(0, 10);
+}
+
+/** Wat je die dag deed (voorbije dagen). */
+function doneIcon(list: SessionLog[] | undefined): string {
+  if (!list?.length) return '';
+  if (list.some((s) => /tennis/i.test(`${s.title ?? ''} ${s.workoutType ?? ''}`))) return '🎾';
+  if (list.some((s) => s.kind === 'strength')) return '🏋️';
+  return '🚴';
 }
 
 function icon(d: PlannedDay | undefined): string {
@@ -35,6 +43,8 @@ export function Agenda() {
   const [offset, setOffset] = useState(0);
   const [selected, setSelected] = useState<ISODate>(today);
   const ahead = s.planAhead();
+  const doneOn = new Map<ISODate, SessionLog[]>();
+  for (const x of s.sessions().filter((x) => SWEAT_KINDS.has(x.kind))) doneOn.set(x.date, [...(doneOn.get(x.date) ?? []), x]);
   const planned = new Map([...ahead.first.days, ...ahead.second.days].map((d) => [d.date, d]));
   const first = monthStart(today, offset);
   const lead = dayIndex(first);
@@ -60,13 +70,18 @@ export function Agenda() {
   const selPlan = planned.get(selected);
   const tennisDay = prefs.tennisDays.includes(dayIndex(selected));
   const label = (d: ISODate) => `${DAY_SHORT[dayIndex(d)]} ${Number(d.slice(8))}/${Number(d.slice(5, 7))}`;
+  // Wat je deze maand al deed.
+  const monthDone = [...doneOn].filter(([d]) => d.startsWith(first.slice(0, 7)) && d <= today).flatMap(([, l]) => l);
+  const nTennis = monthDone.filter((x) => /tennis/i.test(`${x.title ?? ''} ${x.workoutType ?? ''}`)).length;
+  const nStrength = monthDone.filter((x) => x.kind === 'strength').length;
+  const nClass = monthDone.length - nTennis - nStrength;
 
   return (
     <>
       <h1>Agenda</h1>
       <p class="muted">Tik op een dag: groen = je kan trainen ('s avonds, in het weekend overdag), rood = kan niet.</p>
       <div class="row-between cal-nav">
-        <button class="btn small ghost" disabled={offset <= 0} onClick={() => setOffset(offset - 1)} aria-label="Vorige maand">
+        <button class="btn small ghost" disabled={offset <= -6} onClick={() => setOffset(offset - 1)} aria-label="Vorige maand">
           ‹
         </button>
         <h2 class="center">
@@ -76,6 +91,16 @@ export function Agenda() {
           ›
         </button>
       </div>
+      {monthDone.length > 0 && (
+        <p class="muted small month-done">
+          <strong>
+            {offset === 0 ? 'Deze maand' : 'Die maand'}: {monthDone.length} {monthDone.length === 1 ? 'training' : 'trainingen'}
+          </strong>
+          {nStrength ? ` · ${nStrength}× kracht` : ''}
+          {nClass ? ` · ${nClass}× ${prefs.className.toLowerCase()}` : ''}
+          {nTennis ? ` · ${nTennis}× tennis` : ''}
+        </p>
+      )}
       <div class="cal" role="grid" aria-label="Maandkalender">
         {DAY_SHORT.map((d) => (
           <span key={d} class="cal-head" role="columnheader">
@@ -87,7 +112,8 @@ export function Agenda() {
           const past = d < today;
           const st = state(d);
           const p = planned.get(d);
-          const cls = `${past ? 'past' : st.can ? 'can' : 'cannot'}${p?.provisional ? ' provisional' : ''}`;
+          const did = doneOn.get(d);
+          const cls = `${past ? 'past' : st.can ? 'can' : 'cannot'}${did ? ' done' : ''}${p?.provisional ? ' provisional' : ''}`;
           return (
             <button
               key={d}
@@ -95,19 +121,19 @@ export function Agenda() {
               class={`cal-cell ${cls} ${st.source === 'saved' ? 'saved' : 'pattern'} ${d === today ? 'today' : ''} ${d === selected ? 'sel' : ''}`}
               disabled={past}
               aria-pressed={!past && st.can}
-              aria-label={`${dayName(d)} ${Number(d.slice(8))} ${MONTHS[Number(d.slice(5, 7)) - 1]}: ${past ? 'voorbij' : st.can ? 'kan' : 'kan niet'}${p?.sweat ? `, ${p.title}` : ''}`}
+              aria-label={`${dayName(d)} ${Number(d.slice(8))} ${MONTHS[Number(d.slice(5, 7)) - 1]}: ${did ? 'gedaan' : past ? 'voorbij' : st.can ? 'kan' : 'kan niet'}${p?.sweat && !did ? `, ${p.title}` : ''}`}
               onClick={() => toggle(d)}
             >
               <span class="cal-num">{Number(d.slice(8))}</span>
               <span class="cal-ico" aria-hidden="true">
-                {icon(p) || (past ? '' : st.can ? '✓' : '✕')}
+                {doneIcon(did) || (past ? '' : icon(p) || (st.can ? '✓' : '✕'))}
               </span>
             </button>
           );
         })}
       </div>
       <p class="muted small cal-legend">
-        <span class="dot can" /> kan · <span class="dot cannot" /> kan niet · gestreept = nog niet aangevinkt (je vaste patroon) · 🏋️ kracht · 🚴 les ·
+        <span class="dot can" /> kan · <span class="dot cannot" /> kan niet · <span class="dot done" /> gedaan · gestreept = nog niet aangevinkt (je vaste patroon) · 🏋️ kracht · 🚴 les ·
         🎟️ gereserveerd · 🎾 tennis · 🧹 klusjes · iconen vanaf dag 8 zijn voorlopig
       </p>
 

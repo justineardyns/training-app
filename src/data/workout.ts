@@ -35,6 +35,8 @@ export interface WorkoutState {
   rest?: RestState;
   /** Afsluiter na de laatste oefening (enkel bij 60 min, groen). */
   finisher?: { title: string; steps: string[] };
+  /** Opwarming gedaan of overgeslagen. */
+  warmupDone?: boolean;
 }
 
 export function itemFromPlanned(p: PlannedExercise): WorkoutItem {

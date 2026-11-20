@@ -466,3 +466,15 @@ p.why { font-size: 15px; margin: 4px 0 10px; }
 .btn.sick { margin-bottom: 12px; }
 .card.illness { border-left: 4px solid var(--orange); }
 .card.illness.rest { border-left-color: var(--red); }
+
+.cal-cell.past.done { opacity: 1; background: rgba(74, 222, 128, 0.12); border-color: rgba(74, 222, 128, 0.6); }
+.dot.done { background: transparent; border: 2px solid rgba(74, 222, 128, 0.8); }
+.month-done { margin: 0 0 4px; }
+
+.card.milestone { text-align: center; border: 1px solid var(--accent); }
+.milestone-icon { font-size: 44px; margin: 0; line-height: 1.2; }
+.card.milestone h3 { margin: 4px 0; }
+.milestones li { padding: 4px 0; }
+
+.card.warmup h2 { margin-top: 0; }
+.warmup-time { font-size: 56px; font-weight: 800; text-align: center; margin: 8px 0; font-variant-numeric: tabular-nums; }
