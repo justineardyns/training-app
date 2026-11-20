@@ -1,8 +1,9 @@
 import { expect, type Page } from '@playwright/test';
 
-/** Eerste opstart doorlopen zonder koppeling (standaardmateriaal). */
-export async function quickSetup(page: Page, when = '2026-11-23T08:00:00') {
-  await page.clock.setFixedTime(new Date(when));
+/** Eerste opstart doorlopen zonder koppeling (standaardmateriaal). `clock: 'install'` = een klok die je kan doorspoelen. */
+export async function quickSetup(page: Page, when = '2026-11-23T08:00:00', opts: { clock?: 'fixed' | 'install' } = {}) {
+  if (opts.clock === 'install') await page.clock.install({ time: new Date(when) });
+  else await page.clock.setFixedTime(new Date(when));
   await page.goto('./');
   await page.getByRole('button', { name: 'Start' }).click();
   await page.getByRole('button', { name: 'Later koppelen' }).click();
@@ -24,4 +25,13 @@ export async function preferStrengthToday(page: Page) {
   await today.getByRole('button').first().click();
   await page.getByRole('button', { name: /Liever kracht/ }).click();
   await expect(page.locator('.plan').first().locator('.plan-day').first()).toContainText(/Full body|Bovenlichaam|Benen & romp/);
+}
+
+/** In Week: vandaag liever indoor cycling. */
+export async function preferCardioToday(page: Page) {
+  const today = page.locator('.plan').first().locator('.plan-day').first();
+  if (await today.getByText(/Indoor cycling/).count()) return;
+  await today.getByRole('button').first().click();
+  await page.getByRole('button', { name: /Liever indoor cycling/ }).click();
+  await expect(page.locator('.plan').first().locator('.plan-day').first()).toContainText(/Indoor cycling/);
 }

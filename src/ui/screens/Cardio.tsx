@@ -3,14 +3,16 @@ import type { CardioSession } from '../../coach/session.ts';
 import type { Minutes } from '../../coach/types.ts';
 import { Chips } from '../components.tsx';
 import { useStore } from '../hooks.ts';
+import { IntervalTimer } from '../IntervalTimer.tsx';
 import { go } from '../router.ts';
 
 export function Cardio() {
   const s = useStore();
   const today = s.today();
   const day = s.todayPlan();
-  const session = s.sessionFor(day) as CardioSession | undefined;
   const [minutes, setMinutes] = useState<Minutes>(day.minutes ?? 45);
+  // De timer volgt de gekozen duur (een lopende timer houdt zijn blokken).
+  const session = s.sessionFor({ ...day, minutes }) as CardioSession | undefined;
 
   if (!session || session.kind !== 'cardio') {
     return (
@@ -42,11 +44,15 @@ export function Cardio() {
             {idx > 0 && <span class="muted small">of </span>}
             {o.title}
           </h2>
-          <ul class="steps">
-            {o.steps.map((st) => (
-              <li key={st}>{st}</li>
-            ))}
-          </ul>
+          {o.blocks ? (
+            <IntervalTimer id={`${today}-${o.title}`} blocks={o.blocks} steps={o.steps} doneText="Tik hieronder op Gedaan ✓: dan telt ze mee." />
+          ) : (
+            <ul class="steps">
+              {o.steps.map((st) => (
+                <li key={st}>{st}</li>
+              ))}
+            </ul>
+          )}
         </div>
       ))}
       <div class="card">

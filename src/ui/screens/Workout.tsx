@@ -29,6 +29,8 @@ import {
 import { Sheet, Stepper, WeightWheel } from '../components.tsx';
 import { ExerciseDemo, Thumb } from '../Demo.tsx';
 import { useNow, useStore, useWakeLock } from '../hooks.ts';
+import { Elapsed, HoldTimer, IntervalTimer } from '../IntervalTimer.tsx';
+import { clock } from '../../coach/timer.ts';
 import { go } from '../router.ts';
 import { cancelBeep, scheduleBeep } from '../sound.ts';
 
@@ -59,11 +61,12 @@ function RestBar(props: { w: WorkoutState }) {
   const total = Math.max(1, (rest.until - rest.startedAt) / 1000);
   const pct = Math.min(100, ((total - left) / total) * 100);
   const over = left === 0;
+  const overSec = Math.max(0, (now - rest.until) / 1000);
   return (
     <div class={`restbar ${over ? 'over' : ''}`} role="timer" aria-live="polite">
       <div class="restbar-fill" style={{ width: `${pct}%` }} />
       <div class="restbar-row">
-        <span class="restbar-time">{over ? 'Volgende set!' : `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`}</span>
+        <span class="restbar-time">{over ? `Volgende set! +${clock(overSec)}` : clock(left)}</span>
         <button
           class="btn small"
           onClick={() => {
@@ -174,6 +177,8 @@ function ItemCard(props: { w: WorkoutState; i: number }) {
   const [other, setOther] = useState<'more' | 'less' | null>(null);
   const [wheel, setWheel] = useState(false);
   const [busy, setBusy] = useState(false);
+  /** Set waarvan de afteltimer loopt (oefeningen op tijd). */
+  const [hold, setHold] = useState<number | null>(null);
   const profile = store.profile() ?? defaultProfile();
   const allDone = it.sets.every((s) => s.done);
   const current = it.sets[0]?.load ?? p.load;
@@ -183,7 +188,8 @@ function ItemCard(props: { w: WorkoutState; i: number }) {
     return dir === 'more' ? opts.filter((o) => o > current + 1e-9).slice(0, 4) : opts.filter((o) => o < current - 1e-9).slice(-4).reverse();
   };
 
-  const tick = (k: number) =>
+  const tick = (k: number) => {
+    setHold(null);
     act((cur) => {
       const set = cur.items[i]?.sets[k];
       if (!set) return cur;
@@ -193,6 +199,11 @@ function ItemCard(props: { w: WorkoutState; i: number }) {
       else cancelBeep();
       return next;
     });
+  };
+  const startHold = (k: number) => {
+    if (w.rest) act(skipRest);
+    setHold(k);
+  };
 
   const alternatives = busy
     ? alternativesFor(ex.id, w.location)
@@ -232,7 +243,19 @@ function ItemCard(props: { w: WorkoutState; i: number }) {
           <div key={k} class={`set noload ${s.done ? 'done' : ''}`}>
             <span class="set-n">{k + 1}</span>
             {s.done ? (
-              <span class="set-reps">{s.reps}</span>
+              <span class="set-reps">
+                {s.reps}
+                {ex.timed ? ' s' : ''}
+              </span>
+            ) : hold === k ? (
+              <HoldTimer seconds={s.reps} perSide={!!ex.unilateral} onDone={() => tick(k)} onCancel={() => setHold(null)} />
+            ) : ex.timed ? (
+              <div class="set-mid">
+                <Stepper value={s.reps} onChange={(d) => act((cur) => adjustReps(cur, i, k, d))} label={`Seconden set ${k + 1}`} />
+                <button class="btn small play" onClick={() => startHold(k)} aria-label={`Timer set ${k + 1} starten`}>
+                  ▶
+                </button>
+              </div>
             ) : (
               <Stepper value={s.reps} onChange={(d) => act((cur) => adjustReps(cur, i, k, d))} label={`Reps set ${k + 1}`} />
             )}
@@ -379,11 +402,15 @@ function Finish(props: { w: WorkoutState }) {
       {finisher && (
         <div class="card">
           <h3>{finisher.title}</h3>
-          <ul class="steps">
-            {finisher.steps.map((s) => (
-              <li key={s}>{s}</li>
-            ))}
-          </ul>
+          {finisher.blocks ? (
+            <IntervalTimer id={`${w.id}-afsluiter`} blocks={finisher.blocks} steps={finisher.steps} />
+          ) : (
+            <ul class="steps">
+              {finisher.steps.map((s) => (
+                <li key={s}>{s}</li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
       <button
@@ -426,7 +453,9 @@ export function Workout() {
     return (
       <div class="workout">
         <div class="row-between workout-top">
-          <span class="muted">{w.items.length} oefeningen</span>
+          <span class="muted">
+            {w.items.length} oefeningen · <Elapsed since={w.startedAt} />
+          </span>
           <button class="btn small ghost" onClick={() => setStop(true)}>
             Stop
           </button>
@@ -457,8 +486,10 @@ export function Workout() {
         <button class="btn small ghost" disabled={w.index === 0} onClick={() => act(prevGroup)} aria-label="Vorige oefening">
           ←
         </button>
-        <span class="muted">
+        <span class="muted center">
           {group.length > 1 ? 'Superset' : 'Oefening'} {group[0]! + 1}/{total}
+          <br />
+          <Elapsed since={w.startedAt} />
         </span>
         <button class="btn small ghost" onClick={() => setStop(true)}>
           Stop

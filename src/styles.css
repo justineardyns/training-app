@@ -478,3 +478,29 @@ p.why { font-size: 15px; margin: 4px 0 10px; }
 
 .card.warmup h2 { margin-top: 0; }
 .warmup-time { font-size: 56px; font-weight: 800; text-align: center; margin: 8px 0; font-variant-numeric: tabular-nums; }
+
+/* Timers: intervallen (cardio, afsluiter), aftellen per set, trainingsklok */
+.itimer { margin-top: 4px; }
+.itimer:not(.idle) { border-radius: 14px; padding: 12px; background: var(--surface-2); border: 2px solid var(--border); }
+.itimer.easy { border-color: var(--blue); }
+.itimer.hard { border-color: var(--orange); background: color-mix(in srgb, var(--orange) 14%, var(--surface-2)); }
+.itimer.paused { opacity: 0.75; }
+.itimer.done { border-color: var(--accent); }
+.itimer p { margin: 4px 0; }
+.itimer-label { font-size: 22px; font-weight: 700; }
+.itimer.hard .itimer-label { color: var(--orange); }
+.itimer-time { font-size: 64px; font-weight: 800; text-align: center; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.itimer-bar { height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; margin: 6px 0; }
+.itimer-fill { height: 100%; background: var(--blue); transition: width 0.25s linear; }
+.itimer.hard .itimer-fill { background: var(--orange); }
+.itimer .row .btn { flex: 1; }
+.set-mid { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.btn.play { width: 52px; min-height: 52px; padding: 0; font-size: 20px; flex: none; }
+.hold { display: flex; align-items: center; gap: 8px; min-height: 52px; padding-left: 8px; border-radius: 14px; background: var(--surface-2); }
+.hold.hard { background: color-mix(in srgb, var(--orange) 18%, var(--surface-2)); }
+.hold-time { font-size: 28px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.hold-label { flex: 1; font-size: 14px; color: var(--muted); }
+.elapsed { font-variant-numeric: tabular-nums; font-weight: 600; }
+.workout-top .center { text-align: center; line-height: 1.25; }
+.itimer .row .btn { white-space: nowrap; }
+.itimer-stop { display: block; margin: 8px auto 0; }

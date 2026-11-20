@@ -27,6 +27,11 @@ Werkt offline in de gym, draait puur op jouw tikken en kost **€ 0**.
   - **Tennis-extra** ±1× per week (liefst bij bovenlichaam): face pull, externe rotatie en woodchop met de kabel,
     voor sterke schouders en krachtige slagen. Nooit als vervanger bij "Toestel bezet".
   - **Begeleide opwarming** van ±5 min bij elke krachttraining, met een timer die zelf doorloopt (of overslaan).
+  - **Timers:** bij cardio (fiets, roeier, crosstrainer) en de afsluiter een aflopende timer per blok
+    (bv. 30 s stevig / 90 s rustig) die zelf doorloopt, met piepjes bij elke wissel (hoog = stevig) en
+    pauze/volgende. Bij kracht een oplopende klok bovenaan, de rusttimer na elke ✓ (daarna telt hij op), en bij
+    oefeningen op tijd (plank, zijplank) ▶ per set: 5 s klaarzetten, aftellen (per kant met een wissel) en de set
+    wordt vanzelf afgevinkt.
   - **Mijlpalen:** een korte felicitatie bij je eerste training, 10, 25… trainingen, records, lessen, weken op rij
     en een betere krachtcheck.
   - **Bij elke dag een korte "waarom".** Tik op een dag om te wisselen tussen kracht en indoor cycling, of om

@@ -5,6 +5,7 @@ import { easierVariant, deloadPrescription, exposures, lighterPrescription, next
 import { MUSCLE_GROUP, type Group, type StrengthFocus } from './recovery.ts';
 import { CHECK_NOTE } from './check.ts';
 import { addDays } from './dates.ts';
+import { intervals as timerIntervals, type TimerBlock } from './timer.ts';
 import type {
   CoachAdjustments,
   Exercise,
@@ -145,7 +146,7 @@ export interface StrengthSession {
   deload: boolean;
   warmup: string[];
   exercises: PlannedExercise[];
-  finisher?: { title: string; steps: string[] };
+  finisher?: { title: string; steps: string[]; blocks?: TimerBlock[] };
   estimatedMinutes: number;
   notes: string[];
 }
@@ -371,10 +372,11 @@ export function buildStrengthSession(ctx: SessionContext): StrengthSession {
   const hasKb = isAvailable(getExercise('kb-swing'), ctx.location, ctx.equipment, ctx.gym);
   const finisher = wantsFinisher
     ? ctx.location === 'gym'
-      ? { title: 'Afsluiter (6 min)', steps: ['Fiets of roeier: 6× (20 s stevig / 40 s rustig)'] }
+      ? { title: 'Afsluiter (6 min)', steps: ['Fiets of roeier: 6× (20 s stevig / 40 s rustig)'], blocks: timerIntervals(6, 20, 40) }
       : {
           title: 'Afsluiter (6 min)',
           steps: [hasKb ? 'Elke minuut 12 kettlebell swings, 6 minuten lang' : 'Elke minuut 10 squats + 6 push-ups, 6 minuten lang'],
+          blocks: Array.from({ length: 6 }, (_, i) => ({ label: `${hasKb ? '12 kettlebell swings' : '10 squats + 6 push-ups'} (minuut ${i + 1}/6)`, seconds: 60, hard: true })),
         }
     : undefined;
 
@@ -480,8 +482,15 @@ export interface CardioSession {
   title: string;
   location: Location;
   minutes: Minutes;
-  options: { title: string; steps: string[] }[];
+  options: CardioOption[];
   notes: string[];
+}
+
+export interface CardioOption {
+  title: string;
+  steps: string[];
+  /** Voor de timer: blokken die na elkaar aflopen (niet bij een groepsles). */
+  blocks?: TimerBlock[];
 }
 
 export function buildCardioSession(
@@ -496,7 +505,14 @@ export function buildCardioSession(
 
   if (location === 'gym') {
     if (lighter) {
-      options.push({ title: 'Rustige cardio (zone 2)', steps: [`${min - 5} min fiets, roeier of crosstrainer in een tempo waarbij je nog kan praten`, '5 min uitbollen'] });
+      options.push({
+        title: 'Rustige cardio (zone 2)',
+        steps: [`${min - 5} min fiets, roeier of crosstrainer in een tempo waarbij je nog kan praten`, '5 min uitbollen'],
+        blocks: [
+          { label: 'Rustig tempo: je kan nog praten', seconds: (min - 5) * 60 },
+          { label: 'Uitbollen', seconds: 300 },
+        ],
+      });
       if (orange) notes.push('Dagvorm oranje: geen intervallen vandaag, rustig tempo.');
     } else {
       if (ctx.groupClass) {
@@ -511,24 +527,34 @@ export function buildCardioSession(
           ],
         });
       }
+      const zone2 = Math.max(0, min - 10 - intervals * 2);
       options.push({
         title: 'Intervallen op fiets of roeier',
-        steps: ['5 min opwarmen', `${intervals}× (30 s stevig / 90 s rustig)`, `${Math.max(0, min - 10 - intervals * 2)} min rustig (zone 2)`, '5 min uitbollen'].filter((s) => !s.startsWith('0 min')),
+        steps: ['5 min opwarmen', `${intervals}× (30 s stevig / 90 s rustig)`, `${zone2} min rustig (zone 2)`, '5 min uitbollen'].filter((s) => !s.startsWith('0 min')),
+        blocks: [
+          { label: 'Opwarmen: rustig op gang komen', seconds: 300 },
+          ...timerIntervals(intervals, 30, 90),
+          ...(zone2 ? [{ label: 'Rustig tempo (zone 2)', seconds: zone2 * 60 }] : []),
+          { label: 'Uitbollen', seconds: 300 },
+        ],
       });
     }
   } else {
     const hasKb = isAvailable(getExercise('kb-swing'), 'home', ctx.equipment, ctx.gym);
     const rounds = Math.max(2, Math.floor((min - 8) / 4));
+    const stations = [hasKb ? '12 kettlebell swings' : '12 snelle step-ups per been', '10 goblet squats', '8 push-ups (of met handen verhoogd)', '10 eenarmig roeien per kant'];
     options.push({
       title: lighter ? 'Rustig circuit thuis' : 'Kettlebell-circuit (EMOM)',
       steps: [
         '4 min opwarmen: ter plaatse lopen, squats, armcirkels',
         `${rounds} rondes, elke minuut een nieuwe oefening${lighter ? ' (halve reps, rustig tempo)' : ''}:`,
-        hasKb ? '  1. 12 kettlebell swings' : '  1. 12 snelle step-ups per been',
-        '  2. 10 goblet squats',
-        '  3. 8 push-ups (of met handen verhoogd)',
-        '  4. 10 eenarmig roeien per kant',
+        ...stations.map((x, i) => `  ${i + 1}. ${x}`),
         '4 min uitbollen en stretchen',
+      ],
+      blocks: [
+        { label: 'Opwarmen: ter plaatse lopen, squats, armcirkels', seconds: 240 },
+        ...Array.from({ length: rounds }, (_, r) => stations.map((x) => ({ label: `${x} (ronde ${r + 1}/${rounds})`, seconds: 60, hard: !lighter }))).flat(),
+        { label: 'Uitbollen en stretchen', seconds: 240 },
       ],
     });
     if (orange) notes.push('Dagvorm oranje: halve reps en extra rust waar nodig.');

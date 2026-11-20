@@ -117,16 +117,18 @@ export function nextPrescription(input: ProgressionInput): ProgressionResult {
   if (!last) {
     const load = ex.load === 'bodyweight' ? 0 : snapLoad(ex.start * (input.beginner ? BEGINNER_START : 1), options, input.beginner ? 'down' : 'nearest');
     const keep = input.beginner ? 3 : 2;
+    // Op tijd (plank…): niet "reps over" maar rustig stoppen voor de techniek wegvalt; ▶ start de timer.
+    const spare = (n: number) => (ex.timed ? 'stop voor je techniek wegvalt. Tik ▶ voor de timer' : `hou ${n} reps over`);
     return make({
       load,
       targetReps: lo + 2,
       change: 'new',
       note: input.beginner
         ? ex.load === 'bodyweight'
-          ? `Kennismaking: leer de beweging rustig. ${lo + 2}${unit}, hou ${keep} reps over. Bekijk eerst de foto's.`
+          ? `Kennismaking: leer de beweging rustig. ${lo + 2}${unit}, ${spare(keep)}. Bekijk eerst de foto's.`
           : `Kennismaking: startvoorstel ${formatLoad(ex, load)}. Leer de beweging en hou ${keep} reps over. Na de oefening zeg je of het lukte, of dat je meer of minder nam.`
         : ex.load === 'bodyweight'
-          ? `Eerste keer: ${lo + 2}${unit} met goede techniek. Hou 2 reps over.`
+          ? `Eerste keer: ${lo + 2}${unit} met goede techniek, ${spare(2)}.`
           : `Startvoorstel ${formatLoad(ex, load)}: ${lo + 2}${unit} met 2 reps over. Na de oefening zeg je of het lukte, of dat je meer of minder nam.`,
     });
   }

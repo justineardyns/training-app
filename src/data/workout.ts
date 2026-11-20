@@ -1,5 +1,6 @@
 import { templateTitle, type PlannedExercise, type Role, type StrengthSession } from '../coach/session.ts';
 import type { Feel, ISODate, Location, Minutes, Prescription, ReadinessLevel, SessionLog, SetLog, Template } from '../coach/types.ts';
+import type { TimerBlock } from '../coach/timer.ts';
 
 // Status van een lopende training. Pure functies: makkelijk te testen en te bewaren (crash-proof).
 
@@ -34,7 +35,7 @@ export interface WorkoutState {
   index: number;
   rest?: RestState;
   /** Afsluiter na de laatste oefening (enkel bij 60 min, groen). */
-  finisher?: { title: string; steps: string[] };
+  finisher?: { title: string; steps: string[]; blocks?: TimerBlock[] };
   /** Opwarming gedaan of overgeslagen. */
   warmupDone?: boolean;
 }

@@ -48,6 +48,9 @@ Tests gebruiken verzonnen data (`e2e/seed.ts`, `FakeGitHub`).
   zijn nooit een vervanger voor gewone oefeningen.
 - Mijlpalen (`src/coach/milestones.ts`), opwarming (`warmupFor`), spierpijn in gradaties (`sore` = echt,
   `soreLight` = een beetje).
+- Timers (`src/coach/timer.ts`, UI in `src/ui/IntervalTimer.tsx`): cardio-opties en de afsluiter hebben `blocks`
+  (opgeteld = de gekozen duur; groepsles: geen timer), `HoldTimer` voor `ex.timed` vinkt de set zelf af, `Elapsed`
+  = oplopende trainingsklok. Piepjes worden vooruit gepland (`scheduleBeeps`), want iOS vertraagt JS-timers.
 - Herstel (`src/coach/recovery.ts`) en sterke/werkpunten (`src/coach/insights.ts`) sturen de planner en de sessies;
   elke geplande dag krijgt een `why`.
 
