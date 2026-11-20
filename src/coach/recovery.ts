@@ -82,8 +82,8 @@ export function cardioLoad(title: string, minutes: number): Partial<Record<Group
   const f = Math.max(0.5, minutes / 45);
   if (t.includes('tennis')) {
     const h = Math.max(0.5, minutes / 60);
-    // Ontspannen voor je bovenlijf, maar je benen en bilspieren voelen het de dag erna.
-    return { benen: 3.5 * h, duwen: 1.2 * h, core: 1 * h, trekken: 0.5 * h };
+    // Ontspannen voor je bovenlijf; je bilspieren voelen het de dag erna een beetje (1u: licht, 2u: meer).
+    return { benen: 3 * h, duwen: 1.2 * h, core: 1 * h, trekken: 0.5 * h };
   }
   if (t.includes('roei')) return { benen: 3 * f, trekken: 3 * f, core: 1 * f };
   if (t.includes('rustig') || t.includes('zone 2')) return { benen: 2 * f };

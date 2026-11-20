@@ -42,7 +42,6 @@ function checkRules(p: WeekPlan, history: SessionLog[], ctx = '') {
       if (me.kind === 'C') expect(o.kind, `${ctx} conditie na elkaar ${d.date}/${nb}`).toBe('S');
       // Nooit benen de dag vóór of ná indoor cycling (uitzondering: jouw les na een gedane benentraining).
       if (me.kind === 'S' && me.split !== 'upper') expect(o.kind === 'C' && o.legs, `${ctx} benen naast cycling ${d.date}/${nb}`).toBe(false);
-      if (me.kind === 'S' && me.split !== 'upper' && !after) expect(o.kind === 'C' && !!o.tennis, `${ctx} benen na tennis ${nb}/${d.date}`).toBe(false);
       if (me.kind === 'C' && me.legs && after) expect(o.kind === 'S' && o.split !== 'upper', `${ctx} benen na cycling ${d.date}/${nb}`).toBe(false);
       if (me.kind === 'C' && me.legs && !after && !me.user) expect(o.kind === 'S' && o.split !== 'upper', `${ctx} benen voor cycling ${nb}/${d.date}`).toBe(false);
       if (me.kind === 'S' && o.kind === 'S') {
@@ -180,15 +179,22 @@ describe('de coach kiest: max 6 per 7 dagen, conditie en kracht elk max 4', () =
     }
   });
 
-  it('tennis op donderdag = conditie: geen conditie op wo of vr; de dag erna enkel bovenlichaam (stijve bilspieren)', () => {
+  it('tennis op donderdag = conditie: geen conditie op wo of vr; de dag erna mag kracht, benen in gradaties', () => {
     const p = planWeek(base({ prefs: PRO, availability: (d) => (d === D(3) ? { ...std(d), tennis: 120 } : std(d)) }));
     expect(p.days[3]).toMatchObject({ type: 'tennis', title: 'Tennis · 2u', hair: true });
     expect(p.days[2]!.type).not.toBe('cardio');
     expect(p.days[4]!.type).not.toBe('cardio');
     expect(p.violations).toEqual([]);
     const fri = planWeek(base({ prefs: PRO, availability: (d) => (d === D(3) ? { ...std(d), tennis: 120 } : d === D(4) ? { ...std(d), want: 'strength' } : std(d)) }));
-    expect(fri.days[4]).toMatchObject({ type: 'strength', split: 'upper' });
-    expect(fri.days[4]!.why).toMatch(/gisteren tennis, je benen en bilspieren herstellen/);
+    const f = fri.days[4]!;
+    expect(f.type).toBe('strength');
+    if (f.split === 'upper') expect(f.why).toMatch(/gisteren tennis, je bilspieren mogen even bekomen/);
+    // 2u tennis: benen moe → 1 set minder en niet zwaarder (geen verbod).
+    else expect(f.focus?.reduce).toEqual(['benen']);
+    // 1u tennis: benen herstellen (licht stijf) → komen later, niet minder.
+    const oneHour = planWeek(base({ prefs: PRO, availability: (d) => (d === D(3) ? { ...std(d), tennis: 60 } : d === D(4) ? { ...std(d), want: 'strength' } : std(d)) }));
+    const g = oneHour.days[4]!;
+    if (g.split !== 'upper') expect(g.focus?.later).toEqual(['benen']);
   });
 
   it('indoor cycling: minstens 1×, liefst 2×; geen lesmoment → de coach zegt hoe je er een krijgt', () => {

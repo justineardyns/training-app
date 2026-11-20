@@ -13,6 +13,9 @@ Werkt offline in de gym, draait puur op jouw tikken en kost **€ 0**.
 - **Slimme coach:** dubbele progressie, deloads, blessures ("Ik heb last van…"), flexibel herplannen
   bij een gemiste training of minder tijd.
 - **Denkt mee als een personal coach:**
+  - **Herstel in gradaties:** elke training laat per spiergroep een belasting na die over 24 tot 72 uur wegzakt.
+    *Fris* = gewoon, *herstelt* (licht stijf) = later in je training en niet zwaarder, *moe* = 1 set minder en niet
+    zwaarder. Je tik "spierpijn" zet een groep altijd op moe.
   - **Herstel per spiergroep:** benen, borst & schouders, rug & armen, romp. Kracht, indoor cycling en tennis
     tellen mee, net als je tik "spierpijn". Wat nog moe is, komt later in je training of krijgt een set minder
     en gaat niet zwaarder.
@@ -44,7 +47,8 @@ Werkt offline in de gym, draait puur op jouw tikken en kost **€ 0**.
   - Nooit benen de dag vóór of ná indoor cycling: die dagen wordt het bovenlichaam (of rust). Voeg je een les toe
     of reserveer je er een, dan passen de dagen ervoor en erna zich aan.
   - Twee krachtdagen na elkaar wisselen bovenlichaam en benen & romp af.
-  - Na tennis zijn je bilspieren stijf: de dag erna geen benen, wel bovenlichaam.
+  - Na tennis zijn je bilspieren wat stijf: de dag erna liefst bovenlichaam. Benen mag, in gradaties: na 1u komen ze
+    later in je training, na 2u krijgen ze 1 set minder en gaan ze niet zwaarder.
   - 🧹 Elke 7 dagen blijft er minstens één moment vrij voor klusjes (liefst in het weekend, anders een avond).
   - Hoogstens één wandeling per week, op de droogste dag van de week. Is dat een trainingsdag, dan krijg je ze er
     als extraatje bij (🚶). Rustdagen verder: mobiliteit, stretching of rustige core.

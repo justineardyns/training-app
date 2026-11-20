@@ -24,8 +24,9 @@ Tests gebruiken verzonnen data (`e2e/seed.ts`, `FakeGitHub`).
   - conditie (haarwasdag) max 4 en nooit 2 dagen na elkaar;
   - kracht max 4;
   - geen benen (full body of benen & romp) de dag vóór of ná indoor cycling of andere conditie die zwaar is voor de
-    benen; de dag ná tennis ook geen benen (stijve bilspieren; de dag ervoor mag); enige uitzondering: een les die je
-    zelf koos/reserveerde na een gedane benentraining;
+    benen; enige uitzondering: een les die je zelf koos/reserveerde na een gedane benentraining;
+  - tennis is geen harde regel: de dag erna liefst bovenlichaam (zachte voorkeur), herstel in gradaties via
+    `recovery.ts` (1u → benen 'herstelt', 2u → 'moe');
   - twee krachtdagen na elkaar enkel bovenlichaam ↔ benen;
   - minstens één beschikbare dag per 7 dagen vrij voor klusjes (liefst weekend), tenzij je elke dag zelf vastlegde.
 - Rustdagen: hoogstens één wandeling per 7 dagen, op de droogste dag (`WalkAdvice.score`; rustdag krijgt +10 voorrang);
