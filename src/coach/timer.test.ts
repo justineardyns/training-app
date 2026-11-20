@@ -62,7 +62,7 @@ describe('cardio met timer', () => {
 
   it('een groepsles krijgt geen timer, het circuit thuis wel', () => {
     const c = buildCardioSession({ date: '2026-11-23', location: 'gym', minutes: 45, equipment: DEFAULT_HOME, groupClass: 'Indoor cycling' });
-    expect(c.options[0]!.title).toContain('groepsles');
+    expect(c.options).toHaveLength(1);
     expect(c.options[0]!.blocks).toBeUndefined();
     const home = buildCardioSession({ date: '2026-11-23', location: 'home', minutes: 30, equipment: DEFAULT_HOME });
     const sec = totalSeconds(home.options[0]!.blocks!);

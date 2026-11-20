@@ -62,10 +62,18 @@ test('eerste opstart → plannen → trainen → bewaren', async ({ page }) => {
   await snap(page, '04c-opwarming');
   await page.getByRole('button', { name: 'Volgende' }).click();
   await expect(page.getByRole('heading', { name: 'Squats zonder gewicht' })).toBeVisible();
-  await page.getByRole('button', { name: 'Klaar' }).click();
+  await page.getByRole('button', { name: 'Klaar', exact: true }).click();
 
-  // Training: eerste oefening, alle sets afvinken
-  await expect(page.locator('.item-name').first()).toContainText('Leg press');
+  // Tab Training: je hele training als lijst. De tab toont dat er een training bezig is.
+  await expect(page.getByRole('heading', { name: 'Full body A' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Training: bezig' })).toBeVisible();
+  await expect(page.locator('.wgroup.next')).toContainText('Leg press');
+  await snap(page, '05a-lijst');
+
+  // ▶ Start bij de eerste oefening: sets afvinken, rust start vanzelf.
+  await page.getByRole('button', { name: 'Leg press starten' }).click();
+  await expect(page.locator('.item-name')).toContainText('Leg press');
+  await expect(page.locator('.wactive .elapsed')).toHaveText(/^⏱ \d+:\d\d$/);
   const checks = page.getByRole('button', { name: /^Set \d gedaan$/ });
   await expect(page.locator('.load-banner')).toContainText('Startvoorstel');
   await checks.first().click();
@@ -75,25 +83,39 @@ test('eerste opstart → plannen → trainen → bewaren', async ({ page }) => {
   while ((await checks.count()) > 0) await checks.first().click();
   await snap(page, '05b-gelukt');
   await page.getByRole('button', { name: /Gelukt/ }).click();
+  // Dicht en afgevinkt; de volgende staat klaar.
+  await expect(page.locator('.item-name')).toHaveCount(0);
+  await expect(page.locator('.wgroup.klaar')).toContainText('Leg press');
+  await expect(page.locator('.wgroup.next')).toContainText('Chest press');
+  await expect(page.getByText(/^1\/\d+ klaar/)).toBeVisible();
 
-  // Tweede oefening (beginner: eerst het toestel): ik nam meer
-  await expect(page.locator('.item-name').first()).toContainText('Chest press');
+  // Jij kiest de volgorde: eerst de derde oefening (beginner: eerst het toestel), ik nam meer.
+  const third = (await page.locator('.wgroup').nth(2).locator('.wrow-name').textContent())!.trim();
+  await page.locator('.wgroup').nth(2).getByRole('button', { name: /starten$/ }).click();
+  await expect(page.locator('.item-name')).toContainText(third);
   await expect(page.locator('.demo').first()).toBeVisible();
   while ((await checks.count()) > 0) await checks.first().click();
   await page.getByRole('button', { name: /Ik nam meer/ }).click();
   await snap(page, '06-meer');
   await page.locator('.feel .chip').first().click();
-  await expect(page.locator('.item-name').first()).toContainText('Lat pulldown');
+  await expect(page.locator('.wgroup.klaar')).toHaveCount(2);
 
   // Toestel bezet → alternatief
+  await page.getByRole('button', { name: /^Chest press.* starten$/ }).click();
   await page.getByRole('button', { name: 'Toestel bezet' }).click();
   await snap(page, '07-bezet');
   await page.locator('.sheet .btn.alt').first().click();
-  await expect(page.locator('.item-name').first()).not.toContainText('Lat pulldown');
+  await expect(page.locator('.item-name')).not.toContainText('Chest press');
+  // ■ Stop na 1 set: de app vraagt meteen hoe het ging.
+  await checks.first().click();
+  await page.getByRole('button', { name: 'Overslaan', exact: true }).click();
   await snap(page, '08-training');
+  await page.getByRole('button', { name: '■ Stop' }).click();
+  await page.getByRole('button', { name: /Gelukt/ }).click();
+  await expect(page.locator('.wgroup.klaar')).toHaveCount(3);
 
   // Stoppen en bewaren
-  await page.getByRole('button', { name: 'Stop' }).click();
+  await page.getByRole('button', { name: 'Stop', exact: true }).click();
   await page.getByRole('button', { name: 'Afronden en bewaren' }).click();
   await expect(page.getByRole('heading', { name: /Klaar/ })).toBeVisible();
   await page.getByRole('button', { name: 'Bewaar training' }).click();

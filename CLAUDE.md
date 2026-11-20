@@ -51,6 +51,10 @@ Tests gebruiken verzonnen data (`e2e/seed.ts`, `FakeGitHub`).
 - Timers (`src/coach/timer.ts`, UI in `src/ui/IntervalTimer.tsx`): cardio-opties en de afsluiter hebben `blocks`
   (opgeteld = de gekozen duur; groepsles: geen timer), `HoldTimer` voor `ex.timed` vinkt de set zelf af, `Elapsed`
   = oplopende trainingsklok. Piepjes worden vooruit gepland (`scheduleBeeps`), want iOS vertraagt JS-timers.
+- Tab **Training** (`src/ui/screens/Training.tsx`): kracht als lijst (`Workout.tsx`) met ▶ Start / ■ Stop per oefening
+  (`startItem`/`stopItem`/`finishItem`/`finishWorkout` in `src/data/workout.ts`, klok per oefening), vrije volgorde.
+  Groepsles = altijd 1 uur (`CLASS_MINUTES`), geen timer. Losse cardio (`FreeCardio`) met stopwatch in `LocalSettings.freeCardio`,
+  enkel aangeboden op een geplande conditiedag.
 - Herstel (`src/coach/recovery.ts`) en sterke/werkpunten (`src/coach/insights.ts`) sturen de planner en de sessies;
   elke geplande dag krijgt een `why`.
 

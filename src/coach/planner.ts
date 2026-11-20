@@ -199,6 +199,9 @@ export function hourText(t: string | undefined): string | undefined {
   return m && m !== '00' ? `${Number(h)}u${m}` : `${Number(h)}u`;
 }
 
+/** Een groepsles duurt altijd 1 uur. */
+export const CLASS_MINUTES = 60 as const;
+
 export function cardioTitle(loc: Location, min: Minutes, lighter: boolean, groupClass?: string, time?: string): string {
   if (lighter) return `Rustige cardio (zone 2) · ${LOC[loc]} · ${min} min`;
   if (groupClass) return `${groupClass} (groepsles) · Jims${time ? ` · ${hourText(time)}` : ''}`;
@@ -639,7 +642,7 @@ export function planWeek(input: PlanInput): WeekPlan {
         });
       } else {
         const location: Location = cls ? 'gym' : r.location;
-        timeline.push({ date: d, slot, label: `${cls ? prefs.className.toLowerCase() : 'cardio'} ${short(d)}`, load: cardioLoad(cls ? 'cycling' : 'fiets', a.minutes) });
+        timeline.push({ date: d, slot, label: `${cls ? prefs.className.toLowerCase() : 'cardio'} ${short(d)}`, load: cardioLoad(cls ? 'cycling' : 'fiets', cls ? CLASS_MINUTES : a.minutes) });
         const legs = rec.benen;
         const legWhy =
           legs.state === 'moe'
@@ -659,7 +662,7 @@ export function planWeek(input: PlanInput): WeekPlan {
               ? `Lesmoment ${prefs.className.toLowerCase()}${cls.time ? ` om ${hourText(cls.time)}` : ''}.`
               : 'Conditie: geen les die dag, dus fiets of roeier.';
         result.push({
-          date: d, type: 'cardio', sweat: true, status: 'planned', location, minutes: a.minutes, slot, groupClass: !!cls && !lighter,
+          date: d, type: 'cardio', sweat: true, status: 'planned', location, minutes: cls && !lighter ? CLASS_MINUTES : a.minutes, slot, groupClass: !!cls && !lighter,
           title: cardioTitle(location, a.minutes, lighter, cls ? prefs.className : undefined, cls?.time), lighter, classSlot: !!cls, want: a.want,
           booked: !!a.booked && !!cls,
           weather, hair: true, time: cls?.time, gentle: illLighter,

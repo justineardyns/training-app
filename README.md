@@ -4,6 +4,14 @@ Een app op je beginscherm die je trainingen plant, elke set vooraf invult en zel
 Werkt offline in de gym, draait puur op jouw tikken en kost **€ 0**.
 
 - **Vandaag:** wat je doet, één knop **Start**. Dagvorm met één tik: top / oké / moe / ziek of op.
+- **Training** (eigen tab onderaan): alles voor je training van vandaag op één plek.
+  - **Kracht:** je hele training als lijst. Per oefening **▶ Start** en **■ Stop**, in de volgorde die jij wil
+    (toestel bezet? neem gewoon een andere). Per oefening zie je hoelang je er al mee bezig bent, bovenaan
+    je totale tijd en hoeveel je al deed. Stop je na een paar sets, dan vraagt de app meteen hoe het ging.
+    Een groen bolletje op de tab = er loopt een training.
+  - **Indoor cycling:** altijd 1 uur, zonder timer (de lesgever geeft het tempo aan): één tik *Les gedaan*.
+  - **Losse cardio:** liever buiten lopen of fietsen (of roeien in Jims) in plaats van de les? Stopwatch met
+    Start, Pauze en *Stop en bewaar*; blijft lopen als je scherm uitgaat of de app herstart. Telt als conditie.
 - **Trainen (in Jims):** de app stelt per oefening een startgewicht en reps voor, per set één tik ✓,
   rusttimer start vanzelf. Na de oefening één tik: *Gelukt*, *Ik nam meer* of *Ik nam minder*
   (met het gewicht dat je nam). Daarmee bepaalt de app je volgende gewicht. "Toestel bezet",
@@ -27,7 +35,7 @@ Werkt offline in de gym, draait puur op jouw tikken en kost **€ 0**.
   - **Tennis-extra** ±1× per week (liefst bij bovenlichaam): face pull, externe rotatie en woodchop met de kabel,
     voor sterke schouders en krachtige slagen. Nooit als vervanger bij "Toestel bezet".
   - **Begeleide opwarming** van ±5 min bij elke krachttraining, met een timer die zelf doorloopt (of overslaan).
-  - **Timers:** bij cardio (fiets, roeier, crosstrainer) en de afsluiter een aflopende timer per blok
+  - **Timers:** bij cardio zonder les (fiets, roeier, crosstrainer) en de afsluiter een aflopende timer per blok
     (bv. 30 s stevig / 90 s rustig) die zelf doorloopt, met piepjes bij elke wissel (hoog = stevig) en
     pauze/volgende. Bij kracht een oplopende klok bovenaan, de rusttimer na elke ✓ (daarna telt hij op), en bij
     oefeningen op tijd (plank, zijplank) ▶ per set: 5 s klaarzetten, aftellen (per kant met een wissel) en de set

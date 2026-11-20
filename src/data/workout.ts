@@ -14,6 +14,10 @@ export interface WorkoutItem {
   feel?: Feel;
   swappedFrom?: string;
   injuryNote?: string;
+  /** Tijd op deze oefening (▶ Start / ■ Stop): opgetelde ms, en sinds wanneer ze nu loopt. */
+  clock?: { ms: number; since?: number };
+  /** Gestopt met ■ Stop (ook als nog niet alle sets gedaan zijn). */
+  stopped?: boolean;
 }
 
 export interface RestState {
@@ -33,6 +37,8 @@ export interface WorkoutState {
   items: WorkoutItem[];
   /** Index van het huidige item (bij een superset: het eerste van het paar). */
   index: number;
+  /** Staat de huidige oefening open (na ▶ Start)? Jij kiest de volgorde in de lijst. */
+  open?: boolean;
   rest?: RestState;
   /** Afsluiter na de laatste oefening (enkel bij 60 min, groen). */
   finisher?: { title: string; steps: string[]; blocks?: TimerBlock[] };
@@ -98,15 +104,74 @@ export function setItemLoad(w: WorkoutState, i: number, load: number): WorkoutSt
   return update(w, i, (it) => ({ ...it, sets: it.sets.map((s) => ({ ...s, load })) }));
 }
 
+/** Alle groepen in volgorde: een superset-paar (A1 + A2) of één oefening. */
+export function allGroups(w: WorkoutState): number[][] {
+  const out: number[][] = [];
+  w.items.forEach((it, i) => {
+    const letter = it.superset?.slice(0, 1);
+    const last = out.at(-1);
+    if (letter && last && w.items[last[0]!]!.superset?.slice(0, 1) === letter) last.push(i);
+    else out.push([i]);
+  });
+  return out;
+}
+
+export const groupOf = (w: WorkoutState, i: number): number[] => allGroups(w).find((g) => g.includes(i)) ?? [i];
+
+const pauseClock = (it: WorkoutItem, now: number): WorkoutItem =>
+  it.clock?.since !== undefined ? { ...it, clock: { ms: it.clock.ms + Math.max(0, now - it.clock.since) } } : it;
+
+/** Tijd op een oefening in ms (loopt zolang ze open staat). */
+export const itemMs = (it: WorkoutItem, now: number): number =>
+  (it.clock?.ms ?? 0) + (it.clock?.since !== undefined ? Math.max(0, now - it.clock.since) : 0);
+
+export type ItemStatus = 'todo' | 'bezig' | 'klaar';
+export function itemStatus(it: WorkoutItem): ItemStatus {
+  if (it.feel) return 'klaar';
+  return it.sets.some((s) => s.done) ? 'bezig' : 'todo';
+}
+
+/** Nog werk aan: sets of de vraag "hoe ging het?". Gestopt zonder sets = dicht. */
+const pending = (it: WorkoutItem) => !it.feel && !(it.stopped && !it.sets.some((s) => s.done));
+
+/** ▶ Start: deze oefening (of dit superset-paar) openen. De klok van wat open stond, stopt. */
+export function startItem(w: WorkoutState, i: number, now: number): WorkoutState {
+  const g = groupOf(w, i);
+  return {
+    ...w,
+    index: g[0]!,
+    open: true,
+    warmupDone: true,
+    items: w.items.map((it, j) =>
+      g.includes(j) ? (it.feel ? it : { ...it, stopped: undefined, clock: { ms: it.clock?.ms ?? 0, since: it.clock?.since ?? now } }) : pauseClock(it, now),
+    ),
+  };
+}
+
+/** ■ Stop: klok stoppen. Al sets gedaan? Dan vraagt de app meteen hoe het ging; anders gaat de oefening dicht. */
+export function stopItem(w: WorkoutState, i: number, now: number): WorkoutState {
+  const g = groupOf(w, i);
+  const items = w.items.map((it, j) => (g.includes(j) ? { ...pauseClock(it, now), ...(it.feel ? {} : { stopped: true }) } : it));
+  const ask = g.some((j) => pending(items[j]!));
+  return { ...w, items, index: g[0]!, open: ask, rest: undefined };
+}
+
 /**
  * Oefening afsluiten met één tik: "gelukt" (voorgesteld gewicht), of je nam meer/minder (gewicht erbij).
  * Bij een ander gewicht telt dat als "goed" op dat gewicht: de volgende keer start je daar.
+ * Is het hele paar klaar, dan gaat het dicht: jij kiest met ▶ Start wat je daarna doet.
  */
-export function finishItem(w: WorkoutState, i: number, feel: Feel, load?: number): WorkoutState {
+export function finishItem(w: WorkoutState, i: number, feel: Feel, load?: number, now = Date.now()): WorkoutState {
   let next = load === undefined ? w : setItemLoad(w, i, load);
-  next = setFeel(next, i, feel);
-  const ready = groupDone(next) && currentGroup(next).every((g) => next.items[g]!.feel);
-  return ready ? nextGroup(next) : next;
+  next = update(setFeel(next, i, feel), i, (it) => pauseClock(it, now));
+  const g = groupOf(next, i);
+  if (g.some((j) => pending(next.items[j]!))) return next;
+  return { ...next, items: next.items.map((it, j) => (g.includes(j) ? pauseClock(it, now) : it)), open: false, rest: undefined };
+}
+
+/** Training afronden: alle klokken stoppen; wat je niet deed, telt niet mee. */
+export function finishWorkout(w: WorkoutState, now: number): WorkoutState {
+  return { ...w, items: w.items.map((it) => pauseClock(it, now)), index: w.items.length, open: false, rest: undefined };
 }
 
 export function adjustReps(w: WorkoutState, i: number, setIdx: number, delta: number): WorkoutState {

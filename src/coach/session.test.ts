@@ -138,10 +138,12 @@ describe('absolute beginner', () => {
 });
 
 describe('conditiesessie', () => {
-  it('op een lesmoment: indoor cycling (met tips voor je eerste les), anders intervallen', () => {
-    const c = buildCardioSession({ date: '2026-11-25', location: 'gym', minutes: 45, equipment: DEFAULT_HOME, groupClass: 'Indoor cycling' });
-    expect(c.options.map((o) => o.title)).toEqual(['Indoor cycling (groepsles)', 'Intervallen op fiets of roeier']);
-    expect(c.options[0]!.steps.join(' ')).toMatch(/zadelhoogte/);
+  it('op een lesmoment: indoor cycling, altijd 1 uur, zonder timer (met tips voor je eerste les); anders intervallen', () => {
+    const c = buildCardioSession({ date: '2026-11-25', location: 'gym', minutes: 45, equipment: DEFAULT_HOME, groupClass: 'Indoor cycling', time: '19:00' });
+    expect(c.options.map((o) => o.title)).toEqual(['Indoor cycling (groepsles)']);
+    expect(c.minutes).toBe(60);
+    expect(c.options[0]!.blocks).toBeUndefined();
+    expect(c.options[0]!.steps.join(' ')).toMatch(/Les om 19u, 1 uur.*zadelhoogte/);
     const free = buildCardioSession({ date: '2026-11-26', location: 'gym', minutes: 45, equipment: DEFAULT_HOME });
     expect(free.options.map((o) => o.title)).toEqual(['Intervallen op fiets of roeier']);
   });

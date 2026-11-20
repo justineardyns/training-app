@@ -61,6 +61,16 @@ export interface FileRecord {
   updatedAt: number;
 }
 
+export type FreeCardioKind = 'lopen' | 'fietsen' | 'roeien';
+export interface FreeCardioRun {
+  date: ISODate;
+  kind: FreeCardioKind;
+  /** Opgetelde ms tot de laatste pauze. */
+  ms: number;
+  /** Loopt sinds (ontbreekt = gepauzeerd). */
+  since?: number;
+}
+
 export interface LocalSettings {
   token?: string;
   owner?: string;
@@ -77,6 +87,8 @@ export interface LocalSettings {
   lastImport?: string;
   /** Plaats voor het weerbericht. Blijft op je iPhone (nooit in de repo). */
   weatherPlace?: WeatherPlace;
+  /** Lopende stopwatch voor losse cardio (bv. buiten lopen): blijft staan als de app herstart. */
+  freeCardio?: FreeCardioRun;
   /** Mijlpalen die je al zag (felicitatie niet opnieuw tonen). */
   seenMilestones?: string[];
 }
@@ -593,7 +605,7 @@ export class Store {
     await this.updateLog(date, (l) => ({ ...l, light: [...l.light.filter((x) => x.date !== date || x.id !== id), { date, id }] }));
   }
 
-  async quickLog(date: ISODate, kind: 'cardio' | 'class', location: Location, minutes: Minutes, title: string): Promise<void> {
+  async quickLog(date: ISODate, kind: 'cardio' | 'class', location: Location, minutes: number, title: string): Promise<void> {
     await this.logSession({
       id: newId(),
       date,

@@ -5,13 +5,13 @@ import { ADVICE, LEVEL_LABEL } from '../../coach/readiness.ts';
 import { templateTitle, type CardioSession, type StrengthSession } from '../../coach/session.ts';
 import type { Energy, Location, Minutes } from '../../coach/types.ts';
 import type { WalkAdvice } from '../../coach/weather.ts';
-import { newId } from '../../data/store.ts';
-import { startWorkout } from '../../data/workout.ts';
+import { CLASS_MINUTES, hourText } from '../../coach/planner.ts';
 import { Chips, Messages, Pill, Sheet } from '../components.tsx';
 import { Thumb } from '../Demo.tsx';
 import { useStore } from '../hooks.ts';
 import { go } from '../router.ts';
 import { dayLabel } from './Week.tsx';
+import { startStrength } from './Training.tsx';
 import { SyncWarning } from './Connect.tsx';
 import { InjuryCard } from './Injury.tsx';
 import { reportIllness } from '../../data/injuries.ts';
@@ -119,11 +119,15 @@ function QuickLogSheet(props: { open: boolean; onClose: () => void; date: string
       <div class="stack">
         <Chips options={[{ value: 'class', label: 'Groepsles' }, { value: 'cardio', label: 'Cardio' }]} value={kind} onChange={setKind} />
         <Chips options={[{ value: 'gym', label: 'Jims' }, { value: 'home', label: 'Thuis/buiten' }]} value={location} onChange={setLocation} />
-        <Chips<Minutes> options={[{ value: 30, label: '30 min' }, { value: 45, label: '45 min' }, { value: 60, label: '60 min' }]} value={minutes} onChange={setMinutes} />
+        {kind === 'class' ? (
+          <p class="muted small">Een les duurt 1 uur.</p>
+        ) : (
+          <Chips<Minutes> options={[{ value: 30, label: '30 min' }, { value: 45, label: '45 min' }, { value: 60, label: '60 min' }]} value={minutes} onChange={setMinutes} />
+        )}
         <button
           class="btn primary"
           onClick={async () => {
-            await s.quickLog(props.date, kind, location, minutes, kind === 'class' ? 'Groepsles' : 'Cardio');
+            await s.quickLog(props.date, kind, location, kind === 'class' ? CLASS_MINUTES : minutes, kind === 'class' ? s.prefs().className : 'Cardio');
             props.onClose();
           }}
         >
@@ -146,10 +150,8 @@ export function Today() {
 
   const start = async () => {
     if (!session) return;
-    if (session.kind === 'strength') {
-      await s.setWorkout(startWorkout(session, { id: newId(), now: s.now(), readiness: s.checkFor(today)?.level }));
-      go('training');
-    } else go('cardio');
+    if (session.kind === 'strength') await startStrength(s, session);
+    else go('training');
   };
 
   return (
@@ -200,12 +202,14 @@ export function Today() {
                 onChange={(v) => s.updateDay(today, { home: v === 'home' })}
               />
             )}
-            <Chips<Minutes>
-              label="Tijd"
-              options={[{ value: 30, label: '30' }, { value: 45, label: '45' }, { value: 60, label: '60 min' }]}
-              value={day.minutes}
-              onChange={(v) => s.updateDay(today, { minutes: v })}
-            />
+            {!day.groupClass && (
+              <Chips<Minutes>
+                label="Tijd"
+                options={[{ value: 30, label: '30' }, { value: 45, label: '45' }, { value: 60, label: '60 min' }]}
+                value={day.minutes}
+                onChange={(v) => s.updateDay(today, { minutes: v })}
+              />
+            )}
           </div>
           {session.kind === 'strength' ? (
             <>
@@ -216,12 +220,20 @@ export function Today() {
                 </p>
               ))}
             </>
+          ) : day.groupClass ? (
+            <p class="muted">Les van 1 uur{day.time ? ` om ${hourText(day.time)}` : ''}. Liever buiten lopen? Dat kan in Training.</p>
           ) : (
             <p class="muted">{session.options.map((o) => o.title).join(' of ')}</p>
           )}
-          <button class="btn primary huge" onClick={start}>
-            Start
-          </button>
+          {day.groupClass ? (
+            <button class="btn primary huge" onClick={() => s.quickLog(today, 'class', 'gym', CLASS_MINUTES, s.prefs().className)}>
+              ✓ Les gedaan
+            </button>
+          ) : (
+            <button class="btn primary huge" onClick={start}>
+              Start
+            </button>
+          )}
           <button class="btn ghost small" onClick={() => s.postpone(today)}>
             Vandaag lukt niet
           </button>

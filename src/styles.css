@@ -125,7 +125,7 @@ p { margin: 0 0 12px; }
   position: fixed;
   left: 0; right: 0; bottom: 0;
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   background: rgba(11, 13, 16, 0.94);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -166,7 +166,7 @@ p { margin: 0 0 12px; }
   background: linear-gradient(transparent, var(--bg) 30%);
 }
 .focus .sticky-actions, .setup .sticky-actions { bottom: calc(12px + var(--safe-bottom)); }
-.focus .page { padding-bottom: calc(140px + var(--safe-bottom)); }
+
 
 .chips { display: flex; gap: 8px; margin: 8px 0; }
 .chips > .chip { flex: 1; }
@@ -504,3 +504,38 @@ p.why { font-size: 15px; margin: 4px 0 10px; }
 .workout-top .center { text-align: center; line-height: 1.25; }
 .itimer .row .btn { white-space: nowrap; }
 .itimer-stop { display: block; margin: 8px auto 0; }
+
+/* Tab Training: je training als lijst, ▶ Start / ■ Stop per oefening */
+.tabbar a { font-size: 12px; }
+.tabbar .badge.live { background: var(--accent); }
+.restbar { bottom: calc(64px + var(--safe-bottom)); padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+.workout.resting { padding-bottom: 88px; }
+.workout-head h1 { margin: 0; }
+.workout-head p { margin: 2px 0 0; }
+.wprogress { height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; margin: 10px 0 14px; }
+.wprogress > div { height: 100%; background: var(--accent); transition: width 0.3s ease; }
+.wlist { list-style: none; padding: 0; margin: 0 0 16px; }
+.wgroup {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin-bottom: 8px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  scroll-margin-top: 12px;
+}
+.wgroup.next { border-color: var(--accent); }
+.wgroup.klaar { opacity: 0.7; }
+.wgroup.bezig { border-color: var(--orange); }
+.wgroup.open { display: block; padding: 0; background: none; border: 0; }
+.wrows { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.wrow { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.wrow-text { display: flex; flex-direction: column; min-width: 0; }
+.wrow-name { font-weight: 700; font-size: 17px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.btn.wstart { flex: none; width: auto; min-height: 56px; padding: 0 16px; font-size: 18px; white-space: nowrap; }
+.btn.wcheck { flex: none; width: 52px; min-height: 52px; padding: 0; font-size: 22px; color: var(--accent); }
+.free-cardio .btn, .itimer > .btn.ghost { margin-top: 8px; }
+.itimer > .btn.ghost.small { display: flex; margin: 8px auto 0; }
+.wactive {
+  display: flex; align-items: center; gap: 8px; padding: 8px 12px; margin-bottom: 8px;
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface)); border: 1px solid var(--accent); border-radius: 14px;
+}
+.wactive .elapsed { font-size: 22px; }
+.wactive .muted { flex: 1; }
+.free-cardio h3 { margin-top: 0; }

@@ -27,7 +27,7 @@ export async function preferStrengthToday(page: Page) {
   await expect(page.locator('.plan').first().locator('.plan-day').first()).toContainText(/Full body|Bovenlichaam|Benen & romp/);
 }
 
-/** In Week: vandaag liever indoor cycling. */
+/** In Week: vandaag liever indoor cycling (de les van vandaag). */
 export async function preferCardioToday(page: Page) {
   const today = page.locator('.plan').first().locator('.plan-day').first();
   if (await today.getByText(/Indoor cycling/).count()) return;

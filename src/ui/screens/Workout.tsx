@@ -1,24 +1,26 @@
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { alternativesFor, getExercise, videoUrl } from '../../coach/catalog.ts';
 import { acceptableFor } from '../../coach/injury.ts';
 import { formatLoad, isAvailable } from '../../coach/loads.ts';
 import { activeAdjustments } from '../../coach/planner.ts';
-import { buildPrescription, warmupFor, type SessionContext } from '../../coach/session.ts';
+import { buildPrescription, templateTitle, warmupFor, type SessionContext } from '../../coach/session.ts';
 import type { Feel } from '../../coach/types.ts';
 import { weekStart } from '../../coach/dates.ts';
 import { defaultProfile, store } from '../../data/store.ts';
 import {
   addSet,
   adjustReps,
+  allGroups,
   completeSet,
-  currentGroup,
   extendRest,
   finishItem,
-  groupDone,
+  finishWorkout,
   isFinished,
-  nextGroup,
-  prevGroup,
+  itemMs,
+  itemStatus,
   skipRest,
+  startItem,
+  stopItem,
   summary,
   swapItem,
   toSessionLog,
@@ -181,6 +183,8 @@ function ItemCard(props: { w: WorkoutState; i: number }) {
   const [hold, setHold] = useState<number | null>(null);
   const profile = store.profile() ?? defaultProfile();
   const allDone = it.sets.every((s) => s.done);
+  /** Vraag "hoe ging het?": na de laatste set, of na ■ Stop als je al sets deed. */
+  const askFeel = !it.feel && (allDone || (!!it.stopped && it.sets.some((s) => s.done)));
   const current = it.sets[0]?.load ?? p.load;
   /** Gewichten net boven of onder het voorstel (enkel wat in Jims bestaat). */
   const nearby = (dir: 'more' | 'less') => {
@@ -266,7 +270,7 @@ function ItemCard(props: { w: WorkoutState; i: number }) {
         ))}
       </div>
 
-      {allDone && !it.feel && ex.load === 'bodyweight' && (
+      {askFeel && ex.load === 'bodyweight' && (
         <div class="feel">
           <h3>Hoe ging het?</h3>
           <div class="row">
@@ -279,7 +283,7 @@ function ItemCard(props: { w: WorkoutState; i: number }) {
         </div>
       )}
 
-      {allDone && !it.feel && ex.load !== 'bodyweight' && (
+      {askFeel && ex.load !== 'bodyweight' && (
         <div class="feel">
           <h3>Hoe ging het met {formatLoad(ex, it.sets[0]?.load ?? p.load)}?</h3>
           {other === null ? (
@@ -389,7 +393,6 @@ function Finish(props: { w: WorkoutState }) {
   const w = props.w;
   const sum = summary(w);
   const minutes = Math.round((Date.now() - new Date(w.startedAt).getTime()) / 60000);
-  const finisher = w.finisher;
   return (
     <>
       <h1>Klaar! 💪</h1>
@@ -399,20 +402,6 @@ function Finish(props: { w: WorkoutState }) {
         </p>
         {sum.volume > 0 && <p class="muted">Totaal verzet: {sum.volume.toLocaleString('nl-BE')} kg</p>}
       </div>
-      {finisher && (
-        <div class="card">
-          <h3>{finisher.title}</h3>
-          {finisher.blocks ? (
-            <IntervalTimer id={`${w.id}-afsluiter`} blocks={finisher.blocks} steps={finisher.steps} />
-          ) : (
-            <ul class="steps">
-              {finisher.steps.map((s) => (
-                <li key={s}>{s}</li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
       <button
         class="btn primary huge"
         onClick={async () => {
@@ -424,90 +413,168 @@ function Finish(props: { w: WorkoutState }) {
       >
         Bewaar training
       </button>
-      <button class="btn ghost" onClick={() => act((cur) => prevGroup({ ...cur, index: cur.items.length }))}>
-        Terug naar de laatste oefening
+      <button class="btn ghost" onClick={() => act((cur) => ({ ...cur, index: 0, open: false }))}>
+        Terug naar de oefeningen
       </button>
     </>
   );
 }
 
+const minutesText = (ms: number) => (ms >= 60_000 ? `${Math.round(ms / 60_000)} min` : clock(ms / 1000));
+
+/** Eén oefening als compacte regel in de lijst. */
+function Row(props: { w: WorkoutState; i: number }) {
+  const it = props.w.items[props.i]!;
+  const ex = getExercise(it.exerciseId);
+  const p = it.prescription;
+  const status = itemStatus(it);
+  const done = it.sets.filter((x) => x.done);
+  const load = ex.load === 'bodyweight' ? '' : ` · ${formatLoad(ex, it.sets[0]?.load ?? p.load)}`;
+  const unit = (n: number) => (ex.timed ? `${n} s` : `${n}`);
+  const line =
+    status === 'klaar'
+      ? `${done.length}×${unit(done[0]?.reps ?? p.targetReps)}${load}${itemMs(it, Date.now()) >= 1000 ? ` · ${minutesText(itemMs(it, Date.now()))}` : ''}`
+      : status === 'bezig'
+        ? `${done.length}/${it.sets.length} sets${load}`
+        : `${it.sets.length}×${unit(p.targetReps)}${ex.unilateral ? '/kant' : ''}${load}`;
+  return (
+    <div class="wrow">
+      <Thumb id={ex.id} />
+      <span class="wrow-text">
+        <span class="wrow-name">
+          {it.superset && <span class="pill">{it.superset}</span>} {ex.name}
+        </span>
+        <span class="muted small">{line}</span>
+      </span>
+    </div>
+  );
+}
+
+/** Een oefening (of superset-paar) in de lijst: dicht met ▶ Start, of open met de sets en ■ Stop. */
+function Group(props: { w: WorkoutState; g: number[]; next: boolean; quiet: boolean }) {
+  const { w, g, next } = props;
+  const open = !!w.open && g.includes(w.index);
+  const ref = useRef<HTMLLIElement>(null);
+  useNow(1000, open);
+  useEffect(() => {
+    if (open) ref.current?.scrollIntoView({ block: 'start' });
+  }, [open]);
+  const items = g.map((i) => w.items[i]!);
+  const status = items.every((it) => itemStatus(it) === 'klaar') ? 'klaar' : items.some((it) => itemStatus(it) !== 'todo') ? 'bezig' : 'todo';
+  const names = items.map((it) => getExercise(it.exerciseId).name).join(' + ');
+  const start = () => act((cur) => startItem(cur, g[0]!, Date.now()));
+
+  if (open) {
+    return (
+      <li ref={ref} class="wgroup open">
+        <div class="wactive">
+          <span class="elapsed" role="timer" aria-label={`Tijd op ${names}`}>
+            ⏱ {clock(itemMs(items[0]!, Date.now()) / 1000)}
+          </span>
+          <span class="muted small">op deze oefening</span>
+          <button
+            class="btn small"
+            onClick={() => {
+              cancelBeep();
+              act((cur) => stopItem(cur, g[0]!, Date.now()));
+            }}
+          >
+            ■ Stop
+          </button>
+        </div>
+        {g.map((i) => (
+          <ItemCard key={`${i}-${w.items[i]!.exerciseId}`} w={w} i={i} />
+        ))}
+      </li>
+    );
+  }
+  return (
+    <li ref={ref} class={`wgroup ${status} ${next ? 'next' : ''}`}>
+      <div class="wrows">
+        {g.map((i) => (
+          <Row key={i} w={w} i={i} />
+        ))}
+      </div>
+      {status === 'klaar' ? (
+        <button class="btn small ghost wcheck" onClick={start} aria-label={`${names}: klaar. Tik om te openen`}>
+          ✓
+        </button>
+      ) : (
+        <button class={`btn wstart ${next && !props.quiet ? 'primary' : ''}`} onClick={start} aria-label={`${names} starten`}>
+          ▶ {status === 'bezig' ? 'Verder' : 'Start'}
+        </button>
+      )}
+    </li>
+  );
+}
+
+/** Je hele training als lijst: per oefening ▶ Start en ■ Stop, in de volgorde die jij wil. */
 export function Workout() {
   const s = useStore();
   const w = s.workout;
   const [stop, setStop] = useState(false);
   useWakeLock(!!w);
-  if (!w) {
-    return (
-      <>
-        <h1>Geen training bezig</h1>
-        <button class="btn primary" onClick={() => go('vandaag')}>
-          Naar vandaag
-        </button>
-      </>
-    );
-  }
+  if (!w) return null;
   if (isFinished(w)) return <Finish w={w} />;
-  // Eerst opwarmen (tenzij je al bezig bent of het oversloeg).
-  const started = w.items.some((it) => it.sets.some((x) => x.done));
-  if (!w.warmupDone && !started && w.index === 0) {
-    return (
-      <div class="workout">
-        <div class="row-between workout-top">
-          <span class="muted">
-            {w.items.length} oefeningen · <Elapsed since={w.startedAt} />
-          </span>
-          <button class="btn small ghost" onClick={() => setStop(true)}>
-            Stop
-          </button>
-        </div>
-        <Warmup w={w} />
-        <Sheet open={stop} onClose={() => setStop(false)} title="Training stoppen?">
-          <button
-            class="btn danger"
-            onClick={async () => {
-              cancelBeep();
-              setStop(false);
-              await store.setWorkout(undefined);
-              go('vandaag');
-            }}
-          >
-            Weggooien (niet bewaren)
-          </button>
-        </Sheet>
-      </div>
-    );
-  }
-  const group = currentGroup(w);
-  const total = w.items.length;
+  const groups = allGroups(w);
+  const isDone = (g: number[]) => g.every((i) => itemStatus(w.items[i]!) === 'klaar');
+  const doneN = groups.filter(isDone).length;
+  const started = w.items.some((it) => it.sets.some((x) => x.done) || it.clock);
+  const warmup = !w.warmupDone && !started;
+  const next = w.open ? undefined : groups.find((g) => !isDone(g));
+  const finisher = w.finisher;
 
   return (
-    <div class="workout">
-      <div class="row-between workout-top">
-        <button class="btn small ghost" disabled={w.index === 0} onClick={() => act(prevGroup)} aria-label="Vorige oefening">
-          ←
-        </button>
-        <span class="muted center">
-          {group.length > 1 ? 'Superset' : 'Oefening'} {group[0]! + 1}/{total}
-          <br />
-          <Elapsed since={w.startedAt} />
-        </span>
+    <div class={`workout ${w.rest ? 'resting' : ''}`}>
+      <div class="row-between workout-head">
+        <div>
+          <h1>{templateTitle(w.template)}</h1>
+          <p class="muted">
+            {doneN}/{groups.length} klaar · <Elapsed since={w.startedAt} />
+          </p>
+        </div>
         <button class="btn small ghost" onClick={() => setStop(true)}>
           Stop
         </button>
       </div>
-      {group.map((i) => (
-        <ItemCard key={`${i}-${w.items[i]!.exerciseId}`} w={w} i={i} />
-      ))}
-      {groupDone(w) && group.every((g) => w.items[g]!.feel) && (
-        <button class="btn primary huge" onClick={() => act(nextGroup)}>
-          Volgende
-        </button>
+      <div class="wprogress" aria-hidden="true">
+        <div style={{ width: `${(doneN / Math.max(1, groups.length)) * 100}%` }} />
+      </div>
+
+      {warmup && <Warmup w={w} />}
+      {!warmup && !started && <p class="muted small">Tik op ▶ Start bij de oefening die je eerst doet. Toestel bezet? Kies gewoon een andere.</p>}
+
+      <ol class="wlist">
+        {groups.map((g) => (
+          <Group key={`${g[0]}-${w.items[g[0]!]!.exerciseId}`} w={w} g={g} next={g === next} quiet={warmup} />
+        ))}
+      </ol>
+
+      {finisher && (
+        <section class="card">
+          <h3>{finisher.title}</h3>
+          {finisher.blocks ? (
+            <IntervalTimer id={`${w.id}-afsluiter`} blocks={finisher.blocks} steps={finisher.steps} />
+          ) : (
+            <ul class="steps">
+              {finisher.steps.map((x) => (
+                <li key={x}>{x}</li>
+              ))}
+            </ul>
+          )}
+        </section>
       )}
-      {!groupDone(w) && (
-        <button class="btn ghost small" onClick={() => act(nextGroup)}>
-          Oefening overslaan
-        </button>
-      )}
+
+      <button
+        class={`btn ${doneN === groups.length ? 'primary huge' : 'ghost'}`}
+        onClick={() => {
+          cancelBeep();
+          act((cur) => finishWorkout(cur, Date.now()));
+        }}
+      >
+        🏁 Training afronden{doneN < groups.length && started ? ` (${groups.length - doneN} niet gedaan)` : ''}
+      </button>
+
       <RestBar w={w} />
       <Sheet open={stop} onClose={() => setStop(false)} title="Training stoppen?">
         <div class="stack">
@@ -515,7 +582,7 @@ export function Workout() {
             class="btn primary"
             onClick={() => {
               setStop(false);
-              act((cur) => ({ ...cur, index: cur.items.length, rest: undefined }));
+              act((cur) => finishWorkout(cur, Date.now()));
             }}
           >
             Afronden en bewaren

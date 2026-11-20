@@ -516,16 +516,18 @@ export function buildCardioSession(
       if (orange) notes.push('Dagvorm oranje: geen intervallen vandaag, rustig tempo.');
     } else {
       if (ctx.groupClass) {
+        // Groepsles: altijd 1 uur, de lesgever geeft het tempo aan. Geen timer, geen alternatief.
         options.push({
           title: `${ctx.groupClass} (groepsles)`,
           steps: [
-            ...(ctx.time ? [`Les om ${ctx.time.replace(':00', 'u').replace(':', 'u')}: wees er 10 min vroeger`] : []),
+            `${ctx.time ? `Les om ${ctx.time.replace(':00', 'u').replace(':', 'u')}, ` : ''}1 uur: wees er 10 min vroeger`,
             'Reserveer je plaats in de Jims-app als dat nodig is',
-            'Eerste keer? Kom 10 min vroeger: vraag de lesgever om je fiets af te stellen (zadelhoogte = heupbeen)',
+            'Eerste keer? Vraag de lesgever om je fiets af te stellen (zadelhoogte = heupbeen)',
             'Absolute beginner: draai mee op je eigen tempo, je hoeft niet alle sprints voluit te doen',
-            'Tik na de les op "Groepsles gedaan": dan telt ze mee',
           ],
         });
+        notes.push('Tik na de les op "Les gedaan": dan telt ze mee.');
+        return { kind: 'cardio', date: ctx.date, title: ctx.groupClass, location, minutes: 60, options, notes };
       }
       const zone2 = Math.max(0, min - 10 - intervals * 2);
       options.push({

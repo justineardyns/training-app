@@ -4,15 +4,21 @@ import { DEFAULT_HOME } from '../coach/loads.ts';
 import { buildPrescription, buildStrengthSession, type SessionContext } from '../coach/session.ts';
 import {
   adjustReps,
+  allGroups,
   completeSet,
   currentGroup,
   finishItem,
+  finishWorkout,
   groupDone,
+  itemMs,
+  itemStatus,
   isFinished,
   nextGroup,
   setFeel,
   setLoad,
+  startItem,
   startWorkout,
+  stopItem,
   swapItem,
   toSessionLog,
 } from './workout.ts';
@@ -91,10 +97,9 @@ describe('lopende training', () => {
     for (let k = 0; k < w.items[0]!.sets.length; k++) w = completeSet(w, 0, k, k);
     const ok = finishItem(w, 0, 'good');
     expect(ok.items[0]!.feel).toBe('good');
-    expect(ok.index).toBe(1);
+    expect(ok.open).toBe(false);
     const more = finishItem(w, 0, 'good', 45);
     expect(more.items[0]!.sets.every((s) => s.load === 45)).toBe(true);
-    expect(more.index).toBe(1);
   });
 
   it('wordt een sessielog met enkel gedane oefeningen', () => {
@@ -105,5 +110,64 @@ describe('lopende training', () => {
     expect(log).toMatchObject({ kind: 'strength', template: 'A', location: 'gym', durationMin: 47, source: 'app' });
     expect(log.exercises).toHaveLength(1);
     expect(log.exercises[0]!.feel).toBe('hard');
+  });
+
+  it('▶ Start / ■ Stop per oefening, in de volgorde die jij kiest', () => {
+    const t0 = Date.parse('2026-11-23T18:05:00Z');
+    let w = start();
+    expect(w.open).toBeFalsy();
+    // Toestel bezet? Begin gewoon met de derde oefening.
+    w = startItem(w, 2, t0);
+    expect(w).toMatchObject({ index: 2, open: true, warmupDone: true });
+    expect(itemMs(w.items[2]!, t0 + 90_000)).toBe(90_000);
+    // Toch eerst iets anders: de klok van de derde stopt.
+    w = startItem(w, 0, t0 + 120_000);
+    expect(w.index).toBe(0);
+    expect(itemMs(w.items[2]!, t0 + 999_000)).toBe(120_000);
+    // Alle sets + "gelukt": klok stopt, oefening dicht.
+    for (let k = 0; k < w.items[0]!.sets.length; k++) w = completeSet(w, 0, k, t0 + 130_000 + k);
+    w = finishItem(w, 0, 'good', undefined, t0 + 420_000);
+    expect(w.open).toBe(false);
+    expect(itemStatus(w.items[0]!)).toBe('klaar');
+    expect(itemMs(w.items[0]!, t0 + 999_000)).toBe(300_000);
+    expect(itemStatus(w.items[2]!)).toBe('todo');
+  });
+
+  it('■ Stop zonder sets: dicht; na 1 set: meteen "hoe ging het?"', () => {
+    const t0 = 1_000_000;
+    let w = stopItem(startItem(start(), 1, t0), 1, t0 + 5_000);
+    expect(w.open).toBe(false);
+    expect(itemStatus(w.items[1]!)).toBe('todo');
+    w = completeSet(startItem(w, 1, t0 + 10_000), 1, 0, t0 + 20_000);
+    w = stopItem(w, 1, t0 + 30_000);
+    expect(w.open).toBe(true);
+    expect(w.items[1]!.stopped).toBe(true);
+    expect(w.rest).toBeUndefined();
+    w = finishItem(w, 1, 'good', undefined, t0 + 40_000);
+    expect(w.open).toBe(false);
+    expect(itemStatus(w.items[1]!)).toBe('klaar');
+    expect(w.items[1]!.sets.filter((s) => s.done)).toHaveLength(1);
+  });
+
+  it('superset: ▶ Start opent het paar; dicht pas als beide klaar zijn', () => {
+    let w = start({ minutes: 30 });
+    const groups = allGroups(w);
+    expect(groups[0]).toEqual([0, 1]);
+    w = startItem(w, 1, 0);
+    expect(w.index).toBe(0);
+    expect(currentGroup(w)).toEqual([0, 1]);
+    for (const i of [0, 1]) for (let k = 0; k < w.items[i]!.sets.length; k++) w = completeSet(w, i, k, k);
+    w = finishItem(w, 0, 'good', undefined, 100);
+    expect(w.open).toBe(true);
+    w = finishItem(w, 1, 'good', undefined, 200);
+    expect(w.open).toBe(false);
+  });
+
+  it('afronden: wat je niet deed, telt niet mee', () => {
+    let w = completeSet(startItem(start(), 0, 0), 0, 0, 1_000);
+    w = finishWorkout(w, 60_000);
+    expect(isFinished(w)).toBe(true);
+    expect(w.items[0]!.clock).toEqual({ ms: 60_000 });
+    expect(toSessionLog(w, new Date('2026-11-23T18:30:00Z')).exercises).toHaveLength(1);
   });
 });

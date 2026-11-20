@@ -5,8 +5,7 @@ import { Setup } from './screens/Setup.tsx';
 import { Today } from './screens/Today.tsx';
 import { untickedDays, Week } from './screens/Week.tsx';
 import { Agenda } from './screens/Agenda.tsx';
-import { Workout } from './screens/Workout.tsx';
-import { Cardio } from './screens/Cardio.tsx';
+import { Training } from './screens/Training.tsx';
 import { More } from './screens/More.tsx';
 import { Report } from './screens/Report.tsx';
 import { InjuryReport } from './screens/Injury.tsx';
@@ -14,6 +13,7 @@ import { ExerciseInfo } from './screens/ExerciseInfo.tsx';
 
 const TABS = [
   { route: 'vandaag', label: 'Vandaag', ico: '◉' },
+  { route: 'training', label: 'Training', ico: '▶\uFE0E' },
   { route: 'week', label: 'Week', ico: '☰' },
   { route: 'agenda', label: 'Agenda', ico: '▦' },
   { route: 'rapport', label: 'Rapport', ico: '▲' },
@@ -31,10 +31,11 @@ export function App() {
   if (!s.ready) return <div class="app splash" aria-busy="true" />;
   if (!s.profile()?.setupDone) return <Setup />;
 
-  const focus = route === 'training' || route === 'cardio';
   const today = s.today();
   const toTick = untickedDays(today, (d) => !!s.explicitDay(d)) >= 3;
-  const active = route === 'beschikbaarheid' ? 'agenda' : route;
+  // Training bezig (of de stopwatch loopt): groen bolletje op de tab.
+  const live = !!s.workout || !!s.local.freeCardio;
+  const active = route === 'beschikbaarheid' ? 'agenda' : route === 'cardio' ? 'training' : route;
   let page;
   switch (route) {
     case 'week':
@@ -45,10 +46,8 @@ export function App() {
       page = <Agenda />;
       break;
     case 'training':
-      page = <Workout />;
-      break;
-    case 'cardio':
-      page = <Cardio />;
+    case 'cardio': // oude links
+      page = <Training />;
       break;
     case 'oefening':
       page = <ExerciseInfo key={params[0]} id={params[0] ?? ''} />;
@@ -67,21 +66,25 @@ export function App() {
   }
 
   return (
-    <div class={`app ${focus ? 'focus' : ''}`}>
+    <div class="app">
       <main class="page">{page}</main>
-      {!focus && (
-        <nav class="tabbar">
-          {TABS.map((t) => (
-            <a key={t.route} href={`#/${t.route}`} class={active === t.route ? 'on' : ''} aria-label={t.route === 'agenda' && toTick ? 'Agenda: vink je komende dagen aan' : undefined}>
-              <span class="ico" aria-hidden="true">
-                {t.ico}
-                {t.route === 'agenda' && toTick && <span class="badge" />}
-              </span>
-              {t.label}
-            </a>
-          ))}
-        </nav>
-      )}
+      <nav class="tabbar">
+        {TABS.map((t) => (
+          <a
+            key={t.route}
+            href={`#/${t.route}`}
+            class={active === t.route ? 'on' : ''}
+            aria-label={t.route === 'agenda' && toTick ? 'Agenda: vink je komende dagen aan' : t.route === 'training' && live ? 'Training: bezig' : undefined}
+          >
+            <span class="ico" aria-hidden="true">
+              {t.ico}
+              {t.route === 'agenda' && toTick && <span class="badge" />}
+              {t.route === 'training' && live && <span class="badge live" />}
+            </span>
+            {t.label}
+          </a>
+        ))}
+      </nav>
     </div>
   );
 }

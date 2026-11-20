@@ -66,6 +66,8 @@ describe('de coach kiest: max 6 per 7 dagen, conditie en kracht elk max 4', () =
     const p = planWeek(base());
     expect(p).toMatchObject({ target: 4, cap: 6, strength: 2, cardio: 2 });
     expect(p.days.filter((d) => d.groupClass)).toHaveLength(2);
+    // Een groepsles duurt altijd 1 uur.
+    expect(p.days.filter((d) => d.groupClass).every((d) => d.minutes === 60)).toBe(true);
     expect(p.messages.join(' ')).toMatch(/Opbouw: de eerste weken 4 trainingen/);
     expect(p.violations).toEqual([]);
     checkRules(p, []);
