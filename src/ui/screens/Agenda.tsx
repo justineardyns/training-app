@@ -155,6 +155,11 @@ export function Agenda() {
                 {selPlan.provisional ? ' (voorlopig)' : ''}
               </p>
               {selPlan.why && <p class="why">{selPlan.why}</p>}
+              {selPlan.walkExtra && (
+                <p class="walk goed">
+                  🚶 + wandeling{selPlan.walkExtra.bestHour !== undefined ? ` rond ${selPlan.walkExtra.bestHour}u` : ''}: droogste dag van de week
+                </p>
+              )}
               {selPlan.groupClass && (
                 <button class={`btn small ${selPlan.booked ? '' : 'primary'}`} onClick={() => s.updateDay(selected, { booked: selPlan.booked ? undefined : true })}>
                   {selPlan.booked ? '✓ Gereserveerd (tik om te schrappen)' : `🎟️ Les gereserveerd${selPlan.time ? ` (${hourText(selPlan.time)})` : ''}`}

@@ -28,10 +28,10 @@ const legsCardio = (d: PlannedDay | undefined) => !!d && (d.type === 'cardio' ||
 function checkRules(p: WeekPlan, history: SessionLog[], ctx = '') {
   const planned = p.days.filter((d) => d.status === 'planned' && d.sweat && d.type !== 'tennis');
   const tennis = p.days.filter((d) => d.type === 'tennis' && d.status === 'planned');
-  const all = new Map<string, { kind: 'S' | 'C'; split?: string; legs: boolean; planned: boolean; user?: boolean }>();
+  const all = new Map<string, { kind: 'S' | 'C'; split?: string; legs: boolean; planned: boolean; user?: boolean; tennis?: boolean }>();
   for (const h of history.filter((x) => x.kind !== 'light'))
-    all.set(h.date, { kind: h.kind === 'strength' ? 'S' : 'C', split: h.template === 'U' ? 'upper' : h.template === 'L' ? 'lower' : 'full', legs: !/tennis/i.test(h.title ?? ''), planned: false });
-  for (const d of tennis) all.set(d.date, { kind: 'C', legs: false, planned: false });
+    all.set(h.date, { kind: h.kind === 'strength' ? 'S' : 'C', split: h.template === 'U' ? 'upper' : h.template === 'L' ? 'lower' : 'full', legs: !/tennis/i.test(h.title ?? ''), tennis: /tennis/i.test(h.title ?? ''), planned: false });
+  for (const d of tennis) all.set(d.date, { kind: 'C', legs: false, tennis: true, planned: false });
   for (const d of planned) all.set(d.date, { kind: d.type === 'strength' ? 'S' : 'C', split: d.split, legs: d.type === 'cardio', planned: true, user: !!(d.want || d.booked) });
   for (const d of planned) {
     const me = all.get(d.date)!;
@@ -42,6 +42,7 @@ function checkRules(p: WeekPlan, history: SessionLog[], ctx = '') {
       if (me.kind === 'C') expect(o.kind, `${ctx} conditie na elkaar ${d.date}/${nb}`).toBe('S');
       // Nooit benen de dag vóór of ná indoor cycling (uitzondering: jouw les na een gedane benentraining).
       if (me.kind === 'S' && me.split !== 'upper') expect(o.kind === 'C' && o.legs, `${ctx} benen naast cycling ${d.date}/${nb}`).toBe(false);
+      if (me.kind === 'S' && me.split !== 'upper' && !after) expect(o.kind === 'C' && !!o.tennis, `${ctx} benen na tennis ${nb}/${d.date}`).toBe(false);
       if (me.kind === 'C' && me.legs && after) expect(o.kind === 'S' && o.split !== 'upper', `${ctx} benen na cycling ${d.date}/${nb}`).toBe(false);
       if (me.kind === 'C' && me.legs && !after && !me.user) expect(o.kind === 'S' && o.split !== 'upper', `${ctx} benen voor cycling ${nb}/${d.date}`).toBe(false);
       if (me.kind === 'S' && o.kind === 'S') {
@@ -179,15 +180,15 @@ describe('de coach kiest: max 6 per 7 dagen, conditie en kracht elk max 4', () =
     }
   });
 
-  it('tennis op donderdag = conditie: geen conditie op wo of vr; de dag erna mag gewoon kracht (ook benen)', () => {
+  it('tennis op donderdag = conditie: geen conditie op wo of vr; de dag erna enkel bovenlichaam (stijve bilspieren)', () => {
     const p = planWeek(base({ prefs: PRO, availability: (d) => (d === D(3) ? { ...std(d), tennis: 120 } : std(d)) }));
     expect(p.days[3]).toMatchObject({ type: 'tennis', title: 'Tennis · 2u', hair: true });
     expect(p.days[2]!.type).not.toBe('cardio');
     expect(p.days[4]!.type).not.toBe('cardio');
     expect(p.violations).toEqual([]);
     const fri = planWeek(base({ prefs: PRO, availability: (d) => (d === D(3) ? { ...std(d), tennis: 120 } : d === D(4) ? { ...std(d), want: 'strength' } : std(d)) }));
-    expect(fri.days[4]).toMatchObject({ type: 'strength' });
-    expect(fri.days[4]!.focus?.reduce ?? []).toEqual([]);
+    expect(fri.days[4]).toMatchObject({ type: 'strength', split: 'upper' });
+    expect(fri.days[4]!.why).toMatch(/gisteren tennis, je benen en bilspieren herstellen/);
   });
 
   it('indoor cycling: minstens 1×, liefst 2×; geen lesmoment → de coach zegt hoe je er een krijgt', () => {
@@ -339,6 +340,26 @@ describe('de coach denkt mee: herstel, je keuze, het weer en het waarom', () => 
     }
   });
 
+  it('wandeling op de droogste dag van de week: ook als enkel een trainingsdag droog is', () => {
+    const hrs = (prob: number) => Array.from({ length: 24 }, (_, h) => ({ hour: h, temp: 10, precipProb: prob, precip: prob > 60 ? 1.5 : 0, code: prob > 60 ? 63 : 2, wind: 10 }));
+    const wx = (dry: string[]) => (d: string) => {
+      const prob = dry.includes(d) ? 5 : 90;
+      return { date: d, code: prob > 60 ? 63 : 2, tMax: 10, tMin: 3, precipProb: prob, precipSum: prob > 60 ? 8 : 0, windMax: 12, hours: hrs(prob) };
+    };
+    // Enkel donderdag droog, en donderdag tennis je: dan wandelen als extraatje op donderdag.
+    const tennisThu = (d: string) => (d === D(3) ? { ...std(d), tennis: 60 } : std(d));
+    const a = planWeek(base({ availability: tennisThu, weather: wx([D(3)]) }));
+    expect(a.days[3]).toMatchObject({ type: 'tennis', walkExtra: { verdict: 'goed' } });
+    expect(a.days.some((d) => d.light?.id === 'wandeling')).toBe(false);
+    // Enkel een rustdag droog: daar de wandeling.
+    const rest = planWeek(base({ weather: wx([]) })).days.find((d) => d.type === 'light' && d.light?.id !== 'klusjes')!;
+    const b = planWeek(base({ weather: wx([rest.date]) }));
+    const walk = b.days.find((d) => d.light?.id === 'wandeling')!;
+    expect(walk.date).toBe(rest.date);
+    expect(walk.light!.why).toMatch(/droogste dag van de week/);
+    expect(b.days.some((d) => d.walkExtra)).toBe(false);
+  });
+
   it('weekdag die vaak wegvalt: de planner kiest liever een andere dag (maar nooit een training minder)', () => {
     const prefs = { ...PRO, targetPerWeek: 3 };
     expect(planWeek(base({ prefs })).days[0]!.sweat).toBe(true);
@@ -360,6 +381,7 @@ describe('de coach denkt mee: herstel, je keuze, het weer en het waarom', () => 
     expect(dry.days.filter((d) => d.light?.id === 'klusjes')).toHaveLength(1);
     expect(dry.days.find((d) => d.light?.id === 'wandeling')!.weather).toMatchObject({ icon: '🌤️', tMax: 9 });
     expect(wet.days.filter((d) => d.type === 'light').every((d) => d.light!.id !== 'wandeling')).toBe(true);
+    expect(wet.days.some((d) => d.walkExtra)).toBe(false);
   });
 });
 

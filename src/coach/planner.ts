@@ -78,6 +78,8 @@ export interface PlannedDay {
   provisional?: boolean;
   /** Rustiger zonder uitleg (net na ziekte). */
   gentle?: boolean;
+  /** Droogste dag van de week, maar je traint: wandelen als extraatje. */
+  walkExtra?: WalkAdvice;
   /** Krachttraining: full body, bovenlichaam of benen & romp. */
   split?: Split;
   /** Uur van de groepsles (bv. '10:00'). */
@@ -213,7 +215,7 @@ export function splitOfTemplate(t: Template | undefined): Split {
 export function ruleSession(s: SessionLog, planned = false): RuleSession {
   return s.kind === 'strength'
     ? { date: s.date, planned, kind: 'strength', split: splitOfTemplate(s.template) }
-    : { date: s.date, planned, kind: 'cardio', legs: !isTennis(s) };
+    : { date: s.date, planned, kind: 'cardio', legs: !isTennis(s), legsAfter: isTennis(s) };
 }
 
 export interface CoachTarget {
@@ -291,7 +293,7 @@ export function planWeek(input: PlanInput): WeekPlan {
   // Vaste trainingen per dag (gedaan + tennis), zoals de regels ze zien.
   const fixed = new Map<ISODate, RuleSession[]>();
   for (const s of sweat) fixed.set(s.date, [...(fixed.get(s.date) ?? []), ruleSession(s)]);
-  for (const d of tennis) fixed.set(d, [{ date: d, planned: false, kind: 'cardio', legs: false }]);
+  for (const d of tennis) fixed.set(d, [{ date: d, planned: false, kind: 'cardio', legs: false, legsAfter: true }]);
 
   const doneTodayCount = start === today ? (doneOn.get(today)?.length ?? 0) : 0;
 
@@ -320,12 +322,14 @@ export function planWeek(input: PlanInput): WeekPlan {
   const fN = new Int8Array(LEN);
   const fC = new Int8Array(LEN);
   const fLegsC = new Uint8Array(LEN);
+  const fLegsAfter = new Uint8Array(LEN);
   const fSplit: (Split | undefined)[] = new Array(LEN).fill(undefined);
   for (let k = 0; k < LEN; k++) {
     const list = fixed.get(dateAt[k]!) ?? [];
     fN[k] = list.length;
     fC[k] = list.filter((x) => x.kind === 'cardio').length;
     fLegsC[k] = list.some((x) => x.kind === 'cardio' && x.legs) ? 1 : 0;
+    fLegsAfter[k] = list.some((x) => x.kind === 'cardio' && (x.legs || x.legsAfter)) ? 1 : 0;
     fSplit[k] = list.find((x) => x.kind === 'strength')?.split;
   }
   /** 0 = rust, 1 = kracht, 2 = conditie (enkel geplande dagen). */
@@ -333,6 +337,8 @@ export function planWeek(input: PlanInput): WeekPlan {
   const nAt = (k: number) => fN[k]! + (A[k]! ? 1 : 0);
   const cAt = (k: number) => fC[k]! + (A[k] === 2 ? 1 : 0);
   const legsCAt = (k: number) => fLegsC[k] === 1 || A[k] === 2;
+  /** Na deze dag geen benen: cycling/cardio of tennis (stijve bilspieren). */
+  const legsAfterAt = (k: number) => fLegsAfter[k] === 1 || A[k] === 2;
   const sPlanned = (k: number) => A[k] === 1;
 
   const windowOk = (k: number) => {
@@ -355,7 +361,7 @@ export function planWeek(input: PlanInput): WeekPlan {
     for (let k = OFF; k < OFF + horizon; k++) SP[k] = undefined;
     const splitAt = (k: number) => SP[k] ?? fSplit[k];
     // Nooit benen de dag vóór of ná indoor cycling.
-    const blocked = (k: number) => legsCAt(k - 1) || legsCAt(k + 1);
+    const blocked = (k: number) => legsAfterAt(k - 1) || legsCAt(k + 1);
     const legsRecent = (k: number) => {
       for (let q = k - 1; q >= k - 6; q--) {
         const sp = splitAt(q);
@@ -496,6 +502,7 @@ export function planWeek(input: PlanInput): WeekPlan {
     if (assign[i] === 'S' && sp) bestSplits.set(d, sp);
   });
   const legsCardio = (d: ISODate) => legsCAt(idx(d) + OFF);
+  const legsAfterDay = (d: ISODate) => legsAfterAt(idx(d) + OFF);
   const chosen = days.filter((_, i) => assign[i] !== 'rest');
   const kindOf = (d: ISODate) => (assign[idx(d)] === 'S' ? 'strength' : 'cardio');
 
@@ -550,7 +557,6 @@ export function planWeek(input: PlanInput): WeekPlan {
   const sinceText = (d: ISODate) => {
     const p = prevTraining(d);
     if (!p) return 'Uitgerust aan de start.';
-    if (p.gap === 1 && p.label === 'tennis') return 'Gisteren tennis, en dat speel je ontspannen: vandaag gewoon kracht.';
     return p.gap === 1 ? `Gisteren ${p.label}: andere spieren vandaag.` : `${p.gap} dagen na ${p.label} (${short(p.date)}): je spieren zijn hersteld.`;
   };
 
@@ -577,7 +583,7 @@ export function planWeek(input: PlanInput): WeekPlan {
       result.push({
         date: d, type: 'tennis', sweat: true, status: 'planned', minutes: Math.min(60, min) as Minutes, note: 'Telt als conditiesessie.',
         title: `Tennis · ${min >= 60 ? `${Math.round(min / 60)}u` : `${min} min`}`, weather, hair: true,
-        why: 'Telt als je conditie (haarwasdag). De dag ervoor en erna geen conditie.',
+        why: 'Telt als je conditie (haarwasdag). De dag ervoor en erna geen conditie, de dag erna geen benen.',
       });
       continue;
     }
@@ -598,13 +604,13 @@ export function planWeek(input: PlanInput): WeekPlan {
           load: split === 'upper' ? { duwen: 6, trekken: 6, core: 2 } : split === 'lower' ? { benen: 7, core: 3 } : PLANNED_STRENGTH,
         });
         const focus = strengthFocus(rec, input.weakGroup, split === 'upper' ? ['duwen', 'trekken'] : split === 'lower' ? ['benen'] : undefined);
-        const yLegs = legsCardio(addDays(d, -1));
+        const yLegs = legsAfterDay(addDays(d, -1));
         const tLegs = legsCardio(addDays(d, 1));
         const prevSplit = result.at(-1)?.type === 'strength' ? result.at(-1)?.split : undefined;
         const nextS = assign[idx(d) + 1] === 'S';
         const splitWhy =
           split === 'upper' && yLegs
-            ? `Bovenlichaam: gisteren ${labelOn.get(addDays(d, -1))}, je benen krijgen een rustdag.`
+            ? `Bovenlichaam: gisteren ${labelOn.get(addDays(d, -1))}, je ${labelOn.get(addDays(d, -1)) === 'tennis' ? 'benen en bilspieren herstellen' : 'benen krijgen een rustdag'}.`
             : split === 'upper' && tLegs
               ? `Bovenlichaam: morgen ${labelOn.get(addDays(d, 1))}, dan zijn je benen fris.`
               : split !== 'full' && prevSplit
@@ -683,15 +689,36 @@ export function planWeek(input: PlanInput): WeekPlan {
       chore.why = isWeekend(chore.date) ? 'Vrij voor je klusjes: ook je huishouden krijgt een plek in je week.' : "Vrije avond voor je klusjes: ook je huishouden krijgt een plek in je week.";
       delete chore.walk;
     }
-    const walks = result.filter((r) => r.type === 'light' && r.light?.id === 'wandeling');
-    const rank = (r: PlannedDay) => (r.walk?.verdict === 'goed' ? 0 : r.walk?.verdict === 'matig' ? 1 : 2);
-    const keep = [...walks].sort((a, b) => rank(a) - rank(b) || (a.date < b.date ? -1 : 1))[0];
-    for (const w of walks) {
-      if (w === keep) continue;
+    // Hoogstens één wandeling per 7 dagen.
+    const toIndoor = (w: PlannedDay) => {
       const i = result.indexOf(w);
       const indoor = result[i - 1]?.type === 'strength' ? LIGHT.mobiliteit : dayIndex(w.date) % 2 ? LIGHT.stretching : LIGHT.core;
       w.light = indoor;
       w.title = `${indoor.title} (${indoor.minutes} min, zweetvrij)`;
+    };
+    const walkOf = (d: ISODate) => {
+      const wx = input.weather?.(d);
+      return wx ? walkAdvice(wx) : undefined;
+    };
+    if (result.some((r) => walkOf(r.date))) {
+      // Weer bekend: de wandeling op de droogste dag van de week, ook als je die dag traint (dan als extraatje).
+      const best = result
+        .filter((r) => r.status !== 'done' && r.status !== 'moved' && r.light?.id !== 'klusjes')
+        .map((r) => ({ r, w: walkOf(r.date) }))
+        .filter((x): x is { r: PlannedDay; w: WalkAdvice } => !!x.w && x.w.verdict !== 'slecht')
+        // Een rustdag die bijna even droog is (≤ 10 punten minder), krijgt voorrang: wandelen op een rustdag is fijner.
+        .map((x) => ({ ...x, s: x.w.score + (x.r.type === 'light' ? 10 : 0) }))
+        .sort((a, b) => b.s - a.s || (a.r.date < b.r.date ? -1 : 1))[0];
+      for (const r of result) if (r.type === 'light' && r.light?.id === 'wandeling' && r !== best?.r) toIndoor(r);
+      if (best?.r.type === 'light') {
+        best.r.light = { ...LIGHT.wandeling, why: `${best.w.text} De droogste dag van de week om te wandelen.` };
+        best.r.title = `${LIGHT.wandeling.title} (${LIGHT.wandeling.minutes} min, zweetvrij)`;
+        best.r.walk = best.w;
+      } else if (best) best.r.walkExtra = best.w;
+    } else {
+      // Geen weerbericht: hoogstens één wandeling uit de afwisseling.
+      const walks = result.filter((r) => r.type === 'light' && r.light?.id === 'wandeling');
+      for (const w of walks.slice(1)) toIndoor(w);
     }
   }
 

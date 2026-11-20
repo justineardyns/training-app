@@ -157,7 +157,7 @@ describe('store: rollend plannen', () => {
     expect(await refreshWeather(s, { fetchFn })).toBe(true);
     expect(urls[0]).toContain('latitude=50.9'); // Brussel, afgerond
     expect(await refreshWeather(s, { fetchFn })).toBe(false); // nog vers
-    expect(s.plan().days.find((d) => d.type === 'light')).toMatchObject({ light: { id: 'wandeling' }, walk: { verdict: 'goed' }, weather: { tMax: 12 } });
+    expect(s.plan().days.find((d) => d.light?.id === 'wandeling')).toMatchObject({ walk: { verdict: 'goed' }, weather: { tMax: 12 } });
     expect(s.plan().days[1]!.weather).toMatchObject({ tMax: 12 });
     expect(s.dirtyFiles().some((f) => JSON.stringify(f.content).includes('fetchedAt'))).toBe(false);
     // Plaats kiezen → meteen vernieuwen, coördinaten afgerond.

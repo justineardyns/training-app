@@ -28,6 +28,7 @@ describe('herstel per spiergroep', () => {
     expect(l.benen).toBe(3);
     expect(l.duwen).toBe(3);
     expect(cardioLoad('Tennis', 120).duwen).toBeCloseTo(2.4);
+    expect(cardioLoad('Tennis', 60).benen).toBe(3.5);
     expect(cardioLoad('Indoor cycling', 45)).toEqual({ benen: 5, core: 1 });
   });
 
@@ -37,11 +38,12 @@ describe('herstel per spiergroep', () => {
     expect(recoveryAt({ date: '2026-11-23', slot: 'evening' }, ev).benen.state).toBe('fris');
   });
 
-  it('tennis speel je ontspannen: de dag erna ben je fris, ook na 2u', () => {
-    const ev: LoadEvent[] = [{ date: '2026-11-26', slot: 'evening', label: 'tennis (2u) do', load: cardioLoad('tennis', 120) }];
+  it('na tennis zijn je benen en bilspieren stijf; je bovenlijf is fris', () => {
+    const ev: LoadEvent[] = [{ date: '2026-11-26', slot: 'evening', label: 'tennis do', load: cardioLoad('tennis', 60) }];
     const fri = recoveryAt({ date: '2026-11-27', slot: 'evening' }, ev);
-    expect(fri.benen.state).toBe('fris');
+    expect(fri.benen).toMatchObject({ state: 'herstelt', cause: 'tennis do' });
     expect(fri.duwen.state).toBe('fris');
+    expect(recoveryAt({ date: '2026-11-28', slot: 'day' }, ev).benen.state).toBe('fris');
   });
 
   it('jouw spierpijn telt altijd: die groep is moe', () => {

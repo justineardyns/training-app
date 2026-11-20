@@ -24,10 +24,12 @@ Tests gebruiken verzonnen data (`e2e/seed.ts`, `FakeGitHub`).
   - conditie (haarwasdag) max 4 en nooit 2 dagen na elkaar;
   - kracht max 4;
   - geen benen (full body of benen & romp) de dag vóór of ná indoor cycling of andere conditie die zwaar is voor de
-    benen (tennis niet: licht); enige uitzondering: een les die je zelf koos/reserveerde na een gedane benentraining;
+    benen; de dag ná tennis ook geen benen (stijve bilspieren; de dag ervoor mag); enige uitzondering: een les die je
+    zelf koos/reserveerde na een gedane benentraining;
   - twee krachtdagen na elkaar enkel bovenlichaam ↔ benen;
   - minstens één beschikbare dag per 7 dagen vrij voor klusjes (liefst weekend), tenzij je elke dag zelf vastlegde.
-- Rustdagen: hoogstens één wandeling per 7 dagen (droogste dag), de rest mobiliteit/stretching/core.
+- Rustdagen: hoogstens één wandeling per 7 dagen, op de droogste dag (`WalkAdvice.score`; rustdag krijgt +10 voorrang);
+  is de droogste dag een trainingsdag, dan `walkExtra`. Zonder weerbericht: max 1 uit de afwisseling.
 - Doel: het maximum (standaard 6, 1 rustdag; beginners bouwen op 4 → 5 → 6; 1 minder bij vaak moe), minstens 1× en
   liefst 2× indoor cycling, de rest kracht (minstens 2×). `planTwoWeeks` plant 14 dagen: dag 8–14 is voorlopig en
   bouwt verder op dag 1–7. `booked` (gereserveerde les) werkt als een vaste keuze voor conditie. Kracht: `A`/`B` full body, `U` bovenlichaam, `L` benen & romp.

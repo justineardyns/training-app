@@ -62,6 +62,8 @@ export interface WalkAdvice {
   bestHour?: number;
   /** Korte uitleg, bv. "Droog en 11° rond 12u." */
   text: string;
+  /** Hoe goed het wandelweer is (hoger = beter), om de beste dag van de week te kiezen. */
+  score: number;
 }
 
 /** Wanneer kan je wandelen? Weekdag: voor of na het werk en over de middag; weekend: overdag. */
@@ -90,7 +92,7 @@ export function walkAdvice(day: DayWeather): WalkAdvice {
   const daylight = (h: number) => day.sunrise === undefined || day.sunset === undefined || (h >= day.sunrise && h + 1 <= day.sunset);
   if (hours.length === 0) {
     const v: Verdict = day.precipProb >= 70 || day.precipSum >= 5 ? 'slecht' : day.precipProb >= 40 ? 'matig' : 'goed';
-    return { verdict: v, text: `${cap(weatherText(day.code))}, ${Math.round(day.tMax)}°, ${day.precipProb}% kans op regen.` };
+    return { verdict: v, score: 100 - day.precipProb - 10 * Math.min(5, day.precipSum), text: `${cap(weatherText(day.code))}, ${Math.round(day.tMax)}°, ${day.precipProb}% kans op regen.` };
   }
   const best = [...hours].sort((a, b) => hourScore(b, daylight(b.hour)) - hourScore(a, daylight(a.hour)) || a.hour - b.hour)[0]!;
   const verdict = verdictFor(best);
@@ -102,7 +104,7 @@ export function walkAdvice(day: DayWeather): WalkAdvice {
       : verdict === 'matig'
         ? `Beste moment rond ${best.hour}u: ${t}°, ${best.precipProb}% kans op een bui${best.wind >= 30 ? ', veel wind' : ''}${dark}.`
         : `Ook op het beste moment (${best.hour}u) ${best.code >= 95 ? 'onweer' : best.precipProb >= 60 || best.precip >= 0.5 ? `${best.precipProb}% kans op regen` : best.wind >= 45 ? 'storm' : `${t}°`}.`;
-  return { verdict, bestHour: best.hour, text };
+  return { verdict, bestHour: best.hour, text, score: hourScore(best, daylight(best.hour)) };
 }
 
 function cap(s: string): string {

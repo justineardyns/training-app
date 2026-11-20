@@ -4,6 +4,7 @@ import { formatLoad } from '../../coach/loads.ts';
 import { ADVICE, LEVEL_LABEL } from '../../coach/readiness.ts';
 import { templateTitle, type CardioSession, type StrengthSession } from '../../coach/session.ts';
 import type { Energy, Location, Minutes } from '../../coach/types.ts';
+import type { WalkAdvice } from '../../coach/weather.ts';
 import { newId } from '../../data/store.ts';
 import { startWorkout } from '../../data/workout.ts';
 import { Chips, Messages, Pill, Sheet } from '../components.tsx';
@@ -45,6 +46,15 @@ export function StrengthPreview(props: { session: StrengthSession }) {
         </li>
       ))}
     </ul>
+  );
+}
+
+/** Droogste dag van de week, maar je traint: een wandeling als extraatje. */
+function WalkExtra(props: { walk: WalkAdvice }) {
+  return (
+    <p class="walk goed">
+      🚶 Droogste dag van de week: wandel 30 min{props.walk.bestHour !== undefined ? ` rond ${props.walk.bestHour}u` : ''} (optioneel, naast je training).
+    </p>
   );
 }
 
@@ -179,6 +189,7 @@ export function Today() {
             {day.title}
           </h2>
           {day.why && <p class="why">{day.why}</p>}
+          {day.walkExtra && <WalkExtra walk={day.walkExtra} />}
           <div class="stack">
             {!day.groupClass && s.prefs().trainAtHome && (
               <Chips<Location>
@@ -220,6 +231,7 @@ export function Today() {
         <div class="card today-card">
           <h2>🎾 {day.title}</h2>
           <p class="why">{day.why ?? 'Telt als conditiesessie.'} Tik na het spelen op "Tennis gedaan".</p>
+          {day.walkExtra && <WalkExtra walk={day.walkExtra} />}
           <button class="btn primary huge" onClick={() => s.quickLog(today, 'cardio', 'gym', (day.minutes ?? 60) as Minutes, 'Tennis')}>
             Tennis gedaan ✓
           </button>

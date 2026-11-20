@@ -44,9 +44,10 @@ Werkt offline in de gym, draait puur op jouw tikken en kost **€ 0**.
   - Nooit benen de dag vóór of ná indoor cycling: die dagen wordt het bovenlichaam (of rust). Voeg je een les toe
     of reserveer je er een, dan passen de dagen ervoor en erna zich aan.
   - Twee krachtdagen na elkaar wisselen bovenlichaam en benen & romp af.
-  - Tennis speel je ontspannen: de dag erna mag je gewoon kracht doen.
+  - Na tennis zijn je bilspieren stijf: de dag erna geen benen, wel bovenlichaam.
   - 🧹 Elke 7 dagen blijft er minstens één moment vrij voor klusjes (liefst in het weekend, anders een avond).
-  - Rustdagen: hoogstens één wandeling per week (op de droogste dag), verder mobiliteit, stretching of rustige core.
+  - Hoogstens één wandeling per week, op de droogste dag van de week. Is dat een trainingsdag, dan krijg je ze er
+    als extraatje bij (🚶). Rustdagen verder: mobiliteit, stretching of rustige core.
 - **Mix:** minstens 1×, liefst 2× indoor cycling per week, op de lesmomenten: maandag-, woensdag- en
   donderdagavond, en zaterdag en zondag om 10u (🚴 in de Agenda).
   - Tennis telt als conditie. De andere trainingen zijn kracht.

@@ -48,8 +48,8 @@ describe('weer', () => {
   });
 
   it('droog → wandelen (ook na kracht); regen → binnen', () => {
-    const good = { verdict: 'goed' as const, bestHour: 12, text: 'Droog en 11° rond 12u.' };
-    const bad = { verdict: 'slecht' as const, bestHour: 12, text: 'Ook op het beste moment (12u) 90% kans op regen.' };
+    const good = { verdict: 'goed' as const, bestHour: 12, text: 'Droog en 11° rond 12u.', score: 90 };
+    const bad = { verdict: 'slecht' as const, bestHour: 12, text: 'Ook op het beste moment (12u) 90% kans op regen.', score: -50 };
     expect(chooseLight(true, 1, good).light.id).toBe('wandeling');
     expect(chooseLight(true, 1, good).light.why).toMatch(/spieren herstellen/);
     expect(chooseLight(false, 0, bad).light.id).not.toBe('wandeling');

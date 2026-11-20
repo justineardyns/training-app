@@ -30,6 +30,7 @@ export function morningMessage(store: Store): PushMessage | null {
   if (!day || day.status === 'done') return null;
   const injury = store.injuries().find((i) => !i.resolvedOn);
   const ill = store.illness();
+  const walkTip = day?.walkExtra ? ` Droogste dag van de week: wandel${day.walkExtra.bestHour !== undefined ? ` rond ${day.walkExtra.bestHour}u` : ''}.` : '';
   const injuryAsk =
     ill.status === 'rest'
       ? ' Beterschap! Voel je je beter? Tik het aan in de app.'
@@ -38,7 +39,7 @@ export function morningMessage(store: Store): PushMessage | null {
         : '';
 
   if (day.type === 'tennis') {
-    return { title: `Vandaag: ${day.title.toLowerCase()} 🎾`, body: `Telt als conditiesessie. Tik na het spelen op Gedaan.${injuryAsk}${ask}`, url: '#/vandaag', tag: 'vandaag' };
+    return { title: `Vandaag: ${day.title.toLowerCase()} 🎾`, body: `Telt als conditiesessie. Tik na het spelen op Gedaan.${walkTip}${injuryAsk}${ask}`, url: '#/vandaag', tag: 'vandaag' };
   }
   if (day.sweat && day.status === 'planned') {
     const where = day.location === 'home' ? 'thuis' : 'Jims';
@@ -48,14 +49,14 @@ export function morningMessage(store: Store): PushMessage | null {
       const names = session && 'exercises' in session ? session.exercises.slice(0, 3).map((e) => e.exercise.name) : [];
       return {
         title: `Vandaag: ${templateTitle(day.template)} · ${where}${when}`,
-        body: `${day.minutes} min${day.deload ? ' · deloadweek' : ''}${names.length ? ` · ${names.join(', ')}…` : ''}. Tik voor je dagvorm-check.${injuryAsk}${ask}`,
+        body: `${day.minutes} min${day.deload ? ' · deloadweek' : ''}${names.length ? ` · ${names.join(', ')}…` : ''}. Tik voor je dagvorm-check.${walkTip}${injuryAsk}${ask}`,
         url: '#/vandaag',
         tag: 'vandaag',
       };
     }
     return {
       title: day.groupClass ? `Vandaag: ${store.prefs().className.toLowerCase()}${when} 🚴` : `Vandaag: conditie · ${where}${when}`,
-      body: `${day.groupClass ? 'Groepsles in Jims. Reserveer je fiets als dat nodig is.' : `${day.minutes} min · ${day.location === 'home' ? 'kettlebell-circuit' : 'fiets of roeier'}.`} Tik voor je dagvorm-check.${injuryAsk}${ask}`,
+      body: `${day.groupClass ? 'Groepsles in Jims. Reserveer je fiets als dat nodig is.' : `${day.minutes} min · ${day.location === 'home' ? 'kettlebell-circuit' : 'fiets of roeier'}.`} Tik voor je dagvorm-check.${walkTip}${injuryAsk}${ask}`,
       url: '#/vandaag',
       tag: 'vandaag',
     };

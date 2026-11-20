@@ -46,6 +46,11 @@ export function PlanList(props: { plan: WeekPlan; today: string; className?: str
                   d.want && (d.sweat ? <span class="pill green">jouw keuze</span> : <span class="pill orange">keuze past niet</span>)
                 )}
                 {d.why && <span class="why">{d.why}</span>}
+                {d.walkExtra && (
+                  <span class="why walk-extra">
+                    🚶 + wandeling{d.walkExtra.bestHour !== undefined ? ` rond ${d.walkExtra.bestHour}u` : ''}: droogste dag van de week
+                  </span>
+                )}
               </span>
               <span class="plan-icon" aria-label={d.status}>
                 {d.hair && d.status !== 'free' && (

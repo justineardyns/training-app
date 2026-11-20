@@ -43,6 +43,8 @@ export interface RuleSession {
   legs?: boolean;
   /** Jij koos of reserveerde deze les. */
   userChoice?: boolean;
+  /** Na deze conditie zijn je benen/bilspieren stijf (tennis): de dag erna geen benen. */
+  legsAfter?: boolean;
 }
 
 export interface RollingCheck {
@@ -62,6 +64,7 @@ const fmt = (d: ISODate) => `${DAY_NAMES[dayIndex(d)]} ${d}`;
  * - conditie (haarwasdag) nooit twee dagen na elkaar
  * - geen benentraining de dag vóór of ná indoor cycling (of andere conditie die zwaar is voor de benen)
  *   (enige uitzondering: een les die jij koos of reserveerde, de dag na een benentraining die al gedaan is)
+ * - geen benentraining de dag na tennis (stijve bilspieren)
  * - kracht twee dagen na elkaar enkel met andere spieren (bovenlichaam ↔ benen, nooit full body)
  * Gedane sessies zijn een feit; we melden enkel overtredingen waarin een geplande sessie zit.
  */
@@ -86,7 +89,7 @@ export function validateRolling(c: RollingCheck): Violation[] {
     if (A.some((x) => x.kind === 'cardio') && B.some((x) => x.kind === 'cardio')) {
       out.push({ rule: 'consecutive_cardio', dates: [a, b], message: `Conditie op ${a} én ${b}: nooit twee haarwasdagen na elkaar.` });
     }
-    const legsAfter = A.some((x) => x.kind === 'cardio' && x.legs) && B.some(trainsLegs);
+    const legsAfter = A.some((x) => x.kind === 'cardio' && (x.legs || x.legsAfter)) && B.some(trainsLegs);
     const legsBefore =
       B.some((x) => x.kind === 'cardio' && x.legs && !(x.userChoice && !A.some((y) => y.planned))) && A.some(trainsLegs);
     if (legsAfter || legsBefore) {
