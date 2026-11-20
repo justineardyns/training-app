@@ -22,7 +22,7 @@ test('"Ik heb last van…" past de training aan en volgt op', async ({ page }) =
   await expect(page.locator('.card.injuries')).toContainText('hersteld, we bouwen op');
 });
 
-test('"Ik ben ziek": één tik = rust, genezen = rustig terug', async ({ page }) => {
+test('"Ik ben ziek": één tik = rust, genezen = rustiger terug zonder extra uitleg', async ({ page }) => {
   await quickSetup(page);
   await page.getByRole('link', { name: /Vandaag/ }).click();
   await page.getByRole('button', { name: 'Ik heb last van…' }).click();
@@ -38,7 +38,9 @@ test('"Ik ben ziek": één tik = rust, genezen = rustig terug', async ({ page })
   await expect(page.locator('.plan-day.sweat')).toHaveCount(0);
   await page.getByRole('link', { name: /Vandaag/ }).click();
   await page.locator('.card.illness').getByRole('button', { name: 'Genezen' }).click();
-  await expect(page.locator('.card.illness')).toContainText('genezen, we bouwen rustig op');
+  // Genezen: de kaart verdwijnt, geen extra uitleg; de eerste trainingen zijn wel rustiger.
+  await expect(page.locator('.card.illness')).toHaveCount(0);
   await page.getByRole('link', { name: /Week/ }).click();
-  await expect(page.locator('.plan-day.sweat').first()).toContainText(/lichter|Terug na ziekte/);
+  await expect(page.locator('.plan-day.sweat').first()).toContainText('lichter');
+  await expect(page.locator('main')).not.toContainText('ziekte');
 });

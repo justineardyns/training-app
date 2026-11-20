@@ -231,7 +231,9 @@ export function Today() {
 
       {!day.sweat && day.light && (
         <div class="card light-card">
-          <h2>{day.light.id === 'rust' ? 'Rustdag' : day.status === 'moved' ? 'Herstel vandaag' : 'Zweetvrije dag'}</h2>
+          <h2>
+            {day.light.id === 'rust' ? 'Rustdag' : day.light.id === 'klusjes' ? 'Vrij voor klusjes 🧹' : day.status === 'moved' ? 'Herstel vandaag' : 'Zweetvrije dag'}
+          </h2>
           {day.note && <p>{day.note}</p>}
           {day.why && <p class="why">{day.why}</p>}
           <h3>
@@ -254,7 +256,7 @@ export function Today() {
               <li key={st}>{st}</li>
             ))}
           </ul>
-          {day.light.id === 'rust' ? null : s.log(isoWeek(today)).light.some((l) => l.date === today) ? (
+          {day.light.id === 'rust' || day.light.id === 'klusjes' ? null : s.log(isoWeek(today)).light.some((l) => l.date === today) ? (
             <p>✓ Gedaan</p>
           ) : (
             <button class="btn" onClick={() => s.logLight(today, day.light!.id)}>

@@ -109,6 +109,9 @@ describe('ziek melden', () => {
     const first = s.plan().days.find((d) => d.status === 'planned' && d.sweat)!;
     expect(first.lighter).toBe(true);
     const session = s.sessionFor(first);
-    if (session?.kind === 'strength') expect(session.notes.join(' ')).toMatch(/1 set minder/);
+    if (session?.kind === 'strength') {
+      expect(session.exercises[0]!.prescription.note).toBe('1 set minder en niet zwaarder dan vorige keer.');
+      expect(session.notes.join(' ')).not.toMatch(/Dagvorm oranje/);
+    }
   });
 });

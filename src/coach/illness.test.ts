@@ -39,7 +39,10 @@ describe('ziek zijn: ziek is ziek', () => {
     const trainings = p.days.filter((d) => d.status === 'planned' && d.sweat);
     expect(trainings.slice(0, 2).every((d) => d.lighter)).toBe(true);
     expect(trainings.slice(2).every((d) => !d.lighter)).toBe(true);
-    expect(trainings[0]!.why).toMatch(/^Terug na ziekte/);
+    expect(trainings.slice(0, 2).every((d) => d.gentle)).toBe(true);
+    // Zonder extra uitleg: geen boodschap en geen "terug na ziekte" in het waarom.
+    expect(p.messages.join(' ')).not.toMatch(/ziekte/i);
+    expect(trainings.map((d) => d.why).join(' ')).not.toMatch(/ziekte/i);
     // Na 2 trainingen of na een week: gewoon.
     expect(illnessState([healed], MON, [done('2026-11-22'), done('2026-11-22')]).status).toBe('none');
     expect(illnessState([healed], '2026-12-01').status).toBe('none');

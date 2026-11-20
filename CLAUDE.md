@@ -25,7 +25,9 @@ Tests gebruiken verzonnen data (`e2e/seed.ts`, `FakeGitHub`).
   - kracht max 4;
   - geen benen (full body of benen & romp) de dag vóór of ná indoor cycling of andere conditie die zwaar is voor de
     benen (tennis niet: licht); enige uitzondering: een les die je zelf koos/reserveerde na een gedane benentraining;
-  - twee krachtdagen na elkaar enkel bovenlichaam ↔ benen.
+  - twee krachtdagen na elkaar enkel bovenlichaam ↔ benen;
+  - minstens één beschikbare dag per 7 dagen vrij voor klusjes (liefst weekend), tenzij je elke dag zelf vastlegde.
+- Rustdagen: hoogstens één wandeling per 7 dagen (droogste dag), de rest mobiliteit/stretching/core.
 - Doel: het maximum (standaard 6, 1 rustdag; beginners bouwen op 4 → 5 → 6; 1 minder bij vaak moe), minstens 1× en
   liefst 2× indoor cycling, de rest kracht (minstens 2×). `planTwoWeeks` plant 14 dagen: dag 8–14 is voorlopig en
   bouwt verder op dag 1–7. `booked` (gereserveerde les) werkt als een vaste keuze voor conditie. Kracht: `A`/`B` full body, `U` bovenlichaam, `L` benen & romp.
@@ -36,7 +38,7 @@ Tests gebruiken verzonnen data (`e2e/seed.ts`, `FakeGitHub`).
 - Enkel gratis diensten. Weer: Open-Meteo vanop de iPhone (afgeronde coördinaten, cache enkel lokaal in IndexedDB,
   nooit in de privé-repo). Het weer beïnvloedt enkel zweetvrije dagen, nooit de keuze van zweetdagen.
 - Ziek zijn (`src/coach/illness.ts`): ziek is ziek → rust (geen enkele training) tot "Genezen"; daarna de eerste
-  2 trainingen rustiger. Huisarts bij > 7 dagen of erger. Bewaard in `data/injuries.json` (`illnesses`).
+  2 trainingen rustiger (`gentle`: zonder extra uitleg). Huisarts bij > 7 dagen of erger. Bewaard in `data/injuries.json` (`illnesses`).
 - Herstel (`src/coach/recovery.ts`) en sterke/werkpunten (`src/coach/insights.ts`) sturen de planner en de sessies;
   elke geplande dag krijgt een `why`.
 

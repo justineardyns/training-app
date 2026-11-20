@@ -36,7 +36,7 @@ export function PlanList(props: { plan: WeekPlan; today: string; className?: str
             >
               <span class="plan-date">{d.date === props.today ? 'vandaag' : dayLabel(d.date)}</span>
               <span class="plan-title">
-                {d.type === 'tennis' ? '🎾 ' : d.groupClass ? '🚴 ' : ''}
+                {d.type === 'tennis' ? '🎾 ' : d.groupClass ? '🚴 ' : d.light?.id === 'klusjes' ? '🧹 ' : ''}
                 {d.title}
                 {d.slot && d.status === 'planned' && !d.time && <span class="muted small"> · {MOMENT[d.slot]}</span>}
                 {d.lighter && <span class="pill orange">lichter</span>}
@@ -145,7 +145,7 @@ export function Week() {
         </strong>
         {plan.deload.deload ? ' · deloadweek' : ''}
         <br />
-        Conditie (🚿 haarwasdag) max 4 en nooit 2 dagen na elkaar · kracht max 4 · benen een rustdag na {s.prefs().className.toLowerCase()}
+        Conditie (🚿 haarwasdag) max 4 en nooit 2 dagen na elkaar · kracht max 4 · nooit benen naast {s.prefs().className.toLowerCase()} · 🧹 1 moment vrij voor klusjes
       </p>
       <PlanList plan={plan} today={today} className={s.prefs().className} onChange={(date, patch) => s.updateDay(date, patch)} />
       <p class="muted small">Tik op een dag om te wisselen tussen kracht en {s.prefs().className.toLowerCase()}. Wanneer je kan, duid je aan in de Agenda.</p>

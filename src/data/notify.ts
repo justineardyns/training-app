@@ -66,6 +66,9 @@ export function morningMessage(store: Store): PushMessage | null {
   if (ill.status === 'rest') {
     return { title: 'Ziek: vandaag rust 🤒', body: `Veel drinken en slapen, geen training.${injuryAsk}`, url: '#/vandaag', tag: 'vandaag' };
   }
+  if (light?.id === 'klusjes') {
+    return { title: 'Vandaag vrij voor klusjes 🧹', body: `Geen training.${next ? ` Volgende: ${dayName(next.date)}.` : ''}${injuryAsk}${ask}`, url: '#/vandaag', tag: 'vandaag' };
+  }
   return {
     title: 'Zweetvrije dag',
     body: `${light ? `Optioneel: ${light.title.toLowerCase()} (${light.minutes} min).` : 'Rust.'}${next ? ` Volgende training: ${dayName(next.date)}.` : ''}${injuryAsk}${ask}`,

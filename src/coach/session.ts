@@ -109,6 +109,8 @@ export interface SessionContext {
   beginner?: boolean;
   /** Herstel en werkpunt: welke groepen eerst, welke 1 set minder. */
   focus?: StrengthFocus;
+  /** Rustiger (bv. net na ziekte): 1 set minder, niet zwaarder, zonder extra uitleg. */
+  gentle?: boolean;
 }
 
 export interface PlannedExercise {
@@ -235,9 +237,10 @@ export function buildPrescription(ex: Exercise, role: Role, ctx: SessionContext,
   let p: Prescription = { ...r.result };
   delete (p as { switchTo?: string }).switchTo;
   if (ctx.deload) p = deloadPrescription(p, r.options);
-  else if (ctx.readiness === 'orange' || ctx.readiness === 'red') {
+  else if (ctx.readiness === 'orange' || ctx.readiness === 'red' || ctx.gentle) {
     const last = r.history.at(-1);
     p = lighterPrescription(p, last ? snapLoad(workingLoad(last.log), r.options, 'down') : undefined);
+    if (ctx.readiness !== 'orange' && ctx.readiness !== 'red') p = { ...p, note: '1 set minder en niet zwaarder dan vorige keer.' };
   }
   return { exercise: r.e, prescription: p, options: r.options };
 }
@@ -405,10 +408,11 @@ export interface CardioSession {
 }
 
 export function buildCardioSession(
-  ctx: Pick<SessionContext, 'date' | 'location' | 'minutes' | 'readiness' | 'equipment' | 'gym'> & { groupClass?: string; time?: string },
+  ctx: Pick<SessionContext, 'date' | 'location' | 'minutes' | 'readiness' | 'equipment' | 'gym' | 'gentle'> & { groupClass?: string; time?: string },
 ): CardioSession {
   const { minutes: min, location } = ctx;
-  const lighter = ctx.readiness === 'orange' || ctx.readiness === 'red';
+  const orange = ctx.readiness === 'orange' || ctx.readiness === 'red';
+  const lighter = orange || !!ctx.gentle;
   const notes: string[] = [];
   const options: CardioSession['options'] = [];
   const intervals = Math.max(4, Math.min(10, Math.floor((min - 10) / 2)));
@@ -416,7 +420,7 @@ export function buildCardioSession(
   if (location === 'gym') {
     if (lighter) {
       options.push({ title: 'Rustige cardio (zone 2)', steps: [`${min - 5} min fiets, roeier of crosstrainer in een tempo waarbij je nog kan praten`, '5 min uitbollen'] });
-      notes.push('Dagvorm oranje: geen intervallen vandaag, rustig tempo.');
+      if (orange) notes.push('Dagvorm oranje: geen intervallen vandaag, rustig tempo.');
     } else {
       if (ctx.groupClass) {
         options.push({
@@ -450,7 +454,7 @@ export function buildCardioSession(
         '4 min uitbollen en stretchen',
       ],
     });
-    if (lighter) notes.push('Dagvorm oranje: halve reps en extra rust waar nodig.');
+    if (orange) notes.push('Dagvorm oranje: halve reps en extra rust waar nodig.');
   }
   notes.push('Tik na afloop op "Gedaan": dan telt de sessie mee voor je week.');
   return {

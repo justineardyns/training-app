@@ -1,4 +1,4 @@
-import { classSlotFor, classSlotOn, DEFAULT_CLASS_SLOTS, defaultDay, resolveDay } from './availability.ts';
+import { classSlotFor, classSlotOn, DEFAULT_CLASS_SLOTS, defaultDay, isWeekend, resolveDay } from './availability.ts';
 import { addDays, DAY_SHORT, dayIndex, dayName, diffDays, weekStart } from './dates.ts';
 import { decideDeload, type DeloadDecision } from './deload.ts';
 import { chooseLight, LIGHT, type LightActivity } from './light.ts';
@@ -76,6 +76,8 @@ export interface PlannedDay {
   booked?: boolean;
   /** Dag 8–14: voorlopig (bouwt verder op de eerste 7 dagen). */
   provisional?: boolean;
+  /** Rustiger zonder uitleg (net na ziekte). */
+  gentle?: boolean;
   /** Krachttraining: full body, bovenlichaam of benen & romp. */
   split?: Split;
   /** Uur van de groepsles (bv. '10:00'). */
@@ -413,10 +415,15 @@ export function planWeek(input: PlanInput): WeekPlan {
       else if (s.kind === 'class') doneCycling++;
     }
 
+  // Klusjes: minstens één moment waarop je kan, blijft vrij (tenzij je elke vrije dag zelf vastlegde).
+  const choosable = options.map((o) => o.length > 1);
+  const freeable = days.some((d, i) => choosable[i] && !wish(d));
+
   let best = -Infinity;
   const bestA = new Int8Array(LEN);
   const bestSP: (Split | undefined)[] = new Array(LEN).fill(undefined);
   const evaluate = () => {
+    if (freeable && !choosable.some((c, i) => c && A[i + OFF] === 0)) return;
     if (!deriveSplits()) return;
     let sc = 0;
     let nS = doneS;
@@ -501,9 +508,8 @@ export function planWeek(input: PlanInput): WeekPlan {
   });
 
   // Herstel: wat je spieren nog meedragen (voor de focus binnen een training en de uitleg).
-  // Terug na ziekte: de eerste trainingen rustiger.
+  // Net na ziekte: de eerste trainingen rustiger (zonder extra uitleg).
   let returnLeft = input.illness?.status === 'return' ? RETURN_SESSIONS : 0;
-  const illWhy = 'Terug na ziekte: rustiger, rustig opbouwen.';
 
   const timeline: LoadEvent[] = [
     ...sweat.filter((s) => s.date >= addDays(start, -4) && s.date <= addDays(start, horizon)).map((s) => eventFromSession(s, novice)),
@@ -610,8 +616,8 @@ export function planWeek(input: PlanInput): WeekPlan {
         result.push({
           date: d, type: 'strength', sweat: true, status: 'planned', template: t, location: r.location, minutes: a.minutes, slot: r.slot,
           title: `${templateTitle(t)} · ${LOC[r.location]} · ${a.minutes} min${deload.deload ? ' · deload' : ''}`, lighter, deload: deload.deload,
-          focus, split, classSlot: !!cls, want: a.want, weather,
-          why: [illLighter ? illWhy : '', kindWhy, splitWhy, focus.why ?? (splitWhy ? '' : sinceText(d))].filter(Boolean).join(' '),
+          focus, split, classSlot: !!cls, want: a.want, weather, gentle: illLighter,
+          why: [kindWhy, splitWhy, focus.why ?? (splitWhy ? '' : sinceText(d))].filter(Boolean).join(' '),
         });
       } else {
         const location: Location = cls ? 'gym' : r.location;
@@ -624,7 +630,7 @@ export function planWeek(input: PlanInput): WeekPlan {
               ? 'Benen herstellen nog: neem de zware stukken rustig.'
               : 'Geen benen de dag ervoor of erna.';
         const kindWhy = illLighter
-          ? `${illWhy} Rustig fietsen in zone 2 in plaats van ${cls ? 'de les' : 'intervallen'}.`
+          ? 'Rustig fietsen in zone 2.'
           : lighter
           ? 'Dagvorm oranje: rustig tempo, geen intervallen.'
           : a.booked && cls
@@ -638,7 +644,7 @@ export function planWeek(input: PlanInput): WeekPlan {
           date: d, type: 'cardio', sweat: true, status: 'planned', location, minutes: a.minutes, slot, groupClass: !!cls && !lighter,
           title: cardioTitle(location, a.minutes, lighter, cls ? prefs.className : undefined, cls?.time), lighter, classSlot: !!cls, want: a.want,
           booked: !!a.booked && !!cls,
-          weather, hair: true, time: cls?.time,
+          weather, hair: true, time: cls?.time, gentle: illLighter,
           why: `${kindWhy} ${legWhy}`,
         });
       }
@@ -665,6 +671,30 @@ export function planWeek(input: PlanInput): WeekPlan {
     });
   }
 
+  // Rustdagen: één vrij moment voor klusjes (liefst in het weekend), en hoogstens één wandeling.
+  if (!sickRest) {
+    const free = result.filter((r) => r.type === 'light' && r.status === 'free');
+    const canDay = (r: PlannedDay) => choosable[idx(r.date)] ?? false;
+    const chore =
+      free.find((r) => canDay(r) && isWeekend(r.date)) ?? free.find((r) => canDay(r) && r.date !== today) ?? free.find(canDay);
+    if (chore) {
+      chore.light = LIGHT.klusjes;
+      chore.title = LIGHT.klusjes.title;
+      chore.why = isWeekend(chore.date) ? 'Vrij voor je klusjes: ook je huishouden krijgt een plek in je week.' : "Vrije avond voor je klusjes: ook je huishouden krijgt een plek in je week.";
+      delete chore.walk;
+    }
+    const walks = result.filter((r) => r.type === 'light' && r.light?.id === 'wandeling');
+    const rank = (r: PlannedDay) => (r.walk?.verdict === 'goed' ? 0 : r.walk?.verdict === 'matig' ? 1 : 2);
+    const keep = [...walks].sort((a, b) => rank(a) - rank(b) || (a.date < b.date ? -1 : 1))[0];
+    for (const w of walks) {
+      if (w === keep) continue;
+      const i = result.indexOf(w);
+      const indoor = result[i - 1]?.type === 'strength' ? LIGHT.mobiliteit : dayIndex(w.date) % 2 ? LIGHT.stretching : LIGHT.core;
+      w.light = indoor;
+      w.title = `${indoor.title} (${indoor.minutes} min, zweetvrij)`;
+    }
+  }
+
   // Mix in het venster.
   const inWindow = result.filter((r) => r.status === 'planned' || (r.status === 'done' && r.date === today && start === today));
   const nStrength = inWindow.filter((r) => r.type === 'strength').length;
@@ -674,7 +704,7 @@ export function planWeek(input: PlanInput): WeekPlan {
   const messages: string[] = [];
   const unticked = input.explicit ? days.filter((d) => d > today && !input.explicit!(d)).length : 0;
   if (unticked >= 3) messages.push(`${unticked} van de komende dagen heb je nog niet aangevinkt. Ik ging uit van je vaste patroon. Tik op Week om aan te passen.`);
-  if (input.illness && input.illness.status !== 'none') {
+  if (input.illness?.status === 'rest') {
     messages.push(input.illness.message);
     if (input.illness.refer) messages.push(input.illness.referMessage);
   }
@@ -693,7 +723,7 @@ export function planWeek(input: PlanInput): WeekPlan {
   }
   const total = chosen.length + tennis.length + doneTodayCount;
   if (total < T && !sickRest) {
-    const why = `In de komende 7 dagen passen ${total} van de ${T} trainingen binnen je beschikbaarheid en de regels (conditie nooit 2 dagen na elkaar, max 4 kracht en 4 conditie, geen benen de dag na ${prefs.className.toLowerCase()}).`;
+    const why = `In de komende 7 dagen passen ${total} van de ${T} trainingen binnen je beschikbaarheid en de regels (conditie nooit 2 dagen na elkaar, max 4 kracht en 4 conditie, nooit benen naast ${prefs.className.toLowerCase()}, 1 vrij moment voor klusjes).`;
     messages.push(total < NORMAL_MIN ? `${why} Kan je ergens een extra avond vrijmaken?` : why);
   }
   // Indoor cycling: minstens 1×, liefst 2×. Lukt dat niet, eerlijk zeggen hoe je ze toch krijgt.

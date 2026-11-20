@@ -134,8 +134,9 @@ describe('de coach kiest: max 6 per 7 dagen, conditie en kracht elk max 4', () =
   });
 
   it('twee krachtdagen na elkaar: bovenlichaam en benen wisselen af, nooit 2× full body', () => {
-    // Enkel ma en di kunnen.
-    const av = (d: string): DayAvailability => (d <= D(1) ? std(d) : { date: d, slots: [], minutes: 45 });
+    // Ma en di kies je zelf kracht; zondag kan ook (dat wordt je klusjesmoment).
+    const av = (d: string): DayAvailability =>
+      d <= D(1) ? { ...std(d), want: 'strength' } : d === D(6) ? std(d) : { date: d, slots: [], minutes: 45 };
     const p = planWeek(base({ prefs: { ...PRO, classSlots: [] }, availability: av }));
     expect(short(p).slice(0, 2).split('').sort().join('')).toBe('LU');
     expect(p.days[1]!.why).toMatch(/gisteren (bovenlichaam|benen), vandaag de andere spieren/);
@@ -245,7 +246,29 @@ describe('de coach kiest: max 6 per 7 dagen, conditie en kracht elk max 4', () =
     expect(trainDates(again)).toEqual(trainDates(first));
   });
 
-  it('rustdagen krijgen een zweetvrije suggestie', () => {
+  it('klusjes: elke 7 dagen blijft er een moment vrij waarop je kan (liefst in het weekend)', () => {
+    for (const prefs of [DEFAULT_PREFS, PRO]) {
+      const p = planWeek(base({ prefs }));
+      const chores = p.days.filter((d) => d.light?.id === 'klusjes');
+      expect(chores).toHaveLength(1);
+      // Liefst in het weekend, als daar een dag vrij is.
+      const freeWeekend = p.days.some((d) => d.type === 'light' && dayIndex(d.date) >= 5);
+      if (freeWeekend) expect(dayIndex(chores[0]!.date)).toBeGreaterThanOrEqual(5);
+      expect(chores[0]!.why).toMatch(/klusjes/);
+    }
+    // Maar 4 dagen kunnen en je doel is 4: toch één vrij voor klusjes.
+    const four = (d: string): DayAvailability => (dayIndex(d) <= 3 ? std(d) : { date: d, slots: [], minutes: 45 });
+    const p = planWeek(base({ prefs: { ...PRO, targetPerWeek: 4 }, availability: four }));
+    expect(p.days.filter((d) => d.sweat)).toHaveLength(3);
+    expect(p.days.filter((d) => d.light?.id === 'klusjes')).toHaveLength(1);
+    expect(p.messages.join(' ')).toMatch(/1 vrij moment voor klusjes/);
+    // Alles zelf vastgelegd (gereserveerd of gekozen): dan geen klusjesmoment opgedrongen.
+    const all = planWeek(base({ prefs: PRO, availability: (d) => ({ ...std(d), want: dayIndex(d) % 2 ? 'strength' : 'cardio' }) }));
+    expect(all.violations).toEqual([]);
+  });
+
+  it('rustdagen krijgen een zweetvrije suggestie, met hoogstens één wandeling', () => {
+    expect(planWeek(base()).days.filter((d) => d.light?.id === 'wandeling').length).toBeLessThanOrEqual(1);
     const p = planWeek(base());
     expect(p.days.filter((d) => !d.sweat).every((d) => d.light && d.why)).toBe(true);
   });
@@ -332,8 +355,10 @@ describe('de coach denkt mee: herstel, je keuze, het weer en het waarom', () => 
     const none = planWeek(base());
     expect(trainDates(dry)).toEqual(trainDates(none));
     expect(trainDates(wet)).toEqual(trainDates(none));
-    expect(dry.days.filter((d) => d.type === 'light').every((d) => d.light!.id === 'wandeling')).toBe(true);
-    expect(dry.days.find((d) => d.type === 'light')!.weather).toMatchObject({ icon: '🌤️', tMax: 9 });
+    // Hoogstens één wandeling per 7 dagen (op de droogste dag), en één klusjesmoment.
+    expect(dry.days.filter((d) => d.light?.id === 'wandeling')).toHaveLength(1);
+    expect(dry.days.filter((d) => d.light?.id === 'klusjes')).toHaveLength(1);
+    expect(dry.days.find((d) => d.light?.id === 'wandeling')!.weather).toMatchObject({ icon: '🌤️', tMax: 9 });
     expect(wet.days.filter((d) => d.type === 'light').every((d) => d.light!.id !== 'wandeling')).toBe(true);
   });
 });
@@ -415,6 +440,10 @@ describe('harde regels (fuzz, rollend)', () => {
         if (!trainAtHome) expect(d.location, ctx).toBe('gym');
       }
       checkRules(p, history, ctx);
+      // Klusjes: als er een dag kan zonder dat jij hem vastlegde, blijft er minstens één beschikbare dag vrij.
+      const freeable = p.days.some((d) => d.date >= today && resolveDay(avMap.get(d.date)!, trainAtHome).available && !avMap.get(d.date)!.want && !avMap.get(d.date)!.tennis && d.status !== 'done' && d.status !== 'moved');
+      if (freeable && !p.days.some((d) => d.status === 'moved')) expect(p.days.some((d) => d.type === 'light' && resolveDay(avMap.get(d.date)!, trainAtHome).available), ctx).toBe(true);
+      expect(p.days.filter((d) => d.light?.id === 'wandeling').length, ctx).toBeLessThanOrEqual(1);
       if (n % 5 === 0) {
         const two = planTwoWeeks({ today, availability: (d) => avMap.get(d) ?? defaultDay(d, 45), history, prefs });
         expect(two.second.violations, ctx).toEqual([]);

@@ -45,6 +45,8 @@ Werkt offline in de gym, draait puur op jouw tikken en kost **€ 0**.
     of reserveer je er een, dan passen de dagen ervoor en erna zich aan.
   - Twee krachtdagen na elkaar wisselen bovenlichaam en benen & romp af.
   - Tennis speel je ontspannen: de dag erna mag je gewoon kracht doen.
+  - 🧹 Elke 7 dagen blijft er minstens één moment vrij voor klusjes (liefst in het weekend, anders een avond).
+  - Rustdagen: hoogstens één wandeling per week (op de droogste dag), verder mobiliteit, stretching of rustige core.
 - **Mix:** minstens 1×, liefst 2× indoor cycling per week, op de lesmomenten: maandag-, woensdag- en
   donderdagavond, en zaterdag en zondag om 10u (🚴 in de Agenda).
   - Tennis telt als conditie. De andere trainingen zijn kracht.
@@ -155,7 +157,7 @@ stuurt volgende week bij en pusht. Dat kan ook automatisch als geplande taak elk
 | **Gewicht** | De app stelt het voor. Na de oefening: *Gelukt*, of *Ik nam meer/minder* + welk gewicht. |
 | **Lukt vandaag niet** | **Vandaag lukt niet**: het plan schuift op, zonder sessies op te stapelen. |
 | **Pijntje** | **Ik heb last van…** → zone + ernst. Oefeningen worden vervangen of lichter, daarna rustig opbouwen. |
-| **Ziek** | **Ik heb last van… → 🤒 Ik ben ziek** (of via dagvorm *Ziek of op*). Ziek is ziek: rust tot je *Genezen* tikt, daarna zijn je eerste 2 trainingen rustiger. Lang ziek of erger: de coach raadt je huisarts aan. |
+| **Ziek** | **Ik heb last van… → 🤒 Ik ben ziek** (of via dagvorm *Ziek of op*). Ziek is ziek: rust tot je *Genezen* tikt, daarna zijn je eerste 2 trainingen rustiger (zonder extra uitleg). Lang ziek of erger: de coach raadt je huisarts aan. |
 | **Groepsles of tennis** | Tik na afloop op *Gedaan* (of *Groepsles of cardio gedaan?* als het niet gepland was). |
 
 ## Problemen oplossen

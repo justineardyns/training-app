@@ -2,7 +2,7 @@ import type { WalkAdvice } from './weather.ts';
 
 // Zweetvrije activiteiten voor de dagen tussen je trainingen. Allemaal optioneel.
 
-export type LightId = 'mobiliteit' | 'wandeling' | 'core' | 'stretching' | 'rust';
+export type LightId = 'mobiliteit' | 'wandeling' | 'core' | 'stretching' | 'rust' | 'klusjes';
 
 export interface LightActivity {
   id: LightId;
@@ -40,6 +40,13 @@ export const LIGHT: Record<LightId, LightActivity> = {
     minutes: 8,
     why: 'Sterke romp, rustig tempo: je zweet niet.',
     steps: ['Dead bug: 2× 8 per kant', 'Bird dog: 2× 8 per kant', 'Zijplank: 2× 20 s per kant', 'Rustig ademen, geen haast'],
+  },
+  klusjes: {
+    id: 'klusjes',
+    title: 'Klusjes',
+    minutes: 0,
+    why: 'Vrij moment voor je huishouden, boodschappen of wat er nog moet gebeuren. Ook dat hoort bij een haalbaar schema.',
+    steps: ['Geen training gepland', 'Tijd voor je huishouden of boodschappen'],
   },
   rust: {
     id: 'rust',

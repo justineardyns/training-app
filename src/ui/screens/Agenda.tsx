@@ -21,6 +21,7 @@ function monthStart(date: ISODate, offset: number): ISODate {
 function icon(d: PlannedDay | undefined): string {
   if (!d) return '';
   if (d.status === 'done') return '✓';
+  if (d.light?.id === 'klusjes') return '🧹';
   if (!d.sweat) return '';
   if (d.type === 'tennis') return '🎾';
   if (d.type === 'cardio') return d.booked ? '🎟️' : '🚴';
@@ -107,7 +108,7 @@ export function Agenda() {
       </div>
       <p class="muted small cal-legend">
         <span class="dot can" /> kan · <span class="dot cannot" /> kan niet · gestreept = nog niet aangevinkt (je vaste patroon) · 🏋️ kracht · 🚴 les ·
-        🎟️ gereserveerd · 🎾 tennis · iconen vanaf dag 8 zijn voorlopig
+        🎟️ gereserveerd · 🎾 tennis · 🧹 klusjes · iconen vanaf dag 8 zijn voorlopig
       </p>
 
       {selected >= today && (

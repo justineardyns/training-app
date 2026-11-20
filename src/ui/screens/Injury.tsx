@@ -128,17 +128,17 @@ export function IllnessCard() {
   const s = useStore();
   const today = s.today();
   const st = s.illness();
-  if (st.status === 'none' || !st.illness) return null;
+  if (st.status !== 'rest' || !st.illness) return null;
   const ill = st.illness;
   const answered = ill.updates.find((u) => u.date === today);
   return (
     <div class={`card illness ${st.status === 'rest' ? 'rest' : ''}`}>
       <p>
-        <strong>{st.status === 'return' ? '💪 Terug na ziekte' : '🤒 Ziek'}</strong>{' '}
-        <span class="muted small">{st.status === 'return' ? 'genezen, we bouwen rustig op' : `sinds ${diffDays(today, ill.startedOn) || 'vandaag'}${diffDays(today, ill.startedOn) ? ' d' : ''}`}</span>
+        <strong>🤒 Ziek</strong>{' '}
+        <span class="muted small">{`sinds ${diffDays(today, ill.startedOn) || 'vandaag'}${diffDays(today, ill.startedOn) ? ' d' : ''}`}</span>
       </p>
       <p class="small">{st.message}</p>
-      {st.status !== 'return' && (
+      {(
         <>
           {!answered && <p class="small">Hoe voel je je vandaag?</p>}
           <Chips
