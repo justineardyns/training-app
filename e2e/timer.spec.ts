@@ -139,11 +139,12 @@ test('lesdag: gedaan of niet gedaan, of met één tik liever kracht (en terug)',
   await expect(page.locator('.card.done')).toContainText('Indoor cycling');
 });
 
-test('rustdag maar je voelt je goed: toch krachttraining (Week en Vandaag)', async ({ page }) => {
+test('rustdag (ook je klusjesdag) maar je voelt je goed: toch krachttraining', async ({ page }) => {
   await quickSetup(page);
   // Week: tik op een rustdag → toch kracht.
   const row = (i: number) => page.locator('.plan').first().locator('.plan-day').nth(i);
-  const rest = page.locator('.plan').first().locator('.plan-day.light').filter({ hasNotText: 'Klusjes' }).first();
+  // Klusjesdag = rustdag: ook daar kan je toch kracht kiezen.
+  const rest = page.locator('.plan').first().locator('.plan-day.light').filter({ hasText: 'Klusjes' }).first();
   const date = (await rest.locator('.plan-date').textContent())!.trim();
   await rest.getByRole('button').first().click();
   await page.getByRole('button', { name: '💪 Toch krachttraining' }).click();

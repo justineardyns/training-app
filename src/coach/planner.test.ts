@@ -356,6 +356,21 @@ describe('de coach denkt mee: herstel, je keuze, het weer en het waarom', () => 
     }
   });
 
+  it('klusjesdag = rustdag: ook daar toch kracht; het klusjesmoment schuift naar een andere vrije dag', () => {
+    // Zoals in een echte week: di/do/za kan niet, wo liever een les, zo gereserveerd, vr kracht.
+    const red = new Set([D(1), D(3), D(5)]);
+    const week = (extra: Record<string, Partial<DayAvailability>>) => (d: string): DayAvailability => ({
+      ...(red.has(d) ? { ...std(d), slots: [] } : std(d)),
+      ...(d === D(2) ? { want: 'cardio' as const } : d === D(6) ? { booked: true } : {}),
+      ...(extra[d] ?? {}),
+    });
+    const before = planWeek(base({ availability: week({ [D(4)]: { want: 'strength' } }) }));
+    expect(before.days[0]!.light?.id).toBe('klusjes');
+    const p = planWeek(base({ availability: week({ [D(4)]: { want: 'strength' }, [MON]: { want: 'strength' } }) }));
+    expect(p.days[0]!.type).toBe('strength');
+    expect(p.violations).toEqual([]);
+  });
+
   it('elke dag heeft een waarom', () => {
     for (const p of [planWeek(base()), planWeek(base({ prefs: PRO }))]) for (const d of p.days) expect(d.why, d.date).toBeTruthy();
   });
