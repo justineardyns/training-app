@@ -343,6 +343,19 @@ describe('de coach denkt mee: herstel, je keuze, het weer en het waarom', () => 
     expect([...(today.focus?.later ?? []), ...(today.focus?.reduce ?? [])]).toContain('duwen');
   });
 
+  it('rustdag maar je voelt je goed: toch kracht, binnen de regels (een latere training schuift op)', () => {
+    const before = planWeek(base());
+    const rests = before.days.filter((d) => !d.sweat && d.light?.id !== 'klusjes').map((d) => d.date);
+    expect(rests.length).toBeGreaterThan(0);
+    for (const rest of rests) {
+      const p = planWeek(base({ availability: (d) => (d === rest ? { ...std(d), want: 'strength' } : std(d)) }));
+      const day = p.days.find((d) => d.date === rest)!;
+      expect(day.type).toBe('strength');
+      expect(p.violations).toEqual([]);
+      expect(p.days.filter((d) => d.sweat).length).toBeLessThanOrEqual(p.target);
+    }
+  });
+
   it('elke dag heeft een waarom', () => {
     for (const p of [planWeek(base()), planWeek(base({ prefs: PRO }))]) for (const d of p.days) expect(d.why, d.date).toBeTruthy();
   });

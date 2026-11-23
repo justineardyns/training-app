@@ -58,7 +58,9 @@ Tests gebruiken verzonnen data (`e2e/seed.ts`, `FakeGitHub`).
 - Tab **Training** (`src/ui/screens/Training.tsx`): kracht als lijst (`Workout.tsx`) met ▶ Start / ■ Stop per oefening
   (`startItem`/`stopItem`/`finishItem`/`finishWorkout` in `src/data/workout.ts`, klok per oefening), vrije volgorde.
   Groepsles = altijd 1 uur (`CLASS_MINUTES`), geen timer; `ClassActions` (gedaan / niet gedaan / liever kracht) en
-  `WishNote` (↺ terug, of kort zeggen dat een keuze niet past) op Vandaag en Training. Losse cardio (`FreeCardio`) met stopwatch in `LocalSettings.freeCardio`,
+  `WishNote` (↺ terug, of kort zeggen dat een keuze niet past) op Vandaag en Training. Rustdag (enkel als je die dag
+  vrij bent, niet ziek, dagvorm niet rood): `TrainAnyway` / Week → `store.trainAnyway` = `want: 'strength'`; de planner
+  houdt het doel (opbouw) en schuift een andere training op. Losse cardio (`FreeCardio`) met stopwatch in `LocalSettings.freeCardio`,
   enkel aangeboden op een geplande conditiedag.
 - Herstel (`src/coach/recovery.ts`) en sterke/werkpunten (`src/coach/insights.ts`) sturen de planner en de sessies;
   elke geplande dag krijgt een `why` (intern: tests, /coach; niet in de UI). `plan.messages` idem.

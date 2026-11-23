@@ -11,7 +11,7 @@ import { Thumb } from '../Demo.tsx';
 import { useStore } from '../hooks.ts';
 import { go } from '../router.ts';
 import { dayLabel } from './Week.tsx';
-import { ClassActions, startStrength, WishNote } from './Training.tsx';
+import { ClassActions, startStrength, TrainAnyway, WishNote } from './Training.tsx';
 import { SyncWarning } from './Connect.tsx';
 import { InjuryCard } from './Injury.tsx';
 import { reportIllness } from '../../data/injuries.ts';
@@ -292,6 +292,7 @@ export function Today() {
             </button>
           )}
           <WishNote />
+          <TrainAnyway />
         </div>
       )}
 

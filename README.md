@@ -47,6 +47,8 @@ Werkt offline in de gym, draait puur op jouw tikken en kost **€ 0**.
     en een betere krachtcheck.
   - **Geen uitleg over de planning in de app**: je ziet wat je doet, de coach weet waarom. Uitleg staat enkel
     bij de oefeningen. Tik op een dag om te wisselen tussen kracht en indoor cycling, of om ze te schrappen.
+  - **Rustdag maar je voelt je goed?** *💪 Toch krachttraining* (op Vandaag, in Training of in Week). Je opbouw en
+    regels blijven gelden: een latere training schuift op. Past het niet, dan zie je dat kort.
   - **Krachttrainingen in drie soorten:**
     - *Full body* als er de dag ervoor en erna geen indoor cycling is.
     - *Bovenlichaam* de dag vóór of na indoor cycling.

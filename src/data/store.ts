@@ -1,5 +1,5 @@
 import { addDays, isoWeek, todayIn } from '../coach/dates.ts';
-import { defaultDay } from '../coach/availability.ts';
+import { defaultDay, resolveDay } from '../coach/availability.ts';
 import { DEFAULT_GYM, DEFAULT_HOME } from '../coach/loads.ts';
 import {
   activeAdjustments,
@@ -583,6 +583,17 @@ export class Store {
     const cur = this.checkFor(date);
     if (!cur) return;
     await this.updateLog(date, (l) => ({ ...l, checks: l.checks.map((c) => (c.date === date ? { ...c, sore: groups, soreLight: light } : c)) }));
+  }
+
+  /** Kan je op die dag (groen in de Agenda)? */
+  canTrainOn(date: ISODate): boolean {
+    const { day } = this.dayAvailability(date);
+    return resolveDay(day, this.prefs().trainAtHome).available;
+  }
+
+  /** Rustdag (die je wel vrij had), maar je voelt je goed: toch kracht. */
+  async trainAnyway(date: ISODate): Promise<void> {
+    await this.updateDay(date, { want: 'strength' });
   }
 
   async postpone(date: ISODate): Promise<void> {

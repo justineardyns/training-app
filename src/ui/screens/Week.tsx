@@ -16,13 +16,22 @@ export function dayLabel(date: string): string {
 const MOMENT: Record<Slot, string> = { day: 'overdag', evening: "'s avonds" };
 
 /** Rollend plan. Tik op een dag: waarom, en wisselen (kracht ↔ conditie) of "kan niet". */
-export function PlanList(props: { plan: WeekPlan; today: string; className?: string; onChange?: (date: string, patch: Partial<DayAvailability>) => void }) {
+export function PlanList(props: {
+  plan: WeekPlan;
+  today: string;
+  className?: string;
+  onChange?: (date: string, patch: Partial<DayAvailability>) => void;
+  /** Rustdag (die je wel vrij had), maar toch trainen. */
+  onTrain?: (date: string) => void;
+  canTrain?: (date: string) => boolean;
+}) {
   const [open, setOpen] = useState<string | null>(null);
   const cls = props.className ?? 'Indoor cycling';
   return (
     <div class="plan">
       {props.plan.days.map((d) => {
-        const actionable = !!props.onChange && ((d.status === 'planned' && d.sweat) || (!!d.want && d.status !== 'done'));
+        const restDay = !!props.onTrain && !d.sweat && d.status === 'free' && !d.want && d.date >= props.today && (props.canTrain?.(d.date) ?? true);
+        const actionable = restDay || (!!props.onChange && ((d.status === 'planned' && d.sweat) || (!!d.want && d.status !== 'done')));
         const isOpen = open === d.date && actionable;
         return (
           <div key={d.date} class={`plan-day ${d.sweat ? 'sweat' : 'light'} ${d.status} ${d.date === props.today ? 'today' : ''} ${isOpen ? 'open' : ''}`}>
@@ -64,6 +73,11 @@ export function PlanList(props: { plan: WeekPlan; today: string; className?: str
             </button>
             {isOpen && (
               <div class="plan-actions">
+                {restDay && (
+                  <button class="btn small" onClick={() => { props.onTrain!(d.date); setOpen(null); }}>
+                    💪 Toch krachttraining
+                  </button>
+                )}
                 {d.type === 'strength' && (
                   <button class="btn small" onClick={() => { props.onChange!(d.date, { want: 'cardio' }); setOpen(null); }}>
                     {d.classSlot ? `🚴 Liever ${cls.toLowerCase()}` : 'Liever conditie'}
@@ -149,7 +163,14 @@ export function Week() {
         </strong>
         {plan.deload.deload ? ' · lichtere week' : ''}
       </p>
-      <PlanList plan={plan} today={today} className={s.prefs().className} onChange={(date, patch) => s.updateDay(date, patch)} />
+      <PlanList
+        plan={plan}
+        today={today}
+        className={s.prefs().className}
+        onChange={(date, patch) => s.updateDay(date, patch)}
+        onTrain={s.illness().status === 'rest' ? undefined : (date) => s.trainAnyway(date)}
+        canTrain={(date) => s.canTrainOn(date)}
+      />
       {past.length > 0 && (
         <>
           <h2>Afgelopen 7 dagen</h2>

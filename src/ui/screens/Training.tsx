@@ -61,6 +61,19 @@ export function WishNote() {
   );
 }
 
+/** Rustdag, maar je voelt je goed: toch krachttraining (niet als je ziek bent of je dagvorm rood is). */
+export function TrainAnyway() {
+  const s = useStore();
+  const today = s.today();
+  const day = s.todayPlan();
+  if (day.sweat || day.want || day.status !== 'free' || !s.canTrainOn(today) || s.illness().status === 'rest' || s.checkFor(today)?.level === 'red') return null;
+  return (
+    <button class="btn" onClick={() => s.trainAnyway(today)}>
+      💪 Toch krachttraining
+    </button>
+  );
+}
+
 /** Krachttraining van vandaag starten (ook vanop Vandaag). */
 export async function startStrength(s: Store, session: StrengthSession) {
   await s.setWorkout(startWorkout(session, { id: newId(), now: s.now(), readiness: s.checkFor(s.today())?.level }));
@@ -281,6 +294,7 @@ export function Training() {
       <div class="card">
         <h2>Geen training vandaag</h2>
         <WishNote />
+        <TrainAnyway />
         {next && (
           <p class="muted">
             Volgende: {dayName(next.date)} · {next.title}

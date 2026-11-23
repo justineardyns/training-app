@@ -138,3 +138,21 @@ test('lesdag: gedaan of niet gedaan, of met één tik liever kracht (en terug)',
   await page.locator('.today-card').getByRole('button', { name: '✓ Gedaan' }).click();
   await expect(page.locator('.card.done')).toContainText('Indoor cycling');
 });
+
+test('rustdag maar je voelt je goed: toch krachttraining (Week en Vandaag)', async ({ page }) => {
+  await quickSetup(page);
+  // Week: tik op een rustdag → toch kracht.
+  const row = (i: number) => page.locator('.plan').first().locator('.plan-day').nth(i);
+  const rest = page.locator('.plan').first().locator('.plan-day.light').filter({ hasNotText: 'Klusjes' }).first();
+  const date = (await rest.locator('.plan-date').textContent())!.trim();
+  await rest.getByRole('button').first().click();
+  await page.getByRole('button', { name: '💪 Toch krachttraining' }).click();
+  const same = page.locator('.plan').first().locator('.plan-day').filter({ hasText: date });
+  await expect(same).toContainText(/Full body|Bovenlichaam|Benen & romp/);
+  await expect(same).toContainText('jouw keuze');
+  // Terug naar het voorstel.
+  await same.getByRole('button').first().click();
+  await page.getByRole('button', { name: /Terug naar het voorstel/ }).click();
+  await expect(page.locator('.plan').first().locator('.plan-day').filter({ hasText: date })).not.toContainText('jouw keuze');
+  await expect(row(0)).toBeVisible();
+});
