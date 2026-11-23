@@ -371,6 +371,29 @@ describe('de coach denkt mee: herstel, je keuze, het weer en het waarom', () => 
     expect(p.violations).toEqual([]);
   });
 
+  it('klusjes al gedaan en nog zin: vandaag kracht erbovenop, zonder dat een andere training wegvalt', () => {
+    const red = new Set([D(1), D(3), D(5)]);
+    const week = (extra: Partial<DayAvailability> = {}) => (d: string): DayAvailability => ({
+      ...(red.has(d) ? { ...std(d), slots: [] } : std(d)),
+      ...(d === D(2) ? { want: 'cardio' as const } : d === D(4) ? { want: 'strength' as const } : d === D(6) ? { booked: true } : {}),
+      ...(d === MON ? extra : {}),
+    });
+    const sweat = (p: WeekPlan) => p.days.filter((d) => d.sweat).length;
+    // Vandaag klusjes; afvinken alleen verandert niets (vandaag blijft rust).
+    const plan = planWeek(base({ availability: week() }));
+    expect(plan.days[0]!.light?.id).toBe('klusjes');
+    const done = planWeek(base({ availability: week(), choresDone: [MON] }));
+    expect(done.days[0]!.light?.id).toBe('klusjes');
+    expect(sweat(done)).toBe(sweat(plan));
+    // Toch kracht na je klusjes: één training extra (binnen je opbouw), de rest blijft staan.
+    const extra = planWeek(base({ availability: week({ want: 'strength' }), choresDone: [MON] }));
+    expect(extra.days[0]!.type).toBe('strength');
+    expect(sweat(extra)).toBe(sweat(plan) + 1);
+    expect(extra.days.filter((d, i) => i > 0 && d.sweat).map((d) => d.date)).toEqual(plan.days.filter((d) => d.sweat).map((d) => d.date));
+    expect(sweat(extra)).toBeLessThanOrEqual(extra.target);
+    expect(extra.violations).toEqual([]);
+  });
+
   it('elke dag heeft een waarom', () => {
     for (const p of [planWeek(base()), planWeek(base({ prefs: PRO }))]) for (const d of p.days) expect(d.why, d.date).toBeTruthy();
   });

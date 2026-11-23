@@ -148,6 +148,8 @@ export interface PlanInput {
   novice?: boolean;
   /** Ziek: rust, of terug na ziekte (eerste trainingen rustiger). */
   illness?: IllnessState;
+  /** Dagen waarop je je klusjes al deed (afgevinkt). */
+  choresDone?: ISODate[];
 }
 
 export const SWEAT_KINDS = new Set(['strength', 'cardio', 'class']);
@@ -317,9 +319,12 @@ export function planWeek(input: PlanInput): WeekPlan {
   const candidate = (d: ISODate) =>
     !sickRest &&
     resolveDay(av.get(d)!, prefs.trainAtHome).available && !fixed.has(d) && !postponed.has(d) && !(d === today && input.readinessToday === 'red');
+  // Klusjes vandaag al gedaan: die dag blijft rust, tenzij je zelf toch kracht kiest (dan komt ze er bovenop).
+  const choresToday = start === today && (input.choresDone ?? []).includes(today);
   const options: Choice[][] = days.map((d) => {
     if (!candidate(d)) return ['rest'];
     const w = wish(d);
+    if (choresToday && d === today && !w) return ['rest'];
     return w ? [w === 'strength' ? 'S' : 'C', 'rest'] : ['S', 'C', 'rest'];
   });
 
@@ -432,8 +437,9 @@ export function planWeek(input: PlanInput): WeekPlan {
     }
 
   // Klusjes: minstens één moment waarop je kan, blijft vrij (tenzij je elke vrije dag zelf vastlegde).
+  // Deed je ze vandaag al, dan is dat moment er: je mag er een training bovenop doen.
   const choosable = options.map((o) => o.length > 1);
-  const freeable = days.some((d, i) => choosable[i] && !wish(d));
+  const freeable = !choresToday && days.some((d, i) => choosable[i] && !wish(d));
 
   let best = -Infinity;
   const bestA = new Int8Array(LEN);
@@ -711,8 +717,9 @@ export function planWeek(input: PlanInput): WeekPlan {
   if (!sickRest) {
     const free = result.filter((r) => r.type === 'light' && r.status === 'free');
     const canDay = (r: PlannedDay) => choosable[idx(r.date)] ?? false;
-    const chore =
-      free.find((r) => canDay(r) && isWeekend(r.date)) ?? free.find((r) => canDay(r) && r.date !== today) ?? free.find(canDay);
+    const chore = choresToday
+      ? free.find((r) => r.date === today)
+      : (free.find((r) => canDay(r) && isWeekend(r.date)) ?? free.find((r) => canDay(r) && r.date !== today) ?? free.find(canDay));
     if (chore) {
       chore.light = LIGHT.klusjes;
       chore.title = LIGHT.klusjes.title;

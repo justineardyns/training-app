@@ -279,7 +279,15 @@ export function Today() {
               <li key={st}>{st}</li>
             ))}
           </ul>
-          {day.light.id === 'rust' || day.light.id === 'klusjes' ? null : s.log(isoWeek(today)).light.some((l) => l.date === today) ? (
+          {day.light.id === 'rust' ? null : day.light.id === 'klusjes' ? (
+            s.choresDoneOn(today) ? (
+              <p>✓ Klusjes gedaan</p>
+            ) : (
+              <button class="btn" onClick={() => s.logLight(today, 'klusjes')}>
+                ✓ Klusjes gedaan
+              </button>
+            )
+          ) : s.log(isoWeek(today)).light.some((l) => l.date === today && l.id !== 'klusjes') ? (
             <p>✓ Gedaan</p>
           ) : (
             <button class="btn" onClick={() => s.logLight(today, day.light!.id)}>

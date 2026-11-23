@@ -462,6 +462,7 @@ export class Store {
       soreLightToday: this.checkFor(today)?.soreLight,
       novice: this.novice(),
       illness: this.illness(),
+      choresDone: this.logs().flatMap((l) => (l.light ?? []).filter((x) => x.id === 'klusjes').map((x) => x.date)),
     };
   }
 
@@ -583,6 +584,11 @@ export class Store {
     const cur = this.checkFor(date);
     if (!cur) return;
     await this.updateLog(date, (l) => ({ ...l, checks: l.checks.map((c) => (c.date === date ? { ...c, sore: groups, soreLight: light } : c)) }));
+  }
+
+  /** Klusjes die dag al afgevinkt? */
+  choresDoneOn(date: ISODate): boolean {
+    return this.logs().some((l) => (l.light ?? []).some((x) => x.date === date && x.id === 'klusjes'));
   }
 
   /** Kan je op die dag (groen in de Agenda)? */

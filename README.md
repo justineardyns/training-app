@@ -49,6 +49,8 @@ Werkt offline in de gym, draait puur op jouw tikken en kost **€ 0**.
     bij de oefeningen. Tik op een dag om te wisselen tussen kracht en indoor cycling, of om ze te schrappen.
   - **Rustdag maar je voelt je goed?** *💪 Toch krachttraining* (op Vandaag, in Training of in Week). Je opbouw en
     regels blijven gelden: een latere training schuift op. Past het niet, dan zie je dat kort.
+  - **Klusjes gedaan en nog zin?** Tik *✓ Klusjes gedaan* en daarna *💪 Toch krachttraining*: dan komt die training
+    er bovenop (binnen je opbouw) en blijft de rest van je week staan.
   - **Krachttrainingen in drie soorten:**
     - *Full body* als er de dag ervoor en erna geen indoor cycling is.
     - *Bovenlichaam* de dag vóór of na indoor cycling.

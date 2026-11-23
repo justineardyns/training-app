@@ -29,7 +29,9 @@ Tests gebruiken verzonnen data (`e2e/seed.ts`, `FakeGitHub`).
     `recovery.ts` (1u → benen en romp 'herstelt', 2u → 'moe'); spinning (groepsles, `kind: 'class'`) → benen 'moe' en
     duwen (push-ups op het stuur: triceps) 'herstelt' de dag erna;
   - twee krachtdagen na elkaar enkel bovenlichaam ↔ benen;
-  - minstens één beschikbare dag per 7 dagen vrij voor klusjes (liefst weekend), tenzij je elke dag zelf vastlegde.
+  - minstens één beschikbare dag per 7 dagen vrij voor klusjes (liefst weekend), tenzij je elke dag zelf vastlegde;
+    klusjes vandaag afgevinkt (`choresDone`, light-log `klusjes`) = moment gehaald: vandaag blijft rust tenzij `want`,
+    en dan komt die training erbovenop (binnen het doel);
 - Rustdagen: hoogstens één wandeling per 7 dagen, op de droogste dag (`WalkAdvice.score`; rustdag krijgt +10 voorrang);
   is de droogste dag een trainingsdag, dan `walkExtra`. Zonder weerbericht: max 1 uit de afwisseling.
 - Doel: het maximum (standaard 6, 1 rustdag; beginners bouwen op 4 → 5 → 6; 1 minder bij vaak moe), minstens 1× en
