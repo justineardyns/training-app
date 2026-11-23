@@ -11,7 +11,7 @@ import { Thumb } from '../Demo.tsx';
 import { useStore } from '../hooks.ts';
 import { go } from '../router.ts';
 import { dayLabel } from './Week.tsx';
-import { startStrength } from './Training.tsx';
+import { ClassActions, startStrength, WishNote } from './Training.tsx';
 import { SyncWarning } from './Connect.tsx';
 import { InjuryCard } from './Injury.tsx';
 import { reportIllness } from '../../data/injuries.ts';
@@ -226,17 +226,18 @@ export function Today() {
             <p class="muted">{session.options.map((o) => o.title).join(' of ')}</p>
           )}
           {day.groupClass ? (
-            <button class="btn primary huge" onClick={() => s.quickLog(today, 'class', 'gym', CLASS_MINUTES, s.prefs().className)}>
-              ✓ Les gedaan
-            </button>
+            <ClassActions />
           ) : (
-            <button class="btn primary huge" onClick={start}>
-              Start
-            </button>
+            <>
+              <button class="btn primary huge" onClick={start}>
+                Start
+              </button>
+              <button class="btn ghost small" onClick={() => s.postpone(today)}>
+                Vandaag lukt niet
+              </button>
+            </>
           )}
-          <button class="btn ghost small" onClick={() => s.postpone(today)}>
-            Vandaag lukt niet
-          </button>
+          <WishNote />
         </div>
       )}
 
@@ -290,6 +291,7 @@ export function Today() {
               Toch trainen
             </button>
           )}
+          <WishNote />
         </div>
       )}
 

@@ -29,7 +29,21 @@ describe('herstel per spiergroep', () => {
     expect(l.duwen).toBe(3);
     expect(cardioLoad('Tennis', 120).duwen).toBeCloseTo(2.4);
     expect(cardioLoad('Tennis', 60).benen).toBe(3);
-    expect(cardioLoad('Indoor cycling', 45)).toEqual({ benen: 5, core: 1 });
+    expect(cardioLoad('Indoor cycling', 45)).toEqual({ benen: 5, duwen: 3, core: 1 });
+    // Lopen of buiten fietsen: geen push-ups op het stuur.
+    expect(cardioLoad('Lopen', 45)).toEqual({ benen: 5, core: 1 });
+  });
+
+  it('na spinning (1 uur): de dag erna benen moe, borst en triceps nog een beetje (pompen op de fiets)', () => {
+    const ev: LoadEvent[] = [{ date: '2026-11-25', slot: 'evening', label: 'indoor cycling wo', load: cardioLoad('Indoor cycling', 60) }];
+    const thu = recoveryAt({ date: '2026-11-26', slot: 'evening' }, ev);
+    expect(thu.benen.state).toBe('moe');
+    expect(thu.duwen).toMatchObject({ state: 'herstelt', cause: 'indoor cycling wo' });
+    expect(thu.trekken.state).toBe('fris');
+    expect(recoveryAt({ date: '2026-11-27', slot: 'evening' }, ev).duwen.state).toBe('fris');
+    // Een les die je logt (kind: class) telt als spinning, ook met een andere titel.
+    const log: SessionLog = { id: 'c', date: '2026-11-25', kind: 'class', source: 'app', title: 'Groepsles', durationMin: 60, exercises: [] };
+    expect(sessionLoad(log).duwen).toBe(4);
   });
 
   it('na indoor cycling op zaterdagochtend zijn je benen maandagavond weer fris', () => {
@@ -38,10 +52,11 @@ describe('herstel per spiergroep', () => {
     expect(recoveryAt({ date: '2026-11-23', slot: 'evening' }, ev).benen.state).toBe('fris');
   });
 
-  it('na tennis in gradaties: 1u = de dag erna licht stijf (herstelt), 2u = moe; je bovenlijf blijft fris', () => {
+  it('na tennis in gradaties: 1u = de dag erna benen en buik licht stijf (herstelt), 2u = moe; je bovenlijf blijft fris', () => {
     const one: LoadEvent[] = [{ date: '2026-11-26', slot: 'evening', label: 'tennis do', load: cardioLoad('tennis', 60) }];
     const fri = recoveryAt({ date: '2026-11-27', slot: 'evening' }, one);
     expect(fri.benen).toMatchObject({ state: 'herstelt', cause: 'tennis do' });
+    expect(fri.core).toMatchObject({ state: 'herstelt', cause: 'tennis do' });
     expect(fri.duwen.state).toBe('fris');
     expect(recoveryAt({ date: '2026-11-28', slot: 'day' }, one).benen.state).toBe('fris');
     const two: LoadEvent[] = [{ date: '2026-11-26', slot: 'evening', label: 'tennis (2u) do', load: cardioLoad('tennis', 120) }];
@@ -64,7 +79,7 @@ describe('focus van een krachttraining', () => {
   it('alles fris: enkel je werkpunt eerst', () => {
     const f = strengthFocus(fresh, 'trekken');
     expect(f).toMatchObject({ reduce: [], later: [], first: 'trekken' });
-    expect(f.why).toMatch(/Rug & armen is je werkpunt/);
+    expect(f.why).toMatch(/Rug & biceps is je werkpunt/);
     expect(strengthFocus(fresh).why).toBeUndefined();
   });
 
@@ -72,7 +87,7 @@ describe('focus van een krachttraining', () => {
     const rec = recoveryAt({ date: '2026-11-23' }, [], ['benen']);
     const f = strengthFocus(rec);
     expect(f.reduce).toEqual(['benen']);
-    expect(f.why).toMatch(/Benen nog moe \(spierpijn\): eerst borst & schouders en rug & armen, benen 1 set minder/);
+    expect(f.why).toMatch(/Benen nog moe \(spierpijn\): eerst borst, schouders & triceps en rug & biceps, benen 1 set minder/);
     const s = buildStrengthSession({ date: '2026-11-23', template: 'A', location: 'gym', minutes: 45, history: [], equipment: DEFAULT_HOME, focus: f });
     const mains = s.exercises.filter((e) => e.role === 'main');
     expect(groupOf(mains[0]!.exercise)).not.toBe('benen');

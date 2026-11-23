@@ -10,8 +10,8 @@ export type Group = 'benen' | 'duwen' | 'trekken' | 'core';
 export const GROUPS: Group[] = ['benen', 'duwen', 'trekken', 'core'];
 export const GROUP_LABEL: Record<Group, string> = {
   benen: 'Benen',
-  duwen: 'Borst & schouders',
-  trekken: 'Rug & armen',
+  duwen: 'Borst, schouders & triceps',
+  trekken: 'Rug & biceps',
   core: 'Romp',
 };
 
@@ -82,18 +82,21 @@ export function cardioLoad(title: string, minutes: number): Partial<Record<Group
   const f = Math.max(0.5, minutes / 45);
   if (t.includes('tennis')) {
     const h = Math.max(0.5, minutes / 60);
-    // Ontspannen voor je bovenlijf; je bilspieren voelen het de dag erna een beetje (1u: licht, 2u: meer).
-    return { benen: 3 * h, duwen: 1.2 * h, core: 1 * h, trekken: 0.5 * h };
+    // Ontspannen gespeeld: de dag erna benen (bilspieren) en buik een beetje stijf (1u: ±20%, 2u: meer).
+    return { benen: 3 * h, core: 3 * h, duwen: 1.2 * h, trekken: 0.5 * h };
   }
   if (t.includes('roei')) return { benen: 3 * f, trekken: 3 * f, core: 1 * f };
   if (t.includes('rustig') || t.includes('zone 2')) return { benen: 2 * f };
+  // Spinning (groepsles): zwaar voor de benen (de dag erna ±60% stijf) en met push-ups op het stuur ook voor
+  // borst en triceps (de dag erna nog een beetje).
+  if (/cycling|spinning|groepsles/.test(t)) return { benen: 5 * f, duwen: 3 * f, core: 1 * f };
   return { benen: 5 * f, core: 1 * f };
 }
 
 /** Wat een gedane sessie achterlaat. Zwaar gevoeld of nieuw voor je spieren → iets meer. */
 export function sessionLoad(s: SessionLog, opts: { novice?: boolean } = {}): Partial<Record<Group, number>> {
   if (s.kind === 'light') return {};
-  if (s.kind !== 'strength') return cardioLoad(`${s.title ?? ''} ${s.workoutType ?? ''}`, s.durationMin ?? 45);
+  if (s.kind !== 'strength') return cardioLoad(`${s.kind === 'class' ? 'groepsles ' : ''}${s.title ?? ''} ${s.workoutType ?? ''}`, s.durationMin ?? 45);
   const load: Partial<Record<Group, number>> = {};
   for (const e of s.exercises) {
     const ex = EXERCISES.get(e.exerciseId);

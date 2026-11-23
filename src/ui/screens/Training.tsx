@@ -17,6 +17,50 @@ import { Workout } from './Workout.tsx';
 // Tab "Training": alles voor je training van vandaag op één plek. Kracht als lijst met ▶ Start / ■ Stop
 // per oefening; indoor cycling zonder timer (altijd 1 uur); losse cardio (bv. buiten lopen) met een stopwatch.
 
+/** Lesdag: gedaan of niet gedaan; liever kracht (of de les zit vol) met één tik. */
+export function ClassActions() {
+  const s = useStore();
+  const today = s.today();
+  return (
+    <>
+      <div class="row">
+        <button class="btn primary" onClick={() => s.quickLog(today, 'class', 'gym', CLASS_MINUTES, s.prefs().className)}>
+          ✓ Gedaan
+        </button>
+        <button class="btn" onClick={() => s.postpone(today)}>
+          ✕ Niet gedaan
+        </button>
+      </div>
+      <button class="btn ghost small" onClick={() => s.updateDay(today, { want: 'strength', booked: undefined })}>
+        🏋️ Liever kracht (of les vol)
+      </button>
+    </>
+  );
+}
+
+/** Je koos zelf (kracht of les): met één tik terug naar het voorstel. Past je keuze niet, dan zeg je het kort. */
+export function WishNote() {
+  const s = useStore();
+  const today = s.today();
+  const day = s.todayPlan();
+  if (!day.want || day.status !== 'planned' && day.status !== 'free') return null;
+  const fits = day.sweat && (day.want === 'strength' ? day.type === 'strength' : day.type === 'cardio');
+  return (
+    <p class={fits ? 'muted small' : 'note warn'}>
+      {fits ? '' : `${day.want === 'strength' ? 'Kracht' : 'Een les'} past vandaag niet. `}
+      {fits && day.want === 'strength' && day.classSlot ? (
+        <button class="link" onClick={() => s.updateDay(today, { want: 'cardio' })}>
+          ↺ Toch de les
+        </button>
+      ) : (
+        <button class="link" onClick={() => s.updateDay(today, { want: undefined })}>
+          ↺ Terug naar het plan
+        </button>
+      )}
+    </p>
+  );
+}
+
 /** Krachttraining van vandaag starten (ook vanop Vandaag). */
 export async function startStrength(s: Store, session: StrengthSession) {
   await s.setWorkout(startWorkout(session, { id: newId(), now: s.now(), readiness: s.checkFor(s.today())?.level }));
@@ -198,6 +242,7 @@ export function Training() {
         <button class="btn primary huge" onClick={() => startStrength(s, session)}>
           ▶ Start training
         </button>
+        <WishNote />
       </div>
     );
   } else if (session?.kind === 'cardio' && day.groupClass) {
@@ -212,9 +257,7 @@ export function Training() {
             <li key={st}>{st}</li>
           ))}
         </ul>
-        <button class="btn primary huge" onClick={() => s.quickLog(today, 'class', 'gym', CLASS_MINUTES, className)}>
-          ✓ Les gedaan
-        </button>
+        <ClassActions />
       </div>
     );
   } else if (session?.kind === 'cardio') {
@@ -237,6 +280,7 @@ export function Training() {
     main = (
       <div class="card">
         <h2>Geen training vandaag</h2>
+        <WishNote />
         {next && (
           <p class="muted">
             Volgende: {dayName(next.date)} · {next.title}

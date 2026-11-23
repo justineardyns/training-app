@@ -13,7 +13,7 @@ test('indoor cycling: geen timer (1 uur); liever buiten lopen met een stopwatch'
   await page.getByRole('link', { name: /Training/ }).click();
   await expect(page.getByRole('heading', { name: /Indoor cycling.*1 uur/ })).toBeVisible();
   await expect(page.getByRole('button', { name: /Start timer/ })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: '✓ Les gedaan' })).toBeVisible();
+  await expect(page.getByRole('button', { name: '✓ Gedaan' })).toBeVisible();
 
   // Mooi weer: buiten lopen. Stopwatch start, pauzeert en overleeft herladen.
   await page.getByRole('button', { name: /Lopen/ }).click();
@@ -107,4 +107,34 @@ test('kracht: oplopende klok, afteltimer voor de zijplank en intervaltimer voor 
   await expect(timer.locator('.itimer-label')).toHaveText('Stevig (2/6)');
   await timer.getByRole('button', { name: 'Stop timer' }).click();
   await expect(card.getByRole('button', { name: /Start timer/ })).toBeVisible();
+});
+
+test('lesdag: gedaan of niet gedaan, of met één tik liever kracht (en terug)', async ({ page }) => {
+  await quickSetup(page);
+  await preferCardioToday(page);
+  await page.getByRole('link', { name: /Vandaag/ }).click();
+  const card = page.locator('.today-card');
+  await expect(card).toContainText('Indoor cycling');
+  await expect(card.getByRole('button', { name: '✓ Gedaan' })).toBeVisible();
+  await expect(card.getByRole('button', { name: '✕ Niet gedaan' })).toBeVisible();
+  await expect(card.getByRole('group', { name: 'Tijd' })).toHaveCount(0);
+  if (process.env.SHOTS_DIR) await page.screenshot({ path: `${process.env.SHOTS_DIR}/13-lesdag.png`, fullPage: true });
+
+  // Les vol of liever kracht: één tik, vandaag wordt kracht (bovenlichaam of full body).
+  await card.getByRole('button', { name: /Liever kracht/ }).click();
+  await expect(page.locator('.today-card h2')).toContainText(/Full body|Bovenlichaam|Benen & romp/);
+  await expect(page.locator('.today-card').getByRole('button', { name: 'Start', exact: true })).toBeVisible();
+  // Toch de les.
+  await page.locator('.today-card').getByRole('button', { name: /Toch de les/ }).click();
+  await expect(page.locator('.today-card')).toContainText('Indoor cycling');
+
+  // Niet gedaan: vandaag herstel, en met één tik toch trainen.
+  await page.locator('.today-card').getByRole('button', { name: '✕ Niet gedaan' }).click();
+  await expect(page.locator('.light-card')).toBeVisible();
+  await page.getByRole('button', { name: 'Toch trainen' }).click();
+  await expect(page.locator('.today-card')).toContainText('Indoor cycling');
+
+  // Gedaan: telt als les van 1 uur.
+  await page.locator('.today-card').getByRole('button', { name: '✓ Gedaan' }).click();
+  await expect(page.locator('.card.done')).toContainText('Indoor cycling');
 });

@@ -9,7 +9,8 @@ Werkt offline in de gym, draait puur op jouw tikken en kost **€ 0**.
     (toestel bezet? neem gewoon een andere). Per oefening zie je hoelang je er al mee bezig bent, bovenaan
     je totale tijd en hoeveel je al deed. Stop je na een paar sets, dan vraagt de app meteen hoe het ging.
     Een groen bolletje op de tab = er loopt een training.
-  - **Indoor cycling:** altijd 1 uur, zonder timer (de lesgever geeft het tempo aan): één tik *Les gedaan*.
+  - **Indoor cycling:** altijd 1 uur, zonder timer: *Gedaan* of *Niet gedaan*. Liever kracht of zit de les vol?
+    Eén tik *Liever kracht* (en *Toch de les* om terug te gaan). Ook op Vandaag.
   - **Losse cardio:** liever buiten lopen of fietsen (of roeien in Jims) in plaats van de les? Stopwatch met
     Start, Pauze en *Stop en bewaar*; blijft lopen als je scherm uitgaat of de app herstart. Telt als conditie.
 - **Trainen (in Jims):** de app stelt per oefening een startgewicht en reps voor, per set één tik ✓,
@@ -24,8 +25,10 @@ Werkt offline in de gym, draait puur op jouw tikken en kost **€ 0**.
   - **Herstel in gradaties:** elke training laat per spiergroep een belasting na die over 24 tot 72 uur wegzakt.
     *Fris* = gewoon, *herstelt* (licht stijf) = later in je training en niet zwaarder, *moe* = 1 set minder en niet
     zwaarder. Je tik "spierpijn" kan in gradaties: *een beetje* = herstelt, *echt* = moe.
-  - **Herstel per spiergroep:** benen, borst & schouders, rug & armen, romp. Kracht, indoor cycling en tennis
-    tellen mee, net als je tik "spierpijn". Wat nog moe is, komt later in je training of krijgt een set minder
+  - **Herstel per spiergroep:** benen, borst/schouders/triceps, rug & biceps, romp. Kracht, indoor cycling en tennis
+    tellen mee, net als je tik "spierpijn". Tennis (1u): de dag erna benen en buik een beetje stijf (2u: meer).
+    Spinning: de dag erna benen moe, en borst en triceps nog een beetje van het pompen op de fiets: je
+    bovenlichaam begint dan met trekken. Wat nog moe is, komt later in je training of krijgt een set minder
     en gaat niet zwaarder.
   - **Sterke punten en werkpunten:** wat gaat vooruit, wat staat stil, welke dagen vallen vaak weg, en neem je
     meer of minder dan voorgesteld. Je traagste spiergroep komt eerst in je training, en dagen die vaak wegvallen

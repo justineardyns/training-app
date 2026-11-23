@@ -335,6 +335,14 @@ describe('de coach denkt mee: herstel, je keuze, het weer en het waarom', () => 
     expect(p.violations).toEqual([]);
   });
 
+  it('de dag na spinning: bovenlichaam, duwen (triceps van het pompen) komt later of krijgt een set minder', () => {
+    const cls: SessionLog = { ...done(D(-1), 'class', undefined, 'Indoor cycling'), durationMin: 60 };
+    const p = planWeek(base({ prefs: PRO, history: [cls], availability: (d) => (d === MON ? { ...std(d), want: 'strength' } : std(d)) }));
+    const today = p.days[0]!;
+    expect(today).toMatchObject({ type: 'strength', split: 'upper' });
+    expect([...(today.focus?.later ?? []), ...(today.focus?.reduce ?? [])]).toContain('duwen');
+  });
+
   it('elke dag heeft een waarom', () => {
     for (const p of [planWeek(base()), planWeek(base({ prefs: PRO }))]) for (const d of p.days) expect(d.why, d.date).toBeTruthy();
   });
