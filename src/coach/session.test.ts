@@ -127,7 +127,7 @@ describe('absolute beginner', () => {
     for (const p of beg.exercises) expect(p.prescription.sets).toBeLessThanOrEqual(2);
     const lp = (s: typeof normal) => s.exercises.find((e) => e.exercise.id === 'leg-press')!.prescription.load;
     expect(lp(beg)).toBeLessThan(lp(normal));
-    expect(beg.exercises[0]!.prescription.note).toMatch(/Kennismaking/);
+    expect(beg.exercises[0]!.prescription.note).toMatch(/^Leer de beweging rustig en hou 3 reps over\.$/);
   });
 
   it('na 2 keer: gewone sets', () => {
@@ -143,7 +143,7 @@ describe('conditiesessie', () => {
     expect(c.options.map((o) => o.title)).toEqual(['Indoor cycling (groepsles)']);
     expect(c.minutes).toBe(60);
     expect(c.options[0]!.blocks).toBeUndefined();
-    expect(c.options[0]!.steps.join(' ')).toMatch(/Les om 19u, 1 uur.*zadelhoogte/);
+    expect(c.options[0]!.steps.join(' ')).toMatch(/Les om 19u, 1 uur.*fiets afstellen/);
     const free = buildCardioSession({ date: '2026-11-26', location: 'gym', minutes: 45, equipment: DEFAULT_HOME });
     expect(free.options.map((o) => o.title)).toEqual(['Intervallen op fiets of roeier']);
   });

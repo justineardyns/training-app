@@ -100,13 +100,3 @@ export function Pill(props: { tone?: 'green' | 'orange' | 'red'; children: Compo
   return <span class={`pill ${props.tone ?? ''}`}>{props.children}</span>;
 }
 
-export function Messages(props: { messages: string[] }) {
-  if (!props.messages.length) return null;
-  return (
-    <div class="card coach">
-      {props.messages.map((m) => (
-        <p key={m}>{m}</p>
-      ))}
-    </div>
-  );
-}

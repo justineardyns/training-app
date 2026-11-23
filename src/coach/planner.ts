@@ -252,16 +252,16 @@ export function coachTarget(input: {
     const n = input.history.filter((s) => SWEAT_KINDS.has(s.kind) && s.date < input.today).length;
     if (n < 8 && target > 4) {
       target = 4;
-      note = 'Opbouw: de eerste weken 4 trainingen per 7 dagen, daarna 5 en dan 6. Zo raakt je lichaam eraan gewend.';
+      note = 'Opbouw: eerst 4 trainingen per 7 dagen.';
     } else if (n < 16 && target > 5) {
       target = 5;
-      note = 'Opbouw: nu 5 trainingen per 7 dagen. Binnenkort 6.';
+      note = 'Opbouw: nu 5 trainingen per 7 dagen.';
     }
   }
   const recent = (input.readinessLog ?? []).filter((r) => r.date < input.today && r.date >= addDays(input.today, -7));
   if (recent.filter((r) => r.level !== 'green').length >= 3 && target > 2) {
     target -= 1;
-    note = `Je was de afgelopen dagen vaak moe: deze 7 dagen ${target} trainingen in plaats van ${target + 1}.`;
+    note = `Vaak moe: deze 7 dagen ${target} trainingen.`;
   }
   return { target, cap, note };
 }
@@ -597,8 +597,8 @@ export function planWeek(input: PlanInput): WeekPlan {
       const min = a.tennis!;
       result.push({
         date: d, type: 'tennis', sweat: true, status: 'planned', minutes: Math.min(60, min) as Minutes, note: 'Telt als conditiesessie.',
+        why: 'Telt als conditie.',
         title: `Tennis · ${min >= 60 ? `${Math.round(min / 60)}u` : `${min} min`}`, weather, hair: true,
-        why: 'Telt als je conditie (haarwasdag). De dag ervoor en erna geen conditie; de dag erna liefst bovenlichaam.',
       });
       continue;
     }
@@ -649,11 +649,11 @@ export function planWeek(input: PlanInput): WeekPlan {
             ? `Benen nog moe${legs.cause ? ` (${legs.cause})` : ''}: draai rustig mee.`
             : legs.state === 'herstelt'
               ? 'Benen herstellen nog: neem de zware stukken rustig.'
-              : 'Geen benen de dag ervoor of erna.';
+              : '';
         const kindWhy = illLighter
           ? 'Rustig fietsen in zone 2.'
           : lighter
-          ? 'Dagvorm oranje: rustig tempo, geen intervallen.'
+          ? 'Dagvorm oranje: rustig tempo.'
           : a.booked && cls
             ? `Gereserveerd: ${prefs.className.toLowerCase()}${cls.time ? ` om ${hourText(cls.time)}` : ''}.`
             : a.want === 'cardio'
@@ -666,7 +666,7 @@ export function planWeek(input: PlanInput): WeekPlan {
           title: cardioTitle(location, a.minutes, lighter, cls ? prefs.className : undefined, cls?.time), lighter, classSlot: !!cls, want: a.want,
           booked: !!a.booked && !!cls,
           weather, hair: true, time: cls?.time, gentle: illLighter,
-          why: `${kindWhy} ${legWhy}`,
+          why: `${kindWhy} ${legWhy}`.trim() || undefined,
         });
       }
       continue;
@@ -680,15 +680,7 @@ export function planWeek(input: PlanInput): WeekPlan {
     result.push({
       date: d, type: 'light', sweat: false, status: moved ? 'moved' : 'free', title: light.minutes ? `${light.title} (${light.minutes} min, zweetvrij)` : light.title, light,
       note: moved ? 'Verplaatst: vandaag herstel.' : undefined, weather, walk, want: wish(d),
-      why: sickRest
-        ? 'Ziek: rust tot je beter bent.'
-        : moved
-        ? undefined
-        : yesterday
-          ? `Rustdag na ${yesterday} gisteren: je spieren bouwen nu op.`
-          : tomorrow
-            ? `Morgen ${tomorrow}: vandaag rustig.`
-            : 'Rustdag: ook die horen bij je opbouw.',
+      why: sickRest ? 'Ziek: rust tot je beter bent.' : moved ? undefined : yesterday ? `Rustdag na ${yesterday} gisteren.` : tomorrow ? `Morgen ${tomorrow}: vandaag rustig.` : 'Rustdag.',
     });
   }
 
@@ -699,7 +691,7 @@ export function planWeek(input: PlanInput): WeekPlan {
     for (const r of result) {
       if (r.status === 'planned' && r.type === 'strength' && r.date <= sameWeek) {
         r.check = true;
-        r.why = `💪 Krachtcheck-week: je laatste set op je hoofdoefeningen zoveel mogelijk goede reps. ${r.why ?? ''}`.trim();
+        r.why = `💪 Krachtcheck. ${r.why ?? ''}`.trim();
       }
     }
   }
@@ -711,7 +703,7 @@ export function planWeek(input: PlanInput): WeekPlan {
     const pick = strengthDays.find((r) => r.split === 'upper') ?? strengthDays.find((r) => r.split === 'full') ?? strengthDays[0];
     if (pick) {
       pick.tennisExtra = true;
-      pick.why = `${pick.why ?? ''} + 🎾 tennis-extra: schouders en romp voor je slagen.`.trim();
+      pick.why = `${pick.why ?? ''} + 🎾 tennis-extra.`.trim();
     }
   }
 
@@ -724,7 +716,7 @@ export function planWeek(input: PlanInput): WeekPlan {
     if (chore) {
       chore.light = LIGHT.klusjes;
       chore.title = LIGHT.klusjes.title;
-      chore.why = isWeekend(chore.date) ? 'Vrij voor je klusjes: ook je huishouden krijgt een plek in je week.' : "Vrije avond voor je klusjes: ook je huishouden krijgt een plek in je week.";
+      chore.why = 'Vrij moment voor klusjes.';
       delete chore.walk;
     }
     // Hoogstens één wandeling per 7 dagen.
@@ -768,58 +760,56 @@ export function planWeek(input: PlanInput): WeekPlan {
   // Boodschappen: kort en eerlijk.
   const messages: string[] = [];
   const unticked = input.explicit ? days.filter((d) => d > today && !input.explicit!(d)).length : 0;
-  if (unticked >= 3) messages.push(`${unticked} van de komende dagen heb je nog niet aangevinkt. Ik ging uit van je vaste patroon. Tik op Week om aan te passen.`);
+  if (unticked >= 3) messages.push(`${unticked} dagen nog niet aangevinkt in de Agenda.`);
   if (input.illness?.status === 'rest') {
     messages.push(input.illness.message);
     if (input.illness.refer) messages.push(input.illness.referMessage);
   }
   if (ct.note && !sickRest) messages.push(ct.note);
-  if (checkWeek) messages.push('Krachtcheck deze week: zo zie je zwart op wit hoeveel sterker je werd. Volgende week een lichtere week.');
+  if (checkWeek) messages.push('Krachtcheck deze week.');
   if (deload.deload) messages.push(deload.message);
   const missed = [...original].filter((d) => d < today && d >= addDays(today, -3) && !doneOn.has(d));
-  if (missed.length) messages.push(`Je miste ${missed.length === 1 ? 'een training' : `${missed.length} trainingen`}. Geen inhaalrace: we stapelen niet, het plan schuift op.`);
+  if (missed.length) messages.push(`Je miste ${missed.length === 1 ? 'een training' : `${missed.length} trainingen`}. Het plan schuift op.`);
   if (input.readinessToday === 'red' && original.has(today)) {
     const next = result.find((r) => r.status === 'planned' && r.date > today);
     messages.push(next ? `Rood vandaag: je training schuift naar ${dayName(next.date)}.` : 'Rood vandaag. Er is geen plek meer zonder de regels te breken: herstel gaat voor.');
   }
   for (const t of tennis) {
     if ((fixed.get(addDays(t, -1)) ?? []).some((x) => x.kind === 'cardio' && !tennisSet.has(x.date))) {
-      messages.push(`Tennis op ${dayName(t)} komt meteen na een conditiedag: twee haarwasdagen na elkaar. Speel rustig of sla een van beide over.`);
+      messages.push(`Tennis op ${dayName(t)} komt meteen na een conditiedag: speel rustig.`);
     }
   }
   const total = chosen.length + tennis.length + doneTodayCount;
   if (total < T && !sickRest) {
-    const why = `In de komende 7 dagen passen ${total} van de ${T} trainingen binnen je beschikbaarheid en de regels (conditie nooit 2 dagen na elkaar, max 4 kracht en 4 conditie, nooit benen naast ${prefs.className.toLowerCase()}, 1 vrij moment voor klusjes).`;
+    const why = `${total} van de ${T} trainingen passen deze 7 dagen.`;
     messages.push(total < NORMAL_MIN ? `${why} Kan je ergens een extra avond vrijmaken?` : why);
   }
   // Indoor cycling: minstens 1×, liefst 2×. Lukt dat niet, eerlijk zeggen hoe je ze toch krijgt.
   const cycling = result.filter((r) => r.groupClass || (r.status === 'done' && r.sessions?.some((x) => x.kind === 'class'))).length;
-  if (prefs.className && cycling < WANT_CYCLING && !sickRest) {
+  if (prefs.className && cycling < WANT_CYCLING && !sickRest && !(cycling === 1 && tennis.length && nStrength <= 2)) {
     const swap = result.find((r) => r.status === 'planned' && r.type === 'strength' && r.classSlot && !r.want && r.date !== today);
     const how = swap ? `Tik op ${dayName(swap.date)} in Week voor een les` : 'Maak een lesmoment groen in de Agenda';
     messages.push(
       cycling === 0
-        ? `Geen ${prefs.className.toLowerCase()} deze 7 dagen: er valt geen lesmoment op een dag die past. ${how}.`
-        : tennis.length && nStrength <= 2
-          ? `1× ${prefs.className.toLowerCase()} + tennis deze 7 dagen: de andere trainingen zijn kracht (minstens 2× per week).`
-          : `1× ${prefs.className.toLowerCase()} deze 7 dagen. Zin in een tweede? ${how}.`,
+        ? `Geen ${prefs.className.toLowerCase()} deze 7 dagen. ${how}.`
+        : `1× ${prefs.className.toLowerCase()} deze 7 dagen. Zin in een tweede? ${how}.`,
     );
   }
   const plannedStrength = result.filter((r) => r.status === 'planned' && r.type === 'strength');
   if (plannedStrength.length > 0 && plannedStrength.every((r) => r.split === 'upper') && !sweat.some((x) => x.kind === 'strength' && x.date >= addDays(start, -3) && splitOfTemplate(x.template) !== 'upper')) {
     messages.push(
-      `Geen benen deze 7 dagen: je krachtdagen liggen naast ${prefs.className.toLowerCase()}, en de dag ervoor of erna nooit benen. Zin in een benentraining? Maak in de Agenda een dag groen die niet naast een les ligt.`,
+      `Geen benen deze 7 dagen. Zin in een benentraining? Maak in de Agenda een dag groen die niet naast een les ligt.`,
     );
   }
   if (result.some((r) => r.want === 'cardio') && nStrength < 2 && T >= 3) {
-    messages.push(`Door je keuze voor conditie staat er deze 7 dagen ${nStrength}× kracht. Prima af en toe; kracht is wel je motor.`);
+    messages.push(`Deze 7 dagen ${nStrength}× kracht. Prima af en toe.`);
   }
   for (const d of days) {
     const w = wish(d);
     const got = result.find((r) => r.date === d);
     if (!w || !candidate(d) || (w === 'strength' ? got?.type === 'strength' : got?.type === 'cardio')) continue;
     messages.push(
-      `${av.get(d)?.booked && !av.get(d)?.want ? 'Je reserveerde een les' : `Je koos ${w === 'strength' ? 'kracht' : 'conditie'}`} op ${dayName(d)}, maar dat past daar niet binnen de regels (conditie nooit 2 dagen na elkaar, geen benen de dag na ${prefs.className.toLowerCase()}, max per 7 dagen). Ik hield die dag vrij.`,
+      `${av.get(d)?.booked && !av.get(d)?.want ? 'Je les' : w === 'strength' ? 'Kracht' : 'Conditie'} op ${dayName(d)} past niet binnen de regels.`,
     );
   }
   if (adj?.focus) messages.push(`Coach: ${adj.focus}`);

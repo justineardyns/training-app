@@ -84,7 +84,7 @@ describe('krachtcheck', () => {
     const p = planWeek({ today: MON, availability: (d) => defaultDay(d, 45), history, prefs: { ...DEFAULT_PREFS, experience: 'returning' } });
     const checks = p.days.filter((d) => d.check);
     expect(checks.length).toBeGreaterThan(0);
-    expect(checks[0]!.why).toMatch(/^💪 Krachtcheck-week/);
+    expect(checks[0]!.why).toMatch(/^💪 Krachtcheck/);
     expect(p.messages.join(' ')).toMatch(/Krachtcheck deze week/);
     const s = buildStrengthSession({ ...ctx({ template: 'A', history }), check: true });
     const tested = s.exercises.filter((e) => e.prescription.test).map((e) => e.exercise.id);

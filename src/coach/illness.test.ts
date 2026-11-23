@@ -18,7 +18,7 @@ describe('ziek zijn: ziek is ziek', () => {
     expect(p.days.every((d) => !d.sweat)).toBe(true);
     expect(p.days.every((d) => d.light?.id === 'rust')).toBe(true);
     expect(p.days[0]!.title).toBe('Rust en herstel');
-    expect(p.messages.join(' ')).toMatch(/Ziek: rust\. Geen training tot je beter bent/);
+    expect(p.messages.join(' ')).toMatch(/Ziek: rust tot je beter bent/);
     const two = planTwoWeeks({ today: MON, availability: (d) => defaultDay(d, 45), history: [], prefs: DEFAULT_PREFS, illness: st });
     expect(two.second.days.every((d) => !d.sweat)).toBe(true);
     // Oude meldingen (met een soort ziekte) zijn ook gewoon rust.

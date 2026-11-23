@@ -51,7 +51,7 @@ export function illnessState(illnesses: Illness[], today: ISODate, history: Sess
       illness: active,
       refer,
       referMessage: refer ? `Ga langs bij je huisarts (${reasons.join(', ')}). Meteen bij hoge koorts, pijn op de borst of als je moeilijk ademt.` : '',
-      message: 'Ziek: rust. Geen training tot je beter bent, je lichaam heeft zijn energie nu nodig om te genezen. Tik "Genezen" als je je 24 uur goed voelt.',
+      message: 'Ziek: rust tot je beter bent. Tik "Genezen" als je je 24 uur goed voelt.',
     };
   }
   // Net genezen: de eerste trainingen lichter.

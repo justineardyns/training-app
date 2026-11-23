@@ -47,10 +47,11 @@ export function FreeCardio(props: { title: string; targetMin: number }) {
     return (
       <div class="card free-cardio">
         <h3>{props.title}</h3>
-        <p class="muted small">
-          Start de stopwatch en tik op Stop als je klaar bent: dan telt het als conditie.
-          {wx ? ` Weer: ${wx.icon} ${Math.round(wx.tMax)}°, ${wx.precipProb}% kans op regen.` : ''}
-        </p>
+        {wx && (
+          <p class="muted small">
+            {wx.icon} {Math.round(wx.tMax)}° · {wx.precipProb}% kans op regen
+          </p>
+        )}
         <Chips<FreeCardioKind> label="Wat doe je?" options={Object.entries(FREE).map(([value, f]) => ({ value: value as FreeCardioKind, label: f.label }))} value={kind} onChange={setKind} />
         <button
           class="btn primary"
@@ -77,7 +78,7 @@ export function FreeCardio(props: { title: string; targetMin: number }) {
       <div class="itimer-bar" aria-hidden="true">
         <div class="itimer-fill" style={{ width: `${Math.min(100, (sec / target) * 100)}%` }} />
       </div>
-      <p class="muted small">{sec >= target ? 'Doel gehaald! Stop wanneer je wil.' : running ? 'Scherm mag uit: de tijd loopt gewoon door.' : 'Gepauzeerd.'}</p>
+      {(sec >= target || !running) && <p class="muted small">{sec >= target ? 'Doel gehaald!' : 'Gepauzeerd'}</p>}
       <div class="row">
         <button
           class="btn"
@@ -131,7 +132,7 @@ function CardioOptions(props: { session: CardioSession; minutes: Minutes; onMinu
             {o.title}
           </h2>
           {o.blocks ? (
-            <IntervalTimer id={`${today}-${o.title}`} blocks={o.blocks} steps={o.steps} doneText="Tik hieronder op Gedaan ✓: dan telt het mee." />
+            <IntervalTimer id={`${today}-${o.title}`} blocks={o.blocks} steps={o.steps} />
           ) : (
             <ul class="steps">
               {o.steps.map((st) => (
@@ -179,26 +180,24 @@ export function Training() {
     main = (
       <div class="card">
         <h2>Rust 🤒</h2>
-        <p>Ziek is ziek: geen training tot je beter bent. Tik op Vandaag op "Genezen" als het weer gaat.</p>
+        <p>Rust tot je beter bent.</p>
       </div>
     );
   } else if (day.status === 'done') {
     main = (
       <div class="card done">
         <h2>✓ {day.title}</h2>
-        <p>Vandaag al gedaan. Goed bezig! Nu herstellen: eten, drinken, slapen.</p>
+        <p>Goed bezig!</p>
       </div>
     );
   } else if (session?.kind === 'strength') {
     main = (
       <div class="card today-card">
         <h2>{day.title}</h2>
-        {day.why && <p class="why">{day.why}</p>}
         <StrengthPreview session={session} />
         <button class="btn primary huge" onClick={() => startStrength(s, session)}>
           ▶ Start training
         </button>
-        <p class="muted small">Daarna tik je bij elke oefening op ▶ Start en ■ Stop, in de volgorde die jij wil.</p>
       </div>
     );
   } else if (session?.kind === 'cardio' && day.groupClass) {
@@ -208,7 +207,6 @@ export function Training() {
           🚴 {className}
           {day.time ? ` · ${hourText(day.time)}` : ''} · 1 uur
         </h2>
-        {day.why && <p class="why">{day.why}</p>}
         <ul class="steps">
           {session.options[0]!.steps.map((st) => (
             <li key={st}>{st}</li>
@@ -217,14 +215,12 @@ export function Training() {
         <button class="btn primary huge" onClick={() => s.quickLog(today, 'class', 'gym', CLASS_MINUTES, className)}>
           ✓ Les gedaan
         </button>
-        <p class="muted small">Geen timer nodig: de lesgever geeft het tempo aan.</p>
       </div>
     );
   } else if (session?.kind === 'cardio') {
     main = (
       <>
         <h2>{session.title}</h2>
-        {day.why && <p class="why">{day.why}</p>}
         <CardioOptions session={session} minutes={minutes} onMinutes={setMinutes} />
       </>
     );
@@ -232,7 +228,6 @@ export function Training() {
     main = (
       <div class="card today-card">
         <h2>🎾 {day.title}</h2>
-        <p class="why">Geen timer nodig. Tik na het spelen op "Tennis gedaan".</p>
         <button class="btn primary huge" onClick={() => s.quickLog(today, 'cardio', 'gym', day.minutes ?? 60, 'Tennis')}>
           Tennis gedaan ✓
         </button>
@@ -242,7 +237,6 @@ export function Training() {
     main = (
       <div class="card">
         <h2>Geen training vandaag</h2>
-        <p>{day.light ? `${day.light.title}: rust is ook trainen.` : 'Rustdag: rust is ook trainen.'}</p>
         {next && (
           <p class="muted">
             Volgende: {dayName(next.date)} · {next.title}

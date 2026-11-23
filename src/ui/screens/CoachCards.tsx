@@ -30,11 +30,6 @@ export function RecoveryCard(props: { recovery: Record<Group, GroupRecovery> }) 
           </li>
         ))}
       </ul>
-      <p class="muted small">
-        {allFresh
-          ? 'Alles hersteld. Ik plan nooit dezelfde spieren zwaar voor ze hersteld zijn.'
-          : 'Wat nog moe is, komt later in je training of krijgt een set minder.'}
-      </p>
     </div>
   );
 }
@@ -43,14 +38,7 @@ export function RecoveryCard(props: { recovery: Record<Group, GroupRecovery> }) 
 export function InsightsCard(props: { insights: Insights; full?: boolean }) {
   const { strong, work, enoughData } = props.insights;
   const n = props.full ? 4 : 1;
-  if (!enoughData && strong.length === 0 && work.length === 0) {
-    return (
-      <div class="card coach">
-        <h3>Sterk en werkpunten</h3>
-        <p class="muted">Na 2–3 trainingen zie je hier wat goed gaat en wat beter kan. Ik pas je schema daarop aan.</p>
-      </div>
-    );
-  }
+  if (!enoughData && strong.length === 0 && work.length === 0) return null;
   return (
     <div class="card coach insights">
       <h3>Sterk en werkpunten</h3>
@@ -62,10 +50,7 @@ export function InsightsCard(props: { insights: Insights; full?: boolean }) {
       {work.slice(0, n).map((i) => (
         <p key={i.id} class="insight work">
           <span aria-hidden="true">🎯</span>{' '}
-          <span>
-            {i.text}
-            {i.action && <span class="muted"> {i.action}</span>}
-          </span>
+          <span>{i.text}</span>
         </p>
       ))}
       {strong.length === 0 && work.length === 0 && <p class="muted">Alles op schema. Gewoon zo doorgaan.</p>}
@@ -108,7 +93,7 @@ export function SoreChips() {
   };
   return (
     <div class="sore">
-      <p class="muted small">Spierpijn of stijf? (optioneel)</p>
+      <p class="muted small">Spierpijn?</p>
       {AREAS.map((a) => (
         <Chips<SoreLevel>
           key={a.label}
@@ -142,10 +127,6 @@ export function WeatherSettings() {
   return (
     <>
       <h1>Weer</h1>
-      <p class="muted">
-        Voor je wandeldagen: droog → wandelen, regen → binnen. Gratis via Open-Meteo. Enkel je afgeronde locatie (±10 km) gaat daarheen,
-        nooit je trainingsdata. Het weerbericht blijft op je iPhone.
-      </p>
       <div class="card">
         <p>
           Nu: <strong>{place.name}</strong>
@@ -211,7 +192,6 @@ export function MilestonesList() {
   return (
     <div class="card">
       <h3>Mijlpalen</h3>
-      {all.length === 0 && <p class="muted">Je eerste mijlpaal: je eerste training. Daarna 5, 10, 25… en records, lessen en weken op rij.</p>}
       <ul class="plain milestones">
         {all.slice(0, 8).map((m) => (
           <li key={m.id}>
@@ -234,14 +214,7 @@ export function StrengthCheckCard() {
   const s = useStore();
   const checks = s.checksStrength();
   const nf = new Intl.NumberFormat('nl-BE', { maximumFractionDigits: 1 });
-  if (checks.length === 0) {
-    return (
-      <div class="card">
-        <h3>Krachtcheck</h3>
-        <p class="muted">Elke 6 weken, net voor je lichtere week, doe je op je hoofdoefeningen één set zoveel mogelijk goede reps. Zo zie je zwart op wit hoeveel sterker je wordt.</p>
-      </div>
-    );
-  }
+  if (checks.length === 0) return null;
   const c = checks[0]!;
   return (
     <div class="card">

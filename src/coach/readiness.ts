@@ -120,9 +120,9 @@ export function assessReadiness(input: ReadinessInput): ReadinessResult {
 }
 
 export const ADVICE: Record<ReadinessLevel, string> = {
-  green: 'Groen: train zoals gepland. Ga ervoor.',
-  orange: 'Oranje: je traint, maar lichter: 1 set minder per oefening en geen zwaarder gewicht. Intervallen worden rustige cardio.',
-  red: 'Rood: vandaag geen zweettraining. We verplaatsen je sessie. Doe 15 min mobiliteit of een wandeling.',
+  green: 'Train zoals gepland. Ga ervoor.',
+  orange: 'Lichtere training vandaag.',
+  red: 'Vandaag geen training: rust, mobiliteit of een wandeling.',
 };
 
 export const LEVEL_LABEL: Record<ReadinessLevel, string> = { green: 'Groen', orange: 'Oranje', red: 'Rood' };

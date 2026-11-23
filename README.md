@@ -42,8 +42,8 @@ Werkt offline in de gym, draait puur op jouw tikken en kost **€ 0**.
     wordt vanzelf afgevinkt.
   - **Mijlpalen:** een korte felicitatie bij je eerste training, 10, 25… trainingen, records, lessen, weken op rij
     en een betere krachtcheck.
-  - **Bij elke dag een korte "waarom".** Tik op een dag om te wisselen tussen kracht en indoor cycling, of om
-    ze te schrappen.
+  - **Geen uitleg over de planning in de app**: je ziet wat je doet, de coach weet waarom. Uitleg staat enkel
+    bij de oefeningen. Tik op een dag om te wisselen tussen kracht en indoor cycling, of om ze te schrappen.
   - **Krachttrainingen in drie soorten:**
     - *Full body* als er de dag ervoor en erna geen indoor cycling is.
     - *Bovenlichaam* de dag vóór of na indoor cycling.
@@ -174,7 +174,7 @@ stuurt volgende week bij en pusht. Dat kan ook automatisch als geplande taak elk
 | **Zondag** (of wanneer je wil) | Melding "Vink je komende dagen aan" → tab **Agenda**: tik rood wat niet kan, tennis aanduiden, *De komende 14 dagen kloppen*. 20 seconden. |
 | **'s Ochtends** | Melding met je plan. Open de app → tik hoe je je voelt (en optioneel: spierpijn in benen of bovenlijf) → groen/oranje/rood advies, training past zich aan je herstel aan. |
 | **Les gereserveerd** | **Agenda** → tik de les aan in *Reserveer je indoor cycling* (of in **Week** op de dag → *Les gereserveerd*). |
-| **Liever cycling dan kracht** (of omgekeerd) | **Week** → tik op de dag → *Liever indoor cycling* / *Liever kracht*. Past het niet binnen de regels, dan zegt de coach waarom. |
+| **Liever cycling dan kracht** (of omgekeerd) | **Week** → tik op de dag → *Liever indoor cycling* / *Liever kracht*. Past het niet binnen de regels, dan zie je *keuze past niet*. |
 | **Haar wassen plannen** | 🚿 in **Week** = conditiedag (nooit 2 dagen na elkaar). Krachtdagen zijn zonder haarwas. |
 | **Nieuwe oefening** | Tik op de naam: foto's van de beweging en het toestel, hoe je het instelt, techniektips. |
 | **In de gym** | **Start** → per set ✓ → na elke oefening *Gelukt* of *Ik nam meer/minder*. Toestel bezet? Eén tik. |

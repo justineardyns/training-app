@@ -362,7 +362,6 @@ function ItemCard(props: { w: WorkoutState; i: number }) {
       />
 
       <Sheet open={busy} onClose={() => setBusy(false)} title="Kies een alternatief">
-        <p class="muted small">Zelfde spiergroep. Gedane sets blijven bewaard.</p>
         <div class="stack">
           {alternatives.map((a) => (
             <button
@@ -471,7 +470,7 @@ function Group(props: { w: WorkoutState; g: number[]; next: boolean; quiet: bool
           <span class="elapsed" role="timer" aria-label={`Tijd op ${names}`}>
             ⏱ {clock(itemMs(items[0]!, Date.now()) / 1000)}
           </span>
-          <span class="muted small">op deze oefening</span>
+          <span class="muted small" />
           <button
             class="btn small"
             onClick={() => {
@@ -542,7 +541,6 @@ export function Workout() {
       </div>
 
       {warmup && <Warmup w={w} />}
-      {!warmup && !started && <p class="muted small">Tik op ▶ Start bij de oefening die je eerst doet. Toestel bezet? Kies gewoon een andere.</p>}
 
       <ol class="wlist">
         {groups.map((g) => (

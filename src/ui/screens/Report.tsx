@@ -73,7 +73,7 @@ export function Report() {
       ) : (
         <p class="muted">Geen nieuwe records deze week.</p>
       )}
-      {report.trend.length > 0 && <p class="muted small">Geschatte 1RM per week (kg). Tik op een punt voor de waarde.</p>}
+      {report.trend.length > 0 && <p class="muted small">Geschatte max per week (kg)</p>}
       <div class="multiples">
         {report.trend.map((t) => (
           <div class="card chart" key={t.exerciseId}>
@@ -86,7 +86,7 @@ export function Report() {
       <h2>Volume per spiergroep</h2>
       {volume.length ? (
         <div class="card">
-          <p class="muted small">Harde sets deze week (hoofdspier telt 1, meewerkende spieren ½).</p>
+          <p class="muted small">Sets deze week</p>
           <BarList rows={volume} />
         </div>
       ) : (
@@ -99,7 +99,6 @@ export function Report() {
         <StatTile label="▲ Oranje" value={`${report.readiness.orange}`} sub="lichter" />
         <StatTile label="■ Rood" value={`${report.readiness.red}`} sub="verplaatst" />
       </div>
-      {weekChecks.length === 0 && <p class="muted small">Tik op een trainingsdag hoe je je voelt; dan zie je hier je week.</p>}
 
       {back === 0 && report.nextWeek && (
         <>

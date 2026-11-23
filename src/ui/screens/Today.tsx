@@ -5,8 +5,8 @@ import { ADVICE, LEVEL_LABEL } from '../../coach/readiness.ts';
 import { templateTitle, type CardioSession, type StrengthSession } from '../../coach/session.ts';
 import type { Energy, Location, Minutes } from '../../coach/types.ts';
 import type { WalkAdvice } from '../../coach/weather.ts';
-import { CLASS_MINUTES, hourText } from '../../coach/planner.ts';
-import { Chips, Messages, Pill, Sheet } from '../components.tsx';
+import { activeAdjustments, CLASS_MINUTES, hourText } from '../../coach/planner.ts';
+import { Chips, Pill, Sheet } from '../components.tsx';
 import { Thumb } from '../Demo.tsx';
 import { useStore } from '../hooks.ts';
 import { go } from '../router.ts';
@@ -53,7 +53,7 @@ export function StrengthPreview(props: { session: StrengthSession }) {
 function WalkExtra(props: { walk: WalkAdvice }) {
   return (
     <p class="walk goed">
-      🚶 Droogste dag van de week: wandel 30 min{props.walk.bestHour !== undefined ? ` rond ${props.walk.bestHour}u` : ''} (optioneel, naast je training).
+      🚶 + wandeling 30 min{props.walk.bestHour !== undefined ? ` rond ${props.walk.bestHour}u` : ''} (optioneel)
     </p>
   );
 }
@@ -82,7 +82,6 @@ function ReadinessCard() {
             </button>
           ))}
         </div>
-        <p class="muted small">Eén tik. Moe → ik maak de training lichter. Ziek of op → we verplaatsen ze.</p>
       </div>
     );
   }
@@ -98,7 +97,6 @@ function ReadinessCard() {
         </button>
       </div>
       <p>{ADVICE[tone]}</p>
-      {check.reasons.length > 0 && <p class="muted small">{check.reasons.join(' · ')}</p>}
       {tone !== 'red' && <SoreChips />}
       {check.energy === 'sick' && s.illness().status !== 'rest' && (
         <button class="btn small" onClick={() => void reportIllness(s)}>
@@ -120,7 +118,7 @@ function QuickLogSheet(props: { open: boolean; onClose: () => void; date: string
         <Chips options={[{ value: 'class', label: 'Groepsles' }, { value: 'cardio', label: 'Cardio' }]} value={kind} onChange={setKind} />
         <Chips options={[{ value: 'gym', label: 'Jims' }, { value: 'home', label: 'Thuis/buiten' }]} value={location} onChange={setLocation} />
         {kind === 'class' ? (
-          <p class="muted small">Een les duurt 1 uur.</p>
+          <p class="muted small">1 uur</p>
         ) : (
           <Chips<Minutes> options={[{ value: 30, label: '30 min' }, { value: 45, label: '45 min' }, { value: 60, label: '60 min' }]} value={minutes} onChange={setMinutes} />
         )}
@@ -143,6 +141,8 @@ export function Today() {
   const today = s.today();
   const day = s.todayPlan();
   const plan = s.plan();
+  // Eén zin van je wekelijkse coachsessie (adjustments.focus).
+  const focus = activeAdjustments(s.adjustments(), today)?.focus;
   const session = s.sessionFor(day) as StrengthSession | CardioSession | undefined;
   const [quick, setQuick] = useState(false);
   const nextSweat = plan.days.find((d) => d.date > today && d.status === 'planned');
@@ -163,6 +163,7 @@ export function Today() {
         <WeatherBadge day={day} />
       </p>
       <h1>Vandaag</h1>
+      {focus && <p class="card coach focus">{focus}</p>}
       <MilestoneCard />
       <SyncWarning />
 
@@ -181,7 +182,7 @@ export function Today() {
       {day.status === 'done' && (
         <div class="card done">
           <h2>✓ {day.title}</h2>
-          <p>Gedaan. Goed bezig! Nu herstellen: eten, drinken, slapen.</p>
+          <p>Goed bezig!</p>
         </div>
       )}
 
@@ -191,7 +192,6 @@ export function Today() {
             {day.groupClass ? '🚴 ' : ''}
             {day.title}
           </h2>
-          {day.why && <p class="why">{day.why}</p>}
           {day.walkExtra && <WalkExtra walk={day.walkExtra} />}
           <div class="stack">
             {!day.groupClass && s.prefs().trainAtHome && (
@@ -214,14 +214,14 @@ export function Today() {
           {session.kind === 'strength' ? (
             <>
               <StrengthPreview session={session} />
-              {session.notes.filter((n) => !day.why?.includes(n)).map((n) => (
+              {session.notes.filter((n) => !n.startsWith('Coach:')).map((n) => (
                 <p key={n} class="muted small">
                   {n}
                 </p>
               ))}
             </>
           ) : day.groupClass ? (
-            <p class="muted">Les van 1 uur{day.time ? ` om ${hourText(day.time)}` : ''}. Liever buiten lopen? Dat kan in Training.</p>
+            <p class="muted">1 uur{day.time ? ` · ${hourText(day.time)}` : ''}</p>
           ) : (
             <p class="muted">{session.options.map((o) => o.title).join(' of ')}</p>
           )}
@@ -243,7 +243,6 @@ export function Today() {
       {day.type === 'tennis' && day.status === 'planned' && (
         <div class="card today-card">
           <h2>🎾 {day.title}</h2>
-          <p class="why">{day.why ?? 'Telt als conditiesessie.'} Tik na het spelen op "Tennis gedaan".</p>
           {day.walkExtra && <WalkExtra walk={day.walkExtra} />}
           <button class="btn primary huge" onClick={() => s.quickLog(today, 'cardio', 'gym', (day.minutes ?? 60) as Minutes, 'Tennis')}>
             Tennis gedaan ✓
@@ -260,7 +259,6 @@ export function Today() {
             {day.light.id === 'rust' ? 'Rustdag' : day.light.id === 'klusjes' ? 'Vrij voor klusjes 🧹' : day.status === 'moved' ? 'Herstel vandaag' : 'Zweetvrije dag'}
           </h2>
           {day.note && <p>{day.note}</p>}
-          {day.why && <p class="why">{day.why}</p>}
           <h3>
             {day.light.title}
             {day.light.minutes ? (
@@ -269,7 +267,6 @@ export function Today() {
               </>
             ) : null}
           </h3>
-          <p class="muted small">{day.light.why}</p>
           {day.walk && (
             <p class={`walk ${day.walk.verdict}`}>
               {day.weather?.icon ?? ''} Wandelweer: <strong>{day.walk.verdict}</strong>
@@ -300,8 +297,6 @@ export function Today() {
 
       <InsightsCard insights={s.insights()} />
 
-      {/* De ziektekaart staat al bovenaan: niet dubbel tonen. */}
-      <Messages messages={plan.messages.filter((m) => m !== s.illness().message && m !== s.illness().referMessage)} />
 
       {nextSweat && (
         <p class="muted">

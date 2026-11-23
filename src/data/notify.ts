@@ -39,7 +39,7 @@ export function morningMessage(store: Store): PushMessage | null {
         : '';
 
   if (day.type === 'tennis') {
-    return { title: `Vandaag: ${day.title.toLowerCase()} 🎾`, body: `Telt als conditiesessie. Tik na het spelen op Gedaan.${walkTip}${injuryAsk}${ask}`, url: '#/vandaag', tag: 'vandaag' };
+    return { title: `Vandaag: ${day.title.toLowerCase()} 🎾`, body: `Tik na het spelen op Gedaan.${walkTip}${injuryAsk}${ask}`, url: '#/vandaag', tag: 'vandaag' };
   }
   if (day.sweat && day.status === 'planned') {
     const where = day.location === 'home' ? 'thuis' : 'Jims';
@@ -56,7 +56,7 @@ export function morningMessage(store: Store): PushMessage | null {
     }
     return {
       title: day.groupClass ? `Vandaag: ${store.prefs().className.toLowerCase()}${when} 🚴` : `Vandaag: conditie · ${where}${when}`,
-      body: `${day.groupClass ? 'Groepsles in Jims. Reserveer je fiets als dat nodig is.' : `${day.minutes} min · ${day.location === 'home' ? 'kettlebell-circuit' : 'fiets of roeier'}.`} Tik voor je dagvorm-check.${walkTip}${injuryAsk}${ask}`,
+      body: `${day.groupClass ? '1 uur in Jims.' : `${day.minutes} min · ${day.location === 'home' ? 'kettlebell-circuit' : 'fiets of roeier'}.`} Tik voor je dagvorm-check.${walkTip}${injuryAsk}${ask}`,
       url: '#/vandaag',
       tag: 'vandaag',
     };
@@ -89,7 +89,7 @@ export function sundayMessage(store: Store): PushMessage | null {
   if (unticked(store) >= 3) {
     return {
       title: 'Vink je komende dagen aan',
-      body: `Welke avonden (en weekenddagen) passen de komende week? Tik en vink aan: 20 seconden.${toBook.length ? ` Daarna: reserveer je ${cls}.` : ''}`,
+      body: `Welke dagen passen de komende week?${toBook.length ? ` Daarna: reserveer je ${cls}.` : ''}`,
       url: '#/agenda',
       tag: 'plan',
     };
@@ -97,7 +97,7 @@ export function sundayMessage(store: Store): PushMessage | null {
   if (toBook.length === 0) return null;
   return {
     title: `Reserveer je ${cls} 🎟️`,
-    body: `Lessen zitten snel vol: ${when}. Reserveer in de Jims-app en tik in de Agenda aan wat lukte.`,
+    body: `${when}. Tik in de Agenda aan wat lukte.`,
     url: '#/agenda',
     tag: 'plan',
   };

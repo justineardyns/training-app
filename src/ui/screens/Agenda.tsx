@@ -79,7 +79,6 @@ export function Agenda() {
   return (
     <>
       <h1>Agenda</h1>
-      <p class="muted">Tik op een dag: groen = je kan trainen ('s avonds, in het weekend overdag), rood = kan niet.</p>
       <div class="row-between cal-nav">
         <button class="btn small ghost" disabled={offset <= -6} onClick={() => setOffset(offset - 1)} aria-label="Vorige maand">
           ‹
@@ -133,8 +132,7 @@ export function Agenda() {
         })}
       </div>
       <p class="muted small cal-legend">
-        <span class="dot can" /> kan · <span class="dot cannot" /> kan niet · <span class="dot done" /> gedaan · gestreept = nog niet aangevinkt (je vaste patroon) · 🏋️ kracht · 🚴 les ·
-        🎟️ gereserveerd · 🎾 tennis · 🧹 klusjes · iconen vanaf dag 8 zijn voorlopig
+        <span class="dot can" /> kan · <span class="dot cannot" /> kan niet · <span class="dot done" /> gedaan · 🏋️ kracht · 🚴 les · 🎟️ gereserveerd · 🎾 tennis · 🧹 klusjes
       </p>
 
       {selected >= today && (
@@ -180,10 +178,9 @@ export function Agenda() {
                 <strong>Gepland:</strong> {selPlan.title}
                 {selPlan.provisional ? ' (voorlopig)' : ''}
               </p>
-              {selPlan.why && <p class="why">{selPlan.why}</p>}
               {selPlan.walkExtra && (
                 <p class="walk goed">
-                  🚶 + wandeling{selPlan.walkExtra.bestHour !== undefined ? ` rond ${selPlan.walkExtra.bestHour}u` : ''}: droogste dag van de week
+                  🚶 + wandeling{selPlan.walkExtra.bestHour !== undefined ? ` rond ${selPlan.walkExtra.bestHour}u` : ''}
                 </p>
               )}
               {selPlan.groupClass && (
@@ -193,8 +190,7 @@ export function Agenda() {
               )}
             </>
           )}
-          {selPlan && !selPlan.sweat && sel.can && <p class="muted small">Rustdag in het plan: {selPlan.light?.title.toLowerCase() ?? 'rust'}.</p>}
-          {sel.source !== 'saved' && <p class="muted small">Nog niet aangevinkt: dit volgt je vaste patroon van vorige weken.</p>}
+          {selPlan && !selPlan.sweat && sel.can && <p class="muted small">{selPlan.light?.id === 'klusjes' ? 'Klusjes 🧹' : 'Rustdag'}</p>}
         </div>
       )}
 

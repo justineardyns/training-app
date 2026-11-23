@@ -58,7 +58,9 @@ test('de coach kiest de mix, wisselt spieren af, laat je kiezen en kijkt naar he
   await expect(row(3)).toContainText('Tennis');
   await expect(row(3).locator('.hair')).toBeVisible();
   await expect(row(6)).toContainText('Indoor cycling (groepsles) · Jims · 10u');
-  await expect(row(6)).toContainText('Lesmoment indoor cycling om 10u');
+  // Geen uitleg over de planning in de app (die is voor de coach).
+  await expect(page.locator('.plan .why')).toHaveCount(0);
+  await expect(page.locator('.card.coach')).toHaveCount(0);
   await expect(row(6).locator('.hair')).toBeVisible();
   // Rustdag met droog weer: wandelen.
   await expect(row(1)).toContainText('Wandeling');
@@ -69,7 +71,6 @@ test('de coach kiest de mix, wisselt spieren af, laat je kiezen en kijkt naar he
   await row(2).getByRole('button').first().click();
   await snap(page, '11-wissel');
   await page.getByRole('button', { name: /Liever indoor cycling/ }).click();
-  await expect(page.getByText(/Je koos conditie op woensdag, maar dat past daar niet/)).toBeVisible();
   await expect(row(2)).toContainText('keuze past niet');
   await row(2).getByRole('button').first().click();
   await page.getByRole('button', { name: /Terug naar het voorstel/ }).click();
@@ -86,7 +87,7 @@ test('de coach kiest de mix, wisselt spieren af, laat je kiezen en kijkt naar he
   await expect(mon30).not.toContainText('🏋️');
   await page.locator('.agenda-detail').getByRole('button', { name: /Kan 's avonds/ }).click();
   await expect(mon30).toHaveClass(/can/);
-  await expect(page.locator('.agenda-detail')).toContainText(/Gepland: .*\(voorlopig\)|Rustdag in het plan/);
+  await expect(page.locator('.agenda-detail')).toContainText(/Gepland: .*\(voorlopig\)|Rustdag|Klusjes/);
   const booking = page.locator('.card.booking');
   await expect(booking).toContainText('Reserveer je indoor cycling');
   await expect(booking.getByRole('button')).toHaveCount(3);
@@ -97,16 +98,16 @@ test('de coach kiest de mix, wisselt spieren af, laat je kiezen en kijkt naar he
   // Gelinkt: in Week staat zondag nu als gereserveerd.
   await page.getByRole('link', { name: /Week/ }).click();
   await expect(row(6)).toContainText('gereserveerd');
-  await expect(row(6)).toContainText('Gereserveerd: indoor cycling om 10u');
+
 
   // Vandaag (full body): dagvorm + spierpijn in de benen → benen lichter, bovenlichaam eerst.
   await page.getByRole('link', { name: /Vandaag/ }).click();
   await expect(page.locator('.eyebrow .wx')).toContainText('11°');
   await page.getByRole('button', { name: /Oké/ }).click();
   await page.getByRole('group', { name: 'Spierpijn benen' }).getByRole('button', { name: 'Echt' }).click();
-  await expect(page.locator('.today-card')).toContainText('Benen nog moe (spierpijn)');
   await expect(page.locator('.rec.red')).toContainText('Benen');
-  await expect(page.getByRole('heading', { name: 'Sterk en werkpunten' })).toBeVisible();
+  // Nog geen trainingen: geen lege kaart met uitleg.
+  await expect(page.getByRole('heading', { name: 'Sterk en werkpunten' })).toHaveCount(0);
   await snap(page, '12-vandaag-herstel');
 
   // Weer: plaats kiezen zonder typen.

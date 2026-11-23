@@ -64,7 +64,7 @@ describe('zondagherinnering', () => {
     await s.saveAvailability(days7('2026-11-29').concat([defaultDay('2026-12-06', 45)]));
     const book = sundayMessage(s)!;
     expect(book).toMatchObject({ title: 'Reserveer je indoor cycling 🎟️', url: '#/agenda' });
-    expect(book.body).toMatch(/Lessen zitten snel vol: /);
+    expect(book.body).toMatch(/Tik in de Agenda aan wat lukte/);
     for (const d of s.upcomingClasses()) await s.updateDay(d.date, { booked: true });
     expect(sundayMessage(s)).toBeNull();
   });

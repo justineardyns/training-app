@@ -41,7 +41,6 @@ export function PrefsEditor(props: { value: Prefs; onChange: (p: Prefs) => void;
           value={p.minutes}
           onChange={(v) => set({ minutes: v })}
         />
-        <p class="muted small">Per dag aanpassen kan in de Agenda (tik op de dag) of op Vandaag.</p>
         <h3>Maximum trainingen per 7 dagen</h3>
         <Chips
           options={[3, 4, 5, 6].map((n) => ({ value: n, label: n === 6 ? '6 (max)' : String(n) }))}
@@ -89,7 +88,6 @@ export function PrefsEditor(props: { value: Prefs; onChange: (p: Prefs) => void;
               );
             })}
           </div>
-          <p class="muted small">Op die dagen kan je in de Agenda tennis (1u of 2u) aanduiden: tik op de dag.</p>
         </div>
       )}
     </div>

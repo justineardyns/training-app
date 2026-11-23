@@ -29,7 +29,7 @@ test('"Ik ben ziek": één tik = rust, genezen = rustiger terug zonder extra uit
   if (process.env.SHOTS_DIR) await page.screenshot({ path: `${process.env.SHOTS_DIR}/16-ziek.png`, fullPage: true });
   await page.getByRole('button', { name: /Ik ben ziek/ }).click();
   await expect(page.getByRole('heading', { name: 'Beterschap' })).toBeVisible();
-  await expect(page.getByText(/Geen training tot je beter bent/).first()).toBeVisible();
+  await expect(page.getByText(/Ziek: rust tot je beter bent/).first()).toBeVisible();
   await page.getByRole('button', { name: 'Naar vandaag' }).click();
   await expect(page.locator('.card.illness')).toContainText('Ziek');
   await expect(page.getByRole('heading', { name: 'Rust en herstel' })).toBeVisible();

@@ -4,7 +4,6 @@ import { hourText, type PlannedDay, type WeekPlan } from '../../coach/planner.ts
 import type { DayAvailability, Slot } from '../../coach/types.ts';
 import { templateTitle } from '../../coach/session.ts';
 import { SWEAT_KINDS } from '../../coach/planner.ts';
-import { Messages } from '../components.tsx';
 import { WeatherBadge } from './CoachCards.tsx';
 import { useStore } from '../hooks.ts';
 
@@ -47,10 +46,9 @@ export function PlanList(props: { plan: WeekPlan; today: string; className?: str
                 ) : (
                   d.want && (d.sweat ? <span class="pill green">jouw keuze</span> : <span class="pill orange">keuze past niet</span>)
                 )}
-                {d.why && <span class="why">{d.why}</span>}
                 {d.walkExtra && (
                   <span class="why walk-extra">
-                    🚶 + wandeling{d.walkExtra.bestHour !== undefined ? ` rond ${d.walkExtra.bestHour}u` : ''}: droogste dag van de week
+                    🚶 + wandeling{d.walkExtra.bestHour !== undefined ? ` rond ${d.walkExtra.bestHour}u` : ''}
                   </span>
                 )}
               </span>
@@ -109,7 +107,6 @@ export function BookingCard() {
   return (
     <div class="card booking">
       <h3>{open.length ? `Reserveer je ${s.prefs().className.toLowerCase()}` : `Al je lessen zijn gereserveerd 🎟️`}</h3>
-      {open.length > 0 && <p class="muted small">Lessen zitten snel vol. Reserveer in de Jims-app en tik hier aan wat lukte: die les blijft dan vast staan.</p>}
       <div class="chips wrap" role="group" aria-label="Lessen om te reserveren">
         {classes.map((d) => (
           <button
@@ -150,14 +147,9 @@ export function Week() {
         <strong>
           {plan.planned + plan.done}/{plan.target} trainingen: {plan.strength}× kracht + {plan.cardio}× conditie
         </strong>
-        {plan.deload.deload ? ' · deloadweek' : ''}
-        <br />
-        Conditie (🚿 haarwasdag) max 4 en nooit 2 dagen na elkaar · kracht max 4 · nooit benen naast {s.prefs().className.toLowerCase()} · 🧹 1 moment vrij voor klusjes
+        {plan.deload.deload ? ' · lichtere week' : ''}
       </p>
       <PlanList plan={plan} today={today} className={s.prefs().className} onChange={(date, patch) => s.updateDay(date, patch)} />
-      <p class="muted small">Tik op een dag om te wisselen tussen kracht en {s.prefs().className.toLowerCase()}. Wanneer je kan, duid je aan in de Agenda.</p>
-      <Messages messages={plan.messages} />
-      <p class="muted small">De week erna (voorlopig) en je lessen reserveren: zie de Agenda.</p>
       {past.length > 0 && (
         <>
           <h2>Afgelopen 7 dagen</h2>

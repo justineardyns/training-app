@@ -23,10 +23,10 @@ export interface DeloadInput {
 }
 
 const MESSAGES: Record<DeloadReason, string> = {
-  ritme: 'Deloadweek: na 5 weken opbouwen krijgt je lichaam een lichtere week. Daar word je sterker van.',
-  stagnatie: 'Deloadweek: je kracht staat al een paar trainingen stil. Een lichtere week en daarna opnieuw aanvallen.',
-  dagvorm: 'Deloadweek: je dagvorm was de afgelopen week vaak oranje of rood. We geven je herstel voorrang.',
-  coach: 'Deloadweek op advies van je wekelijkse coachsessie.',
+  ritme: 'Lichtere week na 5 weken opbouwen.',
+  stagnatie: 'Lichtere week: je kracht stond even stil.',
+  dagvorm: 'Lichtere week: je was vaak moe.',
+  coach: 'Lichtere week op advies van je coach.',
 };
 
 export function decideDeload(input: DeloadInput): DeloadDecision {

@@ -68,7 +68,7 @@ describe('de coach kiest: max 6 per 7 dagen, conditie en kracht elk max 4', () =
     expect(p.days.filter((d) => d.groupClass)).toHaveLength(2);
     // Een groepsles duurt altijd 1 uur.
     expect(p.days.filter((d) => d.groupClass).every((d) => d.minutes === 60)).toBe(true);
-    expect(p.messages.join(' ')).toMatch(/Opbouw: de eerste weken 4 trainingen/);
+    expect(p.messages.join(' ')).toMatch(/Opbouw: eerst 4 trainingen/);
     expect(p.violations).toEqual([]);
     checkRules(p, []);
   });
@@ -91,7 +91,7 @@ describe('de coach kiest: max 6 per 7 dagen, conditie en kracht elk max 4', () =
     expect(coachTarget({ prefs: PRO, history: [], today: MON }).target).toBe(6);
     expect(coachTarget({ prefs: { ...DEFAULT_PREFS, targetPerWeek: 3 }, history: [], today: MON }).target).toBe(3);
     const tired = [1, 2, 3].map((i) => ({ date: addDays(MON, -i), level: 'orange' as const }));
-    expect(coachTarget({ prefs: PRO, history: [], today: MON, readinessLog: tired })).toMatchObject({ target: 5, note: expect.stringMatching(/vaak moe/) });
+    expect(coachTarget({ prefs: PRO, history: [], today: MON, readinessLog: tired })).toMatchObject({ target: 5, note: expect.stringMatching(/Vaak moe/) });
   });
 
   it('een les toevoegen: de dag ervoor en erna passen zich aan (nooit benen naast indoor cycling)', () => {
@@ -245,7 +245,7 @@ describe('de coach kiest: max 6 per 7 dagen, conditie en kracht elk max 4', () =
 
   it('gemist: geen inhaalrace, geen stapeling', () => {
     const p = planWeek(base({ today: D(1), originalPlan: [D(0)] }));
-    expect(p.messages.join(' ')).toMatch(/Geen inhaalrace/);
+    expect(p.messages.join(' ')).toMatch(/Het plan schuift op/);
     checkRules(p, []);
   });
 
@@ -270,7 +270,7 @@ describe('de coach kiest: max 6 per 7 dagen, conditie en kracht elk max 4', () =
     const p = planWeek(base({ prefs: { ...PRO, targetPerWeek: 4 }, availability: four }));
     expect(p.days.filter((d) => d.sweat)).toHaveLength(3);
     expect(p.days.filter((d) => d.light?.id === 'klusjes')).toHaveLength(1);
-    expect(p.messages.join(' ')).toMatch(/1 vrij moment voor klusjes/);
+    expect(p.messages.join(' ')).toMatch(/van de \d trainingen passen deze 7 dagen/);
     // Alles zelf vastgelegd (gereserveerd of gekozen): dan geen klusjesmoment opgedrongen.
     const all = planWeek(base({ prefs: PRO, availability: (d) => ({ ...std(d), want: dayIndex(d) % 2 ? 'strength' : 'cardio' }) }));
     expect(all.violations).toEqual([]);
@@ -331,7 +331,7 @@ describe('de coach denkt mee: herstel, je keuze, het weer en het waarom', () => 
     // Woensdag liever cycling, maar donderdag tennis: nooit 2 haarwasdagen na elkaar.
     const p = planWeek(base({ prefs: PRO, availability: (d) => (d === D(3) ? { ...std(d), tennis: 60 } : d === D(2) ? { ...std(d), want: 'cardio' } : std(d)) }));
     expect(p.days[2]!.type).not.toBe('cardio');
-    expect(p.messages.join(' ')).toMatch(/Je koos conditie op woensdag, maar dat past daar niet/);
+    expect(p.messages.join(' ')).toMatch(/Conditie op woensdag past niet binnen de regels/);
     expect(p.violations).toEqual([]);
   });
 
@@ -418,7 +418,7 @@ describe('14 dagen vooruit', () => {
     if (day.type === 'cardio') {
       expect(day).toMatchObject({ booked: true, groupClass: true });
       expect(day.why).toMatch(/^Gereserveerd: indoor cycling/);
-    } else expect([...booked.first.messages, ...booked.second.messages].join(' ')).toMatch(/Je reserveerde een les/);
+    } else expect([...booked.first.messages, ...booked.second.messages].join(' ')).toMatch(/Je les op \w+ past niet binnen de regels/);
   });
 });
 

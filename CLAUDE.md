@@ -35,6 +35,9 @@ Tests gebruiken verzonnen data (`e2e/seed.ts`, `FakeGitHub`).
   liefst 2× indoor cycling, de rest kracht (minstens 2×). `planTwoWeeks` plant 14 dagen: dag 8–14 is voorlopig en
   bouwt verder op dag 1–7. `booked` (gereserveerde les) werkt als een vaste keuze voor conditie. Kracht: `A`/`B` full body, `U` bovenlichaam, `L` benen & romp.
 - UI-teksten in Vlaams Nederlands, de gebruiker aanspreken met "je". Kort, direct, motiverend.
+- **Geen uitleg over de planning of de regels in de UI** (geen "geen benen na tennis", geen meldingenblok, geen `why`
+  tonen): dat is voor de coach. Uitleg hoort enkel bij de oefeningen (notities, tips, techniek). Enige meldingregel
+  bovenaan Vandaag: `adjustments.focus` van /coach.
 - Mobile-first, donker, grote tikdoelen (≥ 48 px, primaire acties ≥ 64 px). Zo weinig mogelijk typen.
 - Buiten scope: voeding, calorieën, lichaamsgewicht, metingen. Apple Health staat voorlopig uit
   (`src/coach/health.ts` en `src/data/healthInbox.ts` blijven slapend klaar; niet aanroepen).
@@ -56,7 +59,7 @@ Tests gebruiken verzonnen data (`e2e/seed.ts`, `FakeGitHub`).
   Groepsles = altijd 1 uur (`CLASS_MINUTES`), geen timer. Losse cardio (`FreeCardio`) met stopwatch in `LocalSettings.freeCardio`,
   enkel aangeboden op een geplande conditiedag.
 - Herstel (`src/coach/recovery.ts`) en sterke/werkpunten (`src/coach/insights.ts`) sturen de planner en de sessies;
-  elke geplande dag krijgt een `why`.
+  elke geplande dag krijgt een `why` (intern: tests, /coach; niet in de UI). `plan.messages` idem.
 
 ## Commando's
 

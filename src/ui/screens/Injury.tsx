@@ -30,7 +30,6 @@ export function InjuryReport() {
         <h1>Beterschap</h1>
         <div class="card coach">
           <p>{st.message}</p>
-          <p>Elke dag vraag ik even hoe het gaat. Ben je genezen, dan bouwen we rustig terug op: je eerste 2 trainingen zijn lichter.</p>
         </div>
         {st.refer && <p class="note warn">{st.referMessage}</p>}
         <p class="muted small">Ga meteen naar je huisarts bij hoge koorts, pijn op de borst of als je moeilijk ademt.</p>
@@ -56,7 +55,6 @@ export function InjuryReport() {
                 ? 'zware oefeningen worden vervangen, de rest gaat lichter.'
                 : 'de zwaarste oefeningen worden vervangen, de rest iets lichter.'}
           </p>
-          <p>Bij elke training vraag ik even hoe het gaat. Zodra het weg is, bouwen we rustig terug op: 60% → 80% → 100%.</p>
         </div>
         {ref.refer && <p class="note warn">{ref.message}</p>}
         <button class="btn primary" onClick={() => go('vandaag')}>
