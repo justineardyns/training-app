@@ -53,6 +53,16 @@ describe('dubbele progressie', () => {
     expect(p.targetReps).toBe(10);
   });
 
+  it('makkelijk gevoeld: halfweg het bereik mag het gewicht al omhoog, anders 2 reps extra', () => {
+    const up = run('db-bench', gymDb, [exp('db-bench', 10, [9, 9, 9], 'good'), exp('db-bench', 10, [10, 10, 10], 'light')]);
+    expect(up).toMatchObject({ change: 'load_up', load: 12, targetReps: 8 });
+    const reps = run('db-bench', gymDb, [exp('db-bench', 10, [8, 8, 8], 'good'), exp('db-bench', 10, [9, 9, 8], 'light')]);
+    expect(reps).toMatchObject({ change: 'reps_up', load: 10, targetReps: 10 });
+    // Grote sprong (4 → 6 kg = +50%): niet te vroeg zwaarder, wel 2 reps extra.
+    const big = run('db-bench', gymDb, [exp('db-bench', 4, [9, 9, 9], 'good'), exp('db-bench', 4, [10, 10, 10], 'light')]);
+    expect(big).toMatchObject({ load: 4, targetReps: 12 });
+  });
+
   it('gewicht omhoog als alle sets de bovengrens halen', () => {
     const p = run('db-bench', gymDb, [exp('db-bench', 10, [11, 11, 10], 'good'), exp('db-bench', 10, [12, 12, 12], 'good')]);
     expect(p.change).toBe('load_up');

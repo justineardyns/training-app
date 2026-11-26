@@ -54,6 +54,10 @@ Tests gebruiken verzonnen data (`e2e/seed.ts`, `FakeGitHub`).
   zijn nooit een vervanger voor gewone oefeningen.
 - Mijlpalen (`src/coach/milestones.ts`), opwarming (`warmupFor`), spierpijn in gradaties (`sore` = echt,
   `soreLight` = een beetje).
+- Na elke oefening één tik inspanning (`Feel`: light = makkelijk, good, hard): makkelijk halfweg het bereik → gewicht
+  omhoog (geen sprong > 25%), anders +2 reps. Pijn in de training (`PainSheet`): zone + een beetje/scherp →
+  `reportInjury` en een alternatief met `stressOn(zone) === 0` (zelfde beweging, anders rustigste voor dezelfde
+  spieren). Terug na pauze (`src/coach/comeback.ts`): ≥ 10 dagen geen kracht → eerste 2 krachtdagen `comeback` (±10%).
 - Timers (`src/coach/timer.ts`, UI in `src/ui/IntervalTimer.tsx`): cardio-opties en de afsluiter hebben `blocks`
   (opgeteld = de gekozen duur; groepsles: geen timer), `HoldTimer` voor `ex.timed` vinkt de set zelf af, `Elapsed`
   = oplopende trainingsklok. Piepjes worden vooruit gepland (`scheduleBeeps`), want iOS vertraagt JS-timers.

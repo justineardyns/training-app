@@ -84,7 +84,7 @@ test('kracht: oplopende klok, afteltimer voor de zijplank en intervaltimer voor 
   await expect(page.locator('.set').first()).toContainText(`${seconds} s`);
   await expect(page.locator('.restbar')).toBeVisible();
   await page.getByRole('button', { name: '■ Stop' }).click();
-  await page.getByRole('button', { name: /Gelukt/ }).click();
+  await page.getByRole('button', { name: 'Goed', exact: true }).click();
 
   // Afsluiter (60 min): 6× 20 s stevig / 40 s rustig, loopt zelf door.
   const card = page.locator('.card').filter({ hasText: 'Afsluiter' });
@@ -156,4 +156,34 @@ test('rustdag (ook je klusjesdag) maar je voelt je goed: toch krachttraining', a
   await page.getByRole('button', { name: /Terug naar het voorstel/ }).click();
   await expect(page.locator('.plan').first().locator('.plan-day').filter({ hasText: date })).not.toContainText('jouw keuze');
   await expect(row(0)).toBeVisible();
+});
+
+test('pijn tijdens een oefening: 2 tikken, pijnvrij alternatief, en de klacht wordt opgevolgd', async ({ page }) => {
+  await quickSetup(page);
+  await preferStrengthToday(page);
+  await page.getByRole('link', { name: /Vandaag/ }).click();
+  await page.getByRole('button', { name: /Oké/ }).click();
+  await page.getByRole('button', { name: 'Start', exact: true }).click();
+  await page.getByRole('button', { name: 'Overslaan' }).click();
+  await page.getByRole('button', { name: 'Leg press starten' }).click();
+  await page.getByRole('button', { name: 'Pijn', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Waar doet het pijn?' })).toBeVisible();
+  // De zones die deze oefening belast staan aangeduid.
+  await expect(page.locator('.sheet .chip.on')).toContainText(['Knie', 'Onderrug', 'Heup']);
+  await page.locator('.sheet').getByRole('button', { name: 'Knie', exact: true }).click();
+  await page.getByRole('button', { name: 'Een beetje' }).click();
+  await expect(page.locator('.item-name')).not.toContainText('Leg press');
+  // Het alternatief spaart je knie helemaal (geen squat of lunge).
+  await expect(page.locator('.item-name')).not.toContainText(/squat|lunge|Leg press/i);
+  await expect(page.locator('.note.warn').first()).toContainText('pijnvrij alternatief');
+  if (process.env.SHOTS_DIR) await page.screenshot({ path: `${process.env.SHOTS_DIR}/20-pijn.png`, fullPage: true });
+  // Een set en dan hoe zwaar het voelde: één tik.
+  await page.getByRole('button', { name: /^Set 1 gedaan$/ }).click();
+  await page.getByRole('button', { name: 'Overslaan', exact: true }).click();
+  await page.getByRole('button', { name: '■ Stop' }).click();
+  await page.getByRole('button', { name: 'Makkelijk' }).click();
+  await expect(page.locator('.wgroup.klaar')).toHaveCount(1);
+  // Op Vandaag volgt de coach je knie op.
+  await page.getByRole('link', { name: /Vandaag/ }).click();
+  await expect(page.getByText(/Knie/).first()).toBeVisible();
 });

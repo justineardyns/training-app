@@ -114,6 +114,8 @@ export interface SessionContext {
   focus?: StrengthFocus;
   /** Rustiger (bv. net na ziekte): 1 set minder, niet zwaarder, zonder extra uitleg. */
   gentle?: boolean;
+  /** Terug na een pauze: gewichten ±10% lichter dan je vorige werkgewicht. */
+  comeback?: boolean;
   /** Tennis-extra: schouders en romp voor je slagen (af en toe). */
   tennisExtra?: boolean;
   /** Krachtcheck: laatste set op de hoofdoefeningen zoveel mogelijk goede reps. */
@@ -250,6 +252,11 @@ export function buildPrescription(ex: Exercise, role: Role, ctx: SessionContext,
     const last = r.history.at(-1);
     p = lighterPrescription(p, last ? snapLoad(workingLoad(last.log), r.options, 'down') : undefined);
     if (ctx.readiness !== 'orange' && ctx.readiness !== 'red') p = { ...p, note: '1 set minder en niet zwaarder dan vorige keer.' };
+  }
+  if (ctx.comeback && p.load > 0 && !ctx.deload) {
+    const last = r.history.at(-1);
+    const base = last ? Math.min(p.load, workingLoad(last.log)) : p.load;
+    p = { ...p, load: snapLoad(base * 0.9, r.options, 'down'), targetReps: p.repRange[0], change: 'lighter', note: 'Terug na je pauze: ±10% lichter. Zo bouw je veilig terug op.' };
   }
   return { exercise: r.e, prescription: p, options: r.options };
 }

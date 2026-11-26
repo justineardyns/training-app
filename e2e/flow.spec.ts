@@ -82,7 +82,7 @@ test('eerste opstart → plannen → trainen → bewaren', async ({ page }) => {
   await page.getByRole('button', { name: 'Overslaan', exact: true }).click();
   while ((await checks.count()) > 0) await checks.first().click();
   await snap(page, '05b-gelukt');
-  await page.getByRole('button', { name: /Gelukt/ }).click();
+  await page.getByRole('button', { name: 'Goed', exact: true }).click();
   // Dicht en afgevinkt; de volgende staat klaar.
   await expect(page.locator('.item-name')).toHaveCount(0);
   await expect(page.locator('.wgroup.klaar')).toContainText('Leg press');
@@ -111,7 +111,7 @@ test('eerste opstart → plannen → trainen → bewaren', async ({ page }) => {
   await page.getByRole('button', { name: 'Overslaan', exact: true }).click();
   await snap(page, '08-training');
   await page.getByRole('button', { name: '■ Stop' }).click();
-  await page.getByRole('button', { name: /Gelukt/ }).click();
+  await page.getByRole('button', { name: 'Goed', exact: true }).click();
   await expect(page.locator('.wgroup.klaar')).toHaveCount(3);
 
   // Stoppen en bewaren

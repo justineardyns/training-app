@@ -1,4 +1,5 @@
 import { classSlotFor, classSlotOn, DEFAULT_CLASS_SLOTS, defaultDay, isWeekend, resolveDay } from './availability.ts';
+import { comebackLeft } from './comeback.ts';
 import { addDays, DAY_SHORT, dayIndex, dayName, diffDays, weekStart } from './dates.ts';
 import { decideDeload, type DeloadDecision } from './deload.ts';
 import { chooseLight, LIGHT, type LightActivity } from './light.ts';
@@ -78,6 +79,8 @@ export interface PlannedDay {
   provisional?: boolean;
   /** Rustiger zonder uitleg (net na ziekte). */
   gentle?: boolean;
+  /** Terug na een pauze (10+ dagen geen kracht): ±10% lichter. */
+  comeback?: boolean;
   /** Droogste dag van de week, maar je traint: wandelen als extraatje. */
   walkExtra?: WalkAdvice;
   /** Krachttraining met tennis-extra (schouders en romp), ±1× per week. */
@@ -582,6 +585,8 @@ export function planWeek(input: PlanInput): WeekPlan {
   };
 
   const result: PlannedDay[] = [];
+  // Terug na een pauze: de eerste krachttrainingen zijn lichter.
+  let comebackN = comebackLeft(input.history, start);
   for (const d of days) {
     const prev = result.at(-1);
     const prevStrength = prev?.type === 'strength' || (prev === undefined && sweat.some((s) => s.date === addDays(d, -1) && s.kind === 'strength'));
@@ -640,10 +645,12 @@ export function planWeek(input: PlanInput): WeekPlan {
                   ? `${templateTitle(t)}: morgen ${split === 'upper' ? 'benen' : 'bovenlichaam'}.`
                   : '';
         const kindWhy = a.want === 'strength' ? 'Jouw keuze: kracht.' : '';
+        const comeback = comebackN > 0;
+        if (comeback) comebackN--;
         result.push({
           date: d, type: 'strength', sweat: true, status: 'planned', template: t, location: r.location, minutes: a.minutes, slot: r.slot,
           title: `${templateTitle(t)} · ${LOC[r.location]} · ${a.minutes} min${deload.deload ? ' · deload' : ''}`, lighter, deload: deload.deload,
-          focus, split, classSlot: !!cls, want: a.want, weather, gentle: illLighter,
+          focus, split, classSlot: !!cls, want: a.want, weather, gentle: illLighter, ...(comeback ? { comeback } : {}),
           why: [kindWhy, splitWhy, focus.why ?? (splitWhy ? '' : sinceText(d))].filter(Boolean).join(' '),
         });
       } else {

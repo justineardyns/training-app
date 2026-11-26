@@ -493,6 +493,7 @@ export class Store {
         gym: profile.gym,
         readiness: day.date === this.today() ? readiness : undefined,
         gentle: !!day.gentle,
+        comeback: !!day.comeback,
         tennisExtra: !!day.tennisExtra,
         check: !!day.check,
         deload: day.deload,

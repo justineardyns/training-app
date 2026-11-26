@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { alternativesFor, getExercise, videoUrl } from '../../coach/catalog.ts';
-import { acceptableFor } from '../../coach/injury.ts';
+import { alternativesFor, EXERCISES, getExercise, stressOn, videoUrl } from '../../coach/catalog.ts';
+import { MUSCLE_GROUP } from '../../coach/recovery.ts';
+import { acceptableFor, ZONE_LABEL } from '../../coach/injury.ts';
+import { reportInjury } from '../../data/injuries.ts';
 import { formatLoad, isAvailable } from '../../coach/loads.ts';
 import { activeAdjustments } from '../../coach/planner.ts';
 import { buildPrescription, templateTitle, warmupFor, type SessionContext } from '../../coach/session.ts';
-import type { Feel } from '../../coach/types.ts';
+import type { Exercise, Feel, Zone } from '../../coach/types.ts';
 import { weekStart } from '../../coach/dates.ts';
 import { defaultProfile, store } from '../../data/store.ts';
 import {
@@ -169,6 +171,81 @@ function Warmup(props: { w: WorkoutState }) {
   );
 }
 
+/** Na een oefening: één tik, hoe zwaar het voelde. Daarop bepaalt de coach je volgende keer. */
+function EffortRow(props: { onPick: (f: Feel) => void }) {
+  return (
+    <div class="row effort">
+      {([['light', 'Makkelijk'], ['good', 'Goed'], ['hard', 'Zwaar']] as [Feel, string][]).map(([f, label]) => (
+        <button key={f} class={`btn ${f === 'good' ? 'primary' : ''}`} onClick={() => props.onPick(f)}>
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** Pijn tijdens een oefening: waar (2 tikken), dan stopt ze en krijg je een pijnvrij alternatief. */
+function PainSheet(props: { open: boolean; onClose: () => void; w: WorkoutState; i: number }) {
+  const { w, i } = props;
+  const it = w.items[i]!;
+  const ex = getExercise(it.exerciseId);
+  const [zone, setZone] = useState<Zone | null>(null);
+  const likely = (Object.keys(ex.stress) as Zone[]).filter((z) => (ex.stress[z] ?? 0) > 0);
+  const zones = [...likely, ...(Object.keys(ZONE_LABEL) as Zone[]).filter((z) => !likely.includes(z))];
+  const close = () => {
+    setZone(null);
+    props.onClose();
+  };
+  const report = async (sharp: boolean) => {
+    if (!zone) return;
+    cancelBeep();
+    await reportInjury(store, zone, sharp ? 2 : 1, sharp);
+    const profile = store.profile() ?? defaultProfile();
+    const remaining = Math.max(1, it.sets.filter((s) => !s.done).length);
+    // Een alternatief dat die zone helemaal spaart: eerst dezelfde beweging, anders iets voor dezelfde spieren.
+    const inWorkout = new Set(w.items.map((x) => x.exerciseId));
+    const group = MUSCLE_GROUP[ex.muscles[0]!];
+    const fits = (a: Exercise) =>
+      !inWorkout.has(a.id) && !a.prehab && stressOn(a, zone) === 0 && isAvailable(a, w.location, profile.equipment, profile.gym) && acceptableFor(a, store.injuries());
+    // Anders: rustigste oefening voor dezelfde spieren (geen explosieve conditie-oefening), liefst een nieuwe beweging.
+    const patterns = new Set(w.items.map((x) => getExercise(x.exerciseId).pattern));
+    const load = (a: Exercise) => Object.values(a.stress).reduce((n, v) => n + (v ?? 0), 0);
+    const sameGroup = [...EXERCISES.values()]
+      .filter((a) => a.pattern !== 'conditioning' && a.locations.includes(w.location) && MUSCLE_GROUP[a.muscles[0]!] === group && fits(a))
+      .sort((a, b) => load(a) - load(b) || Number(patterns.has(a.pattern)) - Number(patterns.has(b.pattern)));
+    const alt = alternativesFor(ex.id, w.location).find(fits) ?? sameGroup[0];
+    if (alt && it.sets.some((s) => !s.done)) {
+      const planned = { ...buildPrescription(alt, it.role, ctxFor(w), remaining), role: it.role };
+      act((cur) => swapItem(cur, i, { ...planned, injuryNote: `Pijn bij ${ex.name.toLowerCase()}: dit is een pijnvrij alternatief. Doet het ook hier pijn, stop dan.` }));
+    } else {
+      act((cur) => stopItem(cur, i, Date.now()));
+    }
+    close();
+  };
+  return (
+    <Sheet open={props.open} onClose={close} title={zone ? 'Hoe?' : 'Waar doet het pijn?'}>
+      {!zone ? (
+        <div class="chips wrap">
+          {zones.map((z) => (
+            <button key={z} class={`chip ${likely.includes(z) ? 'on' : ''}`} onClick={() => setZone(z)}>
+              {ZONE_LABEL[z]}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div class="row">
+          <button class="btn" onClick={() => report(false)}>
+            Een beetje
+          </button>
+          <button class="btn danger" onClick={() => report(true)}>
+            Scherp
+          </button>
+        </div>
+      )}
+    </Sheet>
+  );
+}
+
 function ItemCard(props: { w: WorkoutState; i: number }) {
   const { w, i } = props;
   const it: WorkoutItem = w.items[i]!;
@@ -179,6 +256,7 @@ function ItemCard(props: { w: WorkoutState; i: number }) {
   const [other, setOther] = useState<'more' | 'less' | null>(null);
   const [wheel, setWheel] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [pain, setPain] = useState(false);
   /** Set waarvan de afteltimer loopt (oefeningen op tijd). */
   const [hold, setHold] = useState<number | null>(null);
   const profile = store.profile() ?? defaultProfile();
@@ -272,25 +350,17 @@ function ItemCard(props: { w: WorkoutState; i: number }) {
 
       {askFeel && ex.load === 'bodyweight' && (
         <div class="feel">
-          <h3>Hoe ging het?</h3>
-          <div class="row">
-            {([['good', '✓ Gelukt'], ['light', 'Te makkelijk'], ['hard', 'Te zwaar']] as [Feel, string][]).map(([f, label]) => (
-              <button key={f} class={`btn ${f === 'good' ? 'primary' : ''}`} onClick={() => { cancelBeep(); act((cur) => finishItem(cur, i, f)); }}>
-                {label}
-              </button>
-            ))}
-          </div>
+          <h3>Hoe voelde het?</h3>
+          <EffortRow onPick={(f) => { cancelBeep(); act((cur) => finishItem(cur, i, f)); }} />
         </div>
       )}
 
       {askFeel && ex.load !== 'bodyweight' && (
         <div class="feel">
-          <h3>Hoe ging het met {formatLoad(ex, it.sets[0]?.load ?? p.load)}?</h3>
+          <h3>Hoe voelde {formatLoad(ex, it.sets[0]?.load ?? p.load)}?</h3>
           {other === null ? (
             <div class="stack">
-              <button class="btn primary" onClick={() => { cancelBeep(); act((cur) => finishItem(cur, i, 'good')); }}>
-                ✓ Gelukt
-              </button>
+              <EffortRow onPick={(f) => { cancelBeep(); act((cur) => finishItem(cur, i, f)); }} />
               <div class="row">
                 <button class="btn" onClick={() => setOther('more')}>⬆ Ik nam meer</button>
                 <button class="btn" onClick={() => setOther('less')}>⬇ Ik nam minder</button>
@@ -323,6 +393,9 @@ function ItemCard(props: { w: WorkoutState; i: number }) {
         </button>
         <button class="btn small" onClick={() => act((cur) => addSet(cur, i))}>
           + set
+        </button>
+        <button class="btn small" onClick={() => setPain(true)}>
+          Pijn
         </button>
       </div>
       {tips && (
@@ -361,6 +434,7 @@ function ItemCard(props: { w: WorkoutState; i: number }) {
         onClose={() => setWheel(false)}
       />
 
+      <PainSheet open={pain} onClose={() => setPain(false)} w={w} i={i} />
       <Sheet open={busy} onClose={() => setBusy(false)} title="Kies een alternatief">
         <div class="stack">
           {alternatives.map((a) => (

@@ -170,4 +170,12 @@ describe('lopende training', () => {
     expect(w.items[0]!.clock).toEqual({ ms: 60_000 });
     expect(toSessionLog(w, new Date('2026-11-23T18:30:00Z')).exercises).toHaveLength(1);
   });
+
+  it('wisselen na een gedane set: klok van het afgewerkte deel stopt, het alternatief loopt verder', () => {
+    let w = completeSet(startItem(start(), 0, 0), 0, 0, 1_000);
+    const alt = buildPrescription(getExercise('hack-squat'), 'main', ctx());
+    w = swapItem(w, 0, { ...alt, role: 'main' }, 60_000);
+    expect(w.items[0]!.clock).toEqual({ ms: 60_000 });
+    expect(w.items[1]!.clock).toEqual({ ms: 0, since: 60_000 });
+  });
 });

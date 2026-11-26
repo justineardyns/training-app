@@ -250,8 +250,17 @@ export function nextPrescription(input: ProgressionInput): ProgressionResult {
     });
   }
 
-  // Binnen het bereik: één rep meer per set (of vasthouden als het zwaar was).
-  const target = feel === 'hard' ? Math.max(lo, minReps) : Math.min(hiEff, Math.max(lo, minReps + 1));
+  // Makkelijk gevoeld en alle sets minstens halfweg het bereik: het gewicht mag al omhoog (geen grote sprong).
+  if (feel === 'light' && allSetsDone && ex.load !== 'bodyweight' && !capped && minReps >= Math.ceil((lo + hiEff) / 2)) {
+    const next = stepLoad(wl, options, 1);
+    if (next !== null && (next - wl) / Math.max(wl, 1) <= 0.25) {
+      const r = loadUp(1, 'Vorige keer makkelijk.');
+      if (r) return r;
+    }
+  }
+
+  // Binnen het bereik: één rep meer per set (twee als het makkelijk was, vasthouden als het zwaar was).
+  const target = feel === 'hard' ? Math.max(lo, minReps) : Math.min(hiEff, Math.max(lo, minReps + (feel === 'light' ? 2 : 1)));
   return make({
     load: wl,
     stage: prevStage,

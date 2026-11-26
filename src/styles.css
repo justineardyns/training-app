@@ -539,3 +539,4 @@ p.why { font-size: 15px; margin: 4px 0 10px; }
 .wactive .elapsed { font-size: 22px; }
 .wactive .muted { flex: 1; }
 .free-cardio h3 { margin-top: 0; }
+.row.effort .btn { padding: 12px 6px; font-size: 18px; }

@@ -14,8 +14,11 @@ Werkt offline in de gym, draait puur op jouw tikken en kost **€ 0**.
   - **Losse cardio:** liever buiten lopen of fietsen (of roeien in Jims) in plaats van de les? Stopwatch met
     Start, Pauze en *Stop en bewaar*; blijft lopen als je scherm uitgaat of de app herstart. Telt als conditie.
 - **Trainen (in Jims):** de app stelt per oefening een startgewicht en reps voor, per set één tik ✓,
-  rusttimer start vanzelf. Na de oefening één tik: *Gelukt*, *Ik nam meer* of *Ik nam minder*
-  (met het gewicht dat je nam). Daarmee bepaalt de app je volgende gewicht. "Toestel bezet",
+  rusttimer start vanzelf. Na de oefening één tik: hoe voelde het, *Makkelijk*, *Goed* of *Zwaar* (of *Ik nam
+  meer/minder* met het gewicht dat je nam). Makkelijk = sneller zwaarder, zwaar = eerst proper afwerken.
+  **Pijn** tijdens een oefening: waar en hoe (2 tikken), de oefening stopt en je krijgt een alternatief dat die
+  plek spaart; de coach volgt het op. **Terug na een pauze** (10+ dagen geen kracht): je eerste 2 trainingen
+  zijn ±10% lichter. "Toestel bezet",
   **foto's van elke oefening en elk toestel** (start- en eindpositie, ook offline), techniektips en uitlegvideo.
 - **Absolute beginner:** lichte start, de eerste 2 keer per oefening max 2 sets om de beweging te leren,
   in Jims eerst de toestellen.

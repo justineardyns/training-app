@@ -254,14 +254,16 @@ export function isFinished(w: WorkoutState): boolean {
  * "Toestel bezet": wissel naar een alternatief. Al gedane sets blijven bij de oorspronkelijke
  * oefening; de resterende sets gaan naar het alternatief.
  */
-export function swapItem(w: WorkoutState, i: number, alt: PlannedExercise): WorkoutState {
-  const it = w.items[i]!;
+export function swapItem(w: WorkoutState, i: number, alt: PlannedExercise, now = Date.now()): WorkoutState {
+  const it = pauseClock(w.items[i]!, now);
   const doneSets = it.sets.filter((s) => s.done);
   const remaining = it.sets.length - doneSets.length;
   const replacement: WorkoutItem = {
     ...itemFromPlanned(alt),
     superset: it.superset,
     swappedFrom: it.exerciseId,
+    // Het alternatief loopt meteen verder als de oefening open stond.
+    ...(w.items[i]!.clock?.since !== undefined ? { clock: { ms: 0, since: now } } : {}),
   };
   replacement.sets = Array.from({ length: Math.max(1, remaining) }, () => ({
     load: alt.prescription.load,
