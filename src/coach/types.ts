@@ -232,6 +232,8 @@ export interface SessionLog {
   workoutType?: string;
   /** Gekoppelde Watch-workout (voorkomt dubbel tellen). */
   workoutId?: string;
+  /** Conditietest: 1 km roeien, in seconden. */
+  rowTest?: number;
 }
 
 export interface DayAvailability {

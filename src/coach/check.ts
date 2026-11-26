@@ -30,6 +30,24 @@ export interface StrengthCheck {
   change?: number;
 }
 
+export interface RowTest {
+  date: ISODate;
+  seconds: number;
+  /** Seconden sneller dan de vorige test (negatief = trager). */
+  faster?: number;
+}
+
+/** Conditietests (1 km roeien), nieuwste eerst. */
+export function rowTests(history: SessionLog[]): RowTest[] {
+  const out: RowTest[] = [];
+  let prev: number | undefined;
+  for (const s of [...history].filter((x) => x.rowTest).sort((a, b) => (a.date < b.date ? -1 : 1))) {
+    out.push({ date: s.date, seconds: s.rowTest!, ...(prev !== undefined ? { faster: prev - s.rowTest! } : {}) });
+    prev = s.rowTest;
+  }
+  return out.reverse();
+}
+
 /** Alle krachtchecks, nieuwste eerst. */
 export function strengthChecks(history: SessionLog[]): StrengthCheck[] {
   const byWeek = new Map<string, StrengthCheck>();

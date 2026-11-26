@@ -76,6 +76,8 @@ test('eerste opstart → plannen → trainen → bewaren', async ({ page }) => {
   await expect(page.locator('.wactive .elapsed')).toHaveText(/^⏱ \d+:\d\d$/);
   const checks = page.getByRole('button', { name: /^Set \d gedaan$/ });
   await expect(page.locator('.load-banner')).toContainText('Startvoorstel');
+  // Opwarmsets op maat bij je eerste hoofdoefening.
+  await expect(page.locator('.ramp')).toContainText(/Eerst opwarmen: 8 × \d+ kg · 4 × \d+ kg/);
   await checks.first().click();
   await expect(page.locator('.restbar')).toBeVisible();
   await snap(page, '05-rust');

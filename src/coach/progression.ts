@@ -275,6 +275,20 @@ export function nextPrescription(input: ProgressionInput): ProgressionResult {
   });
 }
 
+/**
+ * Opwarmsets op maat voor een hoofdoefening: 8 reps aan ±50% en 4 reps aan ±75% van je werkgewicht
+ * (enkel gewichten die bestaan, en niet als het werkgewicht al heel licht is).
+ */
+export function rampSets(load: number, options: number[]): { load: number; reps: number }[] {
+  if (load <= 0 || options.length === 0 || load * 0.5 < options[0]! - 1e-9) return [];
+  const out: { load: number; reps: number }[] = [];
+  for (const [f, reps] of [[0.5, 8], [0.75, 4]] as const) {
+    const l = snapLoad(load * f, options, 'down');
+    if (l > 0 && l < load - 1e-9 && !out.some((x) => x.load === l)) out.push({ load: l, reps });
+  }
+  return out;
+}
+
 /** Deload-versie: helft van de sets, ±10% lichter, geen progressie. */
 export function deloadPrescription(p: Prescription, options: number[]): Prescription {
   const load = p.load > 0 ? snapLoad(p.load * 0.9, options, 'down') : 0;

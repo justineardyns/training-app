@@ -120,6 +120,10 @@ export interface SessionContext {
   tennisExtra?: boolean;
   /** Krachtcheck: laatste set op de hoofdoefeningen zoveel mogelijk goede reps. */
   check?: boolean;
+  /** Conditietest (1 km roeien) aan het einde, in de plaats van de afsluiter. */
+  rowTest?: boolean;
+  /** Trainingsblok (aantal lichtere weken achter de rug): vanaf blok 2 wisselen de hulpoefeningen per blok. */
+  block?: number;
 }
 
 export interface PlannedExercise {
@@ -149,6 +153,8 @@ export interface StrengthSession {
   warmup: string[];
   exercises: PlannedExercise[];
   finisher?: { title: string; steps: string[]; blocks?: TimerBlock[] };
+  /** Conditietest aan het einde (1 km roeien op tijd). */
+  rowTest?: boolean;
   estimatedMinutes: number;
   notes: string[];
 }
@@ -180,9 +186,14 @@ function currentVariant(defaultId: string, ctx: SessionContext): string {
   return best;
 }
 
+/** Vanaf het 2de blok (na 2 lichtere weken) wisselen de hulpoefeningen per blok; hoofdoefeningen blijven. */
+export const ROTATE_FROM_BLOCK = 2;
+
 function pickForSlot(slot: Slot, ctx: SessionContext, used: Set<string>): Exercise | undefined {
   const gym = ctx.gym ?? DEFAULT_GYM;
-  const list = ctx.location === 'gym' && ctx.beginner && slot.beginnerGym ? slot.beginnerGym : slot[ctx.location];
+  const base = ctx.location === 'gym' && ctx.beginner && slot.beginnerGym ? slot.beginnerGym : slot[ctx.location];
+  const rot = slot.role !== 'main' && (ctx.block ?? 0) >= ROTATE_FROM_BLOCK ? (ctx.block ?? 0) % base.length : 0;
+  const list = [...base.slice(rot), ...base.slice(0, rot)];
   for (const id of list) {
     let pick = id;
     const swap = ctx.adjustments?.swaps?.find((s) => s.from === id);
@@ -407,7 +418,8 @@ export function buildStrengthSession(ctx: SessionContext): StrengthSession {
     deload: !!ctx.deload,
     warmup,
     exercises: planned,
-    finisher,
+    finisher: ctx.rowTest ? undefined : finisher,
+    ...(ctx.rowTest ? { rowTest: true } : {}),
     estimatedMinutes: Math.ceil((estimateSeconds(planned, vol.superset) + (finisher ? finisherSec : 0)) / 60),
     notes,
   };

@@ -1,4 +1,5 @@
-import { addDays, isoWeek, todayIn } from '../coach/dates.ts';
+import { addDays, diffDays, isoWeek, todayIn } from '../coach/dates.ts';
+import { trainingBlock } from '../coach/deload.ts';
 import { defaultDay, resolveDay } from '../coach/availability.ts';
 import { DEFAULT_GYM, DEFAULT_HOME, formatLoad } from '../coach/loads.ts';
 import {
@@ -24,7 +25,7 @@ import { isWeekend } from '../coach/availability.ts';
 import type { DayWeather } from '../coach/weather.ts';
 import { illnessState, type Illness, type IllnessState } from '../coach/illness.ts';
 import { milestones, type Milestone } from '../coach/milestones.ts';
-import { strengthChecks, type StrengthCheck } from '../coach/check.ts';
+import { rowTests, strengthChecks, type RowTest, type StrengthCheck } from '../coach/check.ts';
 import { DEFAULT_WEEK_GOAL, goalProgress, goalReachedOn, suggestGoals, type Goal, type WeekGoal } from '../coach/goals.ts';
 import { getExercise } from '../coach/catalog.ts';
 import type {
@@ -421,6 +422,10 @@ export class Store {
     await this.saveProfile({ ...p, prefs: { ...p.prefs, weekGoal: goal } });
   }
 
+  rowTests(): RowTest[] {
+    return this.cached('rowTests', () => rowTests(this.sessions()));
+  }
+
   milestones(): Milestone[] {
     return this.cached('milestones', () => {
       const reached: Milestone[] = this.goalStatus()
@@ -432,7 +437,10 @@ export class Store {
           text: 'Zelf gekozen, zelf gehaald. Kies je volgende doel in Rapport.',
           date: reachedOn!,
         }));
-      const extra: Milestone[] = [...reached, ...this.checksStrength()
+      const rows: Milestone[] = this.rowTests()
+        .filter((r) => (r.faster ?? 0) > 0)
+        .map((r) => ({ id: `roeitest-${r.date}`, icon: '🚣', title: `Conditietest: ${r.faster} s sneller`, text: 'Je conditie gaat zichtbaar vooruit.', date: r.date }));
+      const extra: Milestone[] = [...reached, ...rows, ...this.checksStrength()
         .filter((c) => c.change !== undefined && c.change > 0)
         .map((c) => ({
           id: `krachtcheck-${c.week}`,
@@ -546,6 +554,9 @@ export class Store {
         comeback: !!day.comeback,
         tennisExtra: !!day.tennisExtra,
         check: !!day.check,
+        // Conditietest: in de krachtcheck-week, één keer (niet als je er de laatste 3 weken al een deed).
+        rowTest: !!day.check && !this.sessions().some((x) => x.rowTest && diffDays(day.date, x.date) < 21),
+        block: trainingBlock(this.sessions()),
         deload: day.deload,
         injuries: this.injuries(),
         adjustments: activeAdjustments(this.adjustments(), day.date),

@@ -46,6 +46,9 @@ export interface WorkoutState {
   warmupDone?: boolean;
   /** Korte melding bovenaan (bv. 🏆 nieuw record). */
   toast?: { text: string; at: number };
+  /** Conditietest (1 km roeien) in deze training: stopwatch en resultaat. */
+  rowTestDue?: boolean;
+  rowTest?: { since?: number; seconds?: number };
 }
 
 export function itemFromPlanned(p: PlannedExercise): WorkoutItem {
@@ -74,6 +77,7 @@ export function startWorkout(s: StrengthSession, meta: { id: string; now: Date; 
     items: s.exercises.map(itemFromPlanned),
     index: 0,
     finisher: s.finisher,
+    ...(s.rowTest ? { rowTestDue: true } : {}),
   };
 }
 
@@ -293,6 +297,7 @@ export function toSessionLog(w: WorkoutState, endedAt: Date): SessionLog {
     source: 'app',
     title: templateTitle(w.template),
     durationMin: Math.round((endedAt.getTime() - new Date(w.startedAt).getTime()) / 60000),
+    ...(w.rowTest?.seconds ? { rowTest: w.rowTest.seconds } : {}),
     exercises: w.items
       .filter((it) => it.sets.some((s) => s.done))
       .map((it) => ({

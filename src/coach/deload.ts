@@ -22,6 +22,11 @@ export interface DeloadInput {
   adjustments?: CoachAdjustments;
 }
 
+/** Trainingsblok: hoeveel lichtere weken je al achter de rug hebt. */
+export function trainingBlock(history: SessionLog[]): number {
+  return new Set(history.filter((s) => s.deload).map((s) => isoWeek(s.date))).size;
+}
+
 const MESSAGES: Record<DeloadReason, string> = {
   ritme: 'Lichtere week na 5 weken opbouwen.',
   stagnatie: 'Lichtere week: je kracht stond even stil.',

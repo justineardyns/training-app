@@ -7,6 +7,7 @@ import { currentPlace, placeOf, refreshWeather, setWeatherPlace } from '../../da
 import { Chips, Sheet } from '../components.tsx';
 import { getExercise } from '../../coach/catalog.ts';
 import { formatLoad } from '../../coach/loads.ts';
+import { clock } from '../../coach/timer.ts';
 import { weekGoalProgress, weekGoalStreak, type Goal } from '../../coach/goals.ts';
 import { nextMilestone } from '../../coach/milestones.ts';
 import { useStore } from '../hooks.ts';
@@ -216,8 +217,23 @@ export function MilestonesList() {
 export function StrengthCheckCard() {
   const s = useStore();
   const checks = s.checksStrength();
+  const row = s.rowTests()[0];
   const nf = new Intl.NumberFormat('nl-BE', { maximumFractionDigits: 1 });
-  if (checks.length === 0) return null;
+  if (checks.length === 0 && !row) return null;
+  const rowLine = row && (
+    <p>
+      🚣 1 km roeien: <strong>{clock(row.seconds)}</strong>
+      {row.faster !== undefined && <span class="muted small"> ({row.faster >= 0 ? `${row.faster} s sneller` : `${-row.faster} s trager`})</span>}
+    </p>
+  );
+  if (checks.length === 0) {
+    return (
+      <div class="card">
+        <h3>Krachtcheck</h3>
+        {rowLine}
+      </div>
+    );
+  }
   const c = checks[0]!;
   return (
     <div class="card">
@@ -242,6 +258,7 @@ export function StrengthCheckCard() {
           </li>
         ))}
       </ul>
+      {rowLine}
     </div>
   );
 }

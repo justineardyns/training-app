@@ -7,6 +7,7 @@ import { formatLoad, isAvailable } from '../../coach/loads.ts';
 import { activeAdjustments } from '../../coach/planner.ts';
 import { buildPrescription, templateTitle, warmupFor, type SessionContext } from '../../coach/session.ts';
 import { isRecord } from '../../coach/goals.ts';
+import { rampSets } from '../../coach/progression.ts';
 import type { Exercise, Feel, Zone } from '../../coach/types.ts';
 import { weekStart } from '../../coach/dates.ts';
 import { defaultProfile, store } from '../../data/store.ts';
@@ -158,7 +159,6 @@ function Warmup(props: { w: WorkoutState }) {
             </li>
           ))}
         </ol>
-        <p class="muted small">Daarna 1–2 lichte opwarmsets van je eerste oefening.</p>
         <button class="btn primary huge" onClick={() => go(0)}>
           Start opwarming
         </button>
@@ -281,6 +281,10 @@ function ItemCard(props: { w: WorkoutState; i: number }) {
   const [hold, setHold] = useState<number | null>(null);
   const profile = store.profile() ?? defaultProfile();
   const allDone = it.sets.every((s) => s.done);
+  // Opwarmsets op maat: bij je eerste hoofdoefening voor benen en voor bovenlijf, zolang je nog niet begon.
+  const region = (id: string) => (MUSCLE_GROUP[getExercise(id).muscles[0]!] === 'benen' ? 'benen' : 'boven');
+  const warmedUp = w.items.some((o, j) => j !== i && o.role === 'main' && region(o.exerciseId) === region(it.exerciseId) && o.sets.some((x) => x.done));
+  const ramp = it.role === 'main' && ex.load !== 'bodyweight' && !it.sets.some((x) => x.done) && !warmedUp ? rampSets(it.sets[0]?.load ?? p.load, it.options) : [];
   /** Vraag "hoe ging het?": na de laatste set, of na ■ Stop als je al sets deed. */
   const askFeel = !it.feel && (allDone || (!!it.stopped && it.sets.some((s) => s.done)));
   const current = it.sets[0]?.load ?? p.load;
@@ -340,6 +344,11 @@ function ItemCard(props: { w: WorkoutState; i: number }) {
         </p>
       )}
 
+      {ramp.length > 0 && (
+        <p class="ramp">
+          Eerst opwarmen: {ramp.map((r) => `${r.reps} × ${formatLoad(ex, r.load)}`).join(' · ')}
+        </p>
+      )}
       <div class="sets">
         {it.sets.map((s, k) => (
           <div key={k} class={`set noload ${s.done ? 'done' : ''}`}>
@@ -601,6 +610,41 @@ function Group(props: { w: WorkoutState; g: number[]; next: boolean; quiet: bool
   );
 }
 
+/** Conditietest (krachtcheck-week): 1 km roeien op tijd, met een stopwatch. */
+function RowTestCard(props: { w: WorkoutState }) {
+  const t = props.w.rowTest;
+  const running = t?.since !== undefined && t.seconds === undefined;
+  useNow(500, running);
+  const prev = store.rowTests()[0];
+  const sec = t?.seconds ?? (running ? (Date.now() - t!.since!) / 1000 : 0);
+  const diff = t?.seconds !== undefined && prev ? prev.seconds - t.seconds : undefined;
+  return (
+    <section class="card rowtest">
+      <h3>🚣 Conditietest: 1 km roeien</h3>
+      {!t && <p class="muted small">Zo snel als het goed voelt.{prev ? ` Vorige keer: ${clock(prev.seconds)}.` : ''}</p>}
+      <p class="itimer-time">{clock(sec)}</p>
+      {t?.seconds !== undefined ? (
+        <>
+          <p class="center">
+            {diff === undefined ? 'Je eerste meting.' : diff > 0 ? `${diff} s sneller dan vorige keer 💪` : diff < 0 ? `${-diff} s trager dan vorige keer` : 'Even snel als vorige keer.'}
+          </p>
+          <button class="btn ghost small" onClick={() => act((cur) => ({ ...cur, rowTest: undefined }))}>
+            Opnieuw
+          </button>
+        </>
+      ) : running ? (
+        <button class="btn primary" onClick={() => act((cur) => ({ ...cur, rowTest: { since: cur.rowTest?.since, seconds: Math.round((Date.now() - (cur.rowTest?.since ?? Date.now())) / 1000) } }))}>
+          ■ Klaar: 1 km
+        </button>
+      ) : (
+        <button class="btn primary" onClick={() => act((cur) => ({ ...cur, rowTest: { since: Date.now() } }))}>
+          ▶ Start
+        </button>
+      )}
+    </section>
+  );
+}
+
 /** Je hele training als lijst: per oefening ▶ Start en ■ Stop, in de volgorde die jij wil. */
 export function Workout() {
   const s = useStore();
@@ -642,6 +686,8 @@ export function Workout() {
           <Group key={`${g[0]}-${w.items[g[0]!]!.exerciseId}`} w={w} g={g} next={g === next} quiet={warmup} />
         ))}
       </ol>
+
+      {w.rowTestDue && <RowTestCard w={w} />}
 
       {finisher && (
         <section class="card">
