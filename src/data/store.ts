@@ -1,6 +1,6 @@
 import { addDays, isoWeek, todayIn } from '../coach/dates.ts';
 import { defaultDay, resolveDay } from '../coach/availability.ts';
-import { DEFAULT_GYM, DEFAULT_HOME } from '../coach/loads.ts';
+import { DEFAULT_GYM, DEFAULT_HOME, formatLoad } from '../coach/loads.ts';
 import {
   activeAdjustments,
   coachTarget,
@@ -25,6 +25,8 @@ import type { DayWeather } from '../coach/weather.ts';
 import { illnessState, type Illness, type IllnessState } from '../coach/illness.ts';
 import { milestones, type Milestone } from '../coach/milestones.ts';
 import { strengthChecks, type StrengthCheck } from '../coach/check.ts';
+import { DEFAULT_WEEK_GOAL, goalProgress, goalReachedOn, suggestGoals, type Goal, type WeekGoal } from '../coach/goals.ts';
+import { getExercise } from '../coach/catalog.ts';
 import type {
   CoachAdjustments,
   DayAvailability,
@@ -380,9 +382,57 @@ export class Store {
   }
 
   /** Mijlpalen, nieuwste eerst (met je krachtchecks erbij). */
+  // ── Doelen ───────────────────────────────────────────────────────────
+  weekGoal(): WeekGoal {
+    return this.prefs().weekGoal ?? DEFAULT_WEEK_GOAL;
+  }
+
+  goals(): Goal[] {
+    return this.profile()?.goals ?? [];
+  }
+
+  /** Lopende doelen (nog niet gehaald) en gehaalde, met datum. */
+  goalStatus(): { goal: Goal; reachedOn?: ISODate; progress: number }[] {
+    return this.cached('goalStatus', () =>
+      this.goals().map((goal) => ({ goal, reachedOn: goalReachedOn(goal, this.sessions()), progress: goalProgress(goal, this.sessions()) })),
+    );
+  }
+
+  goalSuggestions(): Omit<Goal, 'id'>[] {
+    const active = this.goalStatus().filter((g) => !g.reachedOn).map((g) => g.goal);
+    return active.length >= 3 ? [] : suggestGoals(this.sessions(), active, this.today()).slice(0, 3 - active.length);
+  }
+
+  async addGoal(g: Omit<Goal, 'id'>): Promise<void> {
+    const p = this.profile();
+    if (!p) return;
+    await this.saveProfile({ ...p, goals: [...(p.goals ?? []), { ...g, id: newId() }] });
+  }
+
+  async removeGoal(id: string): Promise<void> {
+    const p = this.profile();
+    if (!p) return;
+    await this.saveProfile({ ...p, goals: (p.goals ?? []).filter((g) => g.id !== id) });
+  }
+
+  async setWeekGoal(goal: WeekGoal): Promise<void> {
+    const p = this.profile();
+    if (!p) return;
+    await this.saveProfile({ ...p, prefs: { ...p.prefs, weekGoal: goal } });
+  }
+
   milestones(): Milestone[] {
     return this.cached('milestones', () => {
-      const extra: Milestone[] = this.checksStrength()
+      const reached: Milestone[] = this.goalStatus()
+        .filter((g) => g.reachedOn)
+        .map(({ goal, reachedOn }) => ({
+          id: `doel-${goal.id}`,
+          icon: '🎯',
+          title: `Doel gehaald: ${getExercise(goal.exerciseId).name}${goal.load ? ` ${formatLoad(getExercise(goal.exerciseId), goal.load)}` : ''} × ${goal.reps}`,
+          text: 'Zelf gekozen, zelf gehaald. Kies je volgende doel in Rapport.',
+          date: reachedOn!,
+        }));
+      const extra: Milestone[] = [...reached, ...this.checksStrength()
         .filter((c) => c.change !== undefined && c.change > 0)
         .map((c) => ({
           id: `krachtcheck-${c.week}`,
@@ -390,7 +440,7 @@ export class Store {
           title: `Krachtcheck: +${Math.round(c.change! * 100)}%`,
           text: 'Sterker dan bij je vorige krachtcheck. Dit is waarom je traint.',
           date: c.date,
-        }));
+        }))];
       return milestones(this.sessions(), extra);
     });
   }

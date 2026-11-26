@@ -52,3 +52,56 @@ test('weekrapport met grafieken, tabellen en het /coach-rapport', async ({ page 
   await page.getByRole('button', { name: 'Vorige week' }).click();
   await expect(page.getByRole('heading', { name: 'Vorige week' })).toBeVisible();
 });
+
+test('doelen: weekdoel met bolletjes op Vandaag, persoonlijk doel met één tik', async ({ page }) => {
+  const today = '2026-11-20'; // vrijdag
+  await page.clock.setFixedTime(new Date(`${today}T19:00:00`));
+  await page.goto('./');
+  const files = seedFiles(today);
+  await page.evaluate(async (records) => {
+    await new Promise<void>((resolve, reject) => {
+      const req = indexedDB.open('coach', 1);
+      req.onupgradeneeded = () => {
+        req.result.createObjectStore('files', { keyPath: 'path' });
+        req.result.createObjectStore('local');
+      };
+      req.onsuccess = () => {
+        const tx = req.result.transaction('files', 'readwrite');
+        for (const r of records) tx.objectStore('files').put(r);
+        tx.oncomplete = () => {
+          req.result.close();
+          resolve();
+        };
+        tx.onerror = () => reject(tx.error);
+      };
+      req.onerror = () => reject(req.error);
+    });
+  }, files);
+  await page.goto('./#/vandaag');
+  await page.reload();
+
+  // Vandaag: je weekdoel als bolletjes (standaard 3× minstens 30 min in Jims).
+  const bar = page.locator('.weekgoal');
+  await expect(bar).toBeVisible();
+  await expect(bar.locator('.wg-dot')).toHaveCount(3);
+  if (shots) await page.screenshot({ path: `${shots}/21-weekdoel.png` });
+  await bar.click();
+
+  // Rapport: kies een voorgesteld doel met één tik.
+  const card = page.locator('.card.goals');
+  await expect(card).toContainText('3× per week minstens 30 min in Jims');
+  const suggestion = card.locator('.goal-suggest .btn').first();
+  const text = (await suggestion.textContent())!.replace('+ ', '').trim();
+  await suggestion.click();
+  await expect(card.locator('.goal')).toContainText(text);
+  await expect(card.locator('.goal-bar')).toBeVisible();
+  if (shots) await card.screenshot({ path: `${shots}/22-doelen.png` });
+
+  // Weekdoel aanpassen: twee tikken.
+  await card.getByRole('button', { name: 'aanpassen' }).click();
+  await page.getByRole('group', { name: 'Keer per week' }).getByRole('button', { name: '4×' }).click();
+  await page.getByRole('button', { name: 'Klaar' }).click();
+  await expect(card).toContainText('4× per week');
+  await page.getByRole('link', { name: /Vandaag/ }).click();
+  await expect(page.locator('.weekgoal .wg-dot')).toHaveCount(4);
+});

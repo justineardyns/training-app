@@ -15,7 +15,7 @@ import { ClassActions, startStrength, TrainAnyway, WishNote } from './Training.t
 import { SyncWarning } from './Connect.tsx';
 import { InjuryCard } from './Injury.tsx';
 import { reportIllness } from '../../data/injuries.ts';
-import { InsightsCard, MilestoneCard, RecoveryCard, SoreChips, WeatherBadge } from './CoachCards.tsx';
+import { InsightsCard, MilestoneCard, RecoveryCard, SoreChips, WeatherBadge, WeekGoalBar } from './CoachCards.tsx';
 
 const ENERGY: { value: Energy; label: string }[] = [
   { value: 'high', label: '💪 Top' },
@@ -164,6 +164,7 @@ export function Today() {
       </p>
       <h1>Vandaag</h1>
       {focus && <p class="card coach focus">{focus}</p>}
+      <WeekGoalBar />
       <MilestoneCard />
       <SyncWarning />
 

@@ -4,7 +4,10 @@ import type { PlannedDay } from '../../coach/planner.ts';
 import { GROUP_LABEL, GROUPS, STATE_LABEL, type Group, type GroupRecovery } from '../../coach/recovery.ts';
 import { PLACES } from '../../coach/weather.ts';
 import { currentPlace, placeOf, refreshWeather, setWeatherPlace } from '../../data/weather.ts';
-import { Chips } from '../components.tsx';
+import { Chips, Sheet } from '../components.tsx';
+import { getExercise } from '../../coach/catalog.ts';
+import { formatLoad } from '../../coach/loads.ts';
+import { weekGoalProgress, weekGoalStreak, type Goal } from '../../coach/goals.ts';
 import { nextMilestone } from '../../coach/milestones.ts';
 import { useStore } from '../hooks.ts';
 import { go } from '../router.ts';
@@ -239,6 +242,94 @@ export function StrengthCheckCard() {
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+/** Je weekdoel als bolletjes (Vandaag). Tik = je doelen in Rapport. */
+export function WeekGoalBar() {
+  const s = useStore();
+  const p = weekGoalProgress(s.sessions(), s.today(), s.weekGoal());
+  return (
+    <button class={`weekgoal ${p.reached ? 'reached' : ''}`} onClick={() => go('rapport')} aria-label={`Weekdoel: ${p.done} van ${p.target} trainingen deze week`}>
+      <span class="weekgoal-dots" aria-hidden="true">
+        {Array.from({ length: Math.max(p.target, p.done) }, (_, k) => (
+          <span key={k} class={`wg-dot ${k < p.done ? 'on' : ''}`} />
+        ))}
+      </span>
+      <span>{p.reached ? 'Weekdoel gehaald 💪' : `${p.done}/${p.target} deze week`}</span>
+    </button>
+  );
+}
+
+const goalText = (g: Goal) => `${getExercise(g.exerciseId).name}${g.load ? ` ${formatLoad(getExercise(g.exerciseId), g.load)}` : ''} × ${g.reps}`;
+
+/** Doelen (Rapport): je weekdoel en persoonlijke doelen. Kiezen = één tik op een voorstel. */
+export function GoalsCard() {
+  const s = useStore();
+  const [edit, setEdit] = useState(false);
+  const wg = s.weekGoal();
+  const streak = weekGoalStreak(s.sessions(), s.today(), wg);
+  const status = s.goalStatus();
+  const active = status.filter((g) => !g.reachedOn);
+  const reached = status.filter((g) => g.reachedOn).slice(-2);
+  const suggestions = s.goalSuggestions();
+  return (
+    <div class="card goals">
+      <h3>Doelen</h3>
+      <div class="row-between">
+        <span>
+          {wg.sessions}× per week minstens {wg.minutes} min in Jims
+          {streak > 1 && <span class="muted small"> · {streak} weken op rij</span>}
+        </span>
+        <button class="link" onClick={() => setEdit(true)}>
+          aanpassen
+        </button>
+      </div>
+      {active.map(({ goal, progress }) => (
+        <div class="goal" key={goal.id}>
+          <div class="row-between">
+            <span>🎯 {goalText(goal)}</span>
+            <button class="link" aria-label={`Doel ${goalText(goal)} schrappen`} onClick={() => s.removeGoal(goal.id)}>
+              ✕
+            </button>
+          </div>
+          <div class="goal-bar" aria-hidden="true">
+            <div style={{ width: `${Math.round(progress * 100)}%` }} />
+          </div>
+        </div>
+      ))}
+      {reached.map(({ goal }) => (
+        <p key={goal.id} class="muted small">
+          ✓ {goalText(goal)}
+        </p>
+      ))}
+      {suggestions.length > 0 && (
+        <div class="stack goal-suggest">
+          {suggestions.map((g) => (
+            <button key={g.exerciseId} class="btn small" onClick={() => s.addGoal(g)}>
+              + {goalText({ ...g, id: '' })}
+            </button>
+          ))}
+        </div>
+      )}
+      <Sheet open={edit} onClose={() => setEdit(false)} title="Weekdoel">
+        <Chips<number>
+          label="Keer per week"
+          options={[2, 3, 4, 5].map((v) => ({ value: v, label: `${v}×` }))}
+          value={wg.sessions}
+          onChange={(v) => s.setWeekGoal({ ...wg, sessions: v })}
+        />
+        <Chips<number>
+          label="Minstens"
+          options={[30, 45, 60].map((v) => ({ value: v, label: `${v} min` }))}
+          value={wg.minutes}
+          onChange={(v) => s.setWeekGoal({ ...wg, minutes: v })}
+        />
+        <button class="btn primary" onClick={() => setEdit(false)}>
+          Klaar
+        </button>
+      </Sheet>
     </div>
   );
 }

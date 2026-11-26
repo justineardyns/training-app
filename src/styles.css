@@ -540,3 +540,20 @@ p.why { font-size: 15px; margin: 4px 0 10px; }
 .wactive .muted { flex: 1; }
 .free-cardio h3 { margin-top: 0; }
 .row.effort .btn { padding: 12px 6px; font-size: 18px; }
+
+/* Doelen: weekbolletjes (Vandaag) en doelen (Rapport) */
+.weekgoal {
+  display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; margin: 0 0 12px; padding: 8px 14px;
+  border-radius: 14px; border: 1px solid var(--border); background: var(--surface); color: var(--text);
+  font-size: 16px; font-weight: 600; cursor: pointer; text-align: left;
+}
+.weekgoal.reached { border-color: var(--accent); }
+.weekgoal-dots { display: flex; gap: 6px; }
+.wg-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--muted); }
+.wg-dot.on { background: var(--accent); border-color: var(--accent); }
+.goal { margin: 10px 0; }
+.goal-bar { height: 8px; border-radius: 4px; background: var(--surface-2); overflow: hidden; margin-top: 4px; }
+.goal-bar > div { height: 100%; background: var(--accent); }
+.goal-suggest { margin-top: 10px; }
+.goal-suggest .btn { width: 100%; justify-content: flex-start; }
+.toast { margin: 0 0 12px; padding: 12px 14px; border-radius: 14px; background: color-mix(in srgb, var(--accent) 18%, var(--surface)); border: 1px solid var(--accent); font-weight: 700; }

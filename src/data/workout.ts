@@ -44,6 +44,8 @@ export interface WorkoutState {
   finisher?: { title: string; steps: string[]; blocks?: TimerBlock[] };
   /** Opwarming gedaan of overgeslagen. */
   warmupDone?: boolean;
+  /** Korte melding bovenaan (bv. 🏆 nieuw record). */
+  toast?: { text: string; at: number };
 }
 
 export function itemFromPlanned(p: PlannedExercise): WorkoutItem {

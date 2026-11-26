@@ -3,7 +3,11 @@
 Een app op je beginscherm die je trainingen plant, elke set vooraf invult en zelf bijstuurt.
 Werkt offline in de gym, draait puur op jouw tikken en kost **€ 0**.
 
-- **Vandaag:** wat je doet, één knop **Start**. Dagvorm met één tik: top / oké / moe / ziek of op.
+- **Vandaag:** wat je doet, één knop **Start**. Dagvorm met één tik: top / oké / moe / ziek of op. Bovenaan je
+  **weekdoel** als bolletjes (standaard 3× per week minstens 30 min in Jims).
+- **Doelen** (Rapport): je weekdoel (aanpassen met 2 tikken) en persoonlijke doelen per oefening. De coach stelt
+  ronde, haalbare doelen voor (bv. leg press 55 kg × 12): één tik om te kiezen, met voortgangsbalk en felicitatie
+  als je het haalt. **🏆 Record** tijdens je training: meteen in beeld.
 - **Training** (eigen tab onderaan): alles voor je training van vandaag op één plek.
   - **Kracht:** je hele training als lijst. Per oefening **▶ Start** en **■ Stop**, in de volgorde die jij wil
     (toestel bezet? neem gewoon een andere). Per oefening zie je hoelang je er al mee bezig bent, bovenaan

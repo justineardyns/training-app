@@ -6,6 +6,7 @@ import { reportInjury } from '../../data/injuries.ts';
 import { formatLoad, isAvailable } from '../../coach/loads.ts';
 import { activeAdjustments } from '../../coach/planner.ts';
 import { buildPrescription, templateTitle, warmupFor, type SessionContext } from '../../coach/session.ts';
+import { isRecord } from '../../coach/goals.ts';
 import type { Exercise, Feel, Zone } from '../../coach/types.ts';
 import { weekStart } from '../../coach/dates.ts';
 import { defaultProfile, store } from '../../data/store.ts';
@@ -56,6 +57,25 @@ function ctxFor(w: WorkoutState): SessionContext {
 }
 
 const act = (fn: (w: WorkoutState) => WorkoutState) => void store.updateWorkout(fn);
+
+/** Na een oefening: sterker dan ooit? Dan meteen een 🏆 bovenaan. */
+function withRecord(next: WorkoutState, i: number): WorkoutState {
+  const it = next.items[i];
+  if (!it || !isRecord(it, store.sessions())) return next;
+  return { ...next, toast: { text: `🏆 Nieuw record: ${getExercise(it.exerciseId).name}!`, at: Date.now() } };
+}
+
+/** Melding bovenaan die na 8 s vanzelf verdwijnt. */
+function Toast(props: { w: WorkoutState }) {
+  const t = props.w.toast;
+  useNow(1000, !!t);
+  if (!t || Date.now() - t.at > 8000) return null;
+  return (
+    <div class="toast" role="status">
+      {t.text}
+    </div>
+  );
+}
 
 function RestBar(props: { w: WorkoutState }) {
   const now = useNow(250, !!props.w.rest);
@@ -351,7 +371,7 @@ function ItemCard(props: { w: WorkoutState; i: number }) {
       {askFeel && ex.load === 'bodyweight' && (
         <div class="feel">
           <h3>Hoe voelde het?</h3>
-          <EffortRow onPick={(f) => { cancelBeep(); act((cur) => finishItem(cur, i, f)); }} />
+          <EffortRow onPick={(f) => { cancelBeep(); act((cur) => withRecord(finishItem(cur, i, f), i)); }} />
         </div>
       )}
 
@@ -360,7 +380,7 @@ function ItemCard(props: { w: WorkoutState; i: number }) {
           <h3>Hoe voelde {formatLoad(ex, it.sets[0]?.load ?? p.load)}?</h3>
           {other === null ? (
             <div class="stack">
-              <EffortRow onPick={(f) => { cancelBeep(); act((cur) => finishItem(cur, i, f)); }} />
+              <EffortRow onPick={(f) => { cancelBeep(); act((cur) => withRecord(finishItem(cur, i, f), i)); }} />
               <div class="row">
                 <button class="btn" onClick={() => setOther('more')}>⬆ Ik nam meer</button>
                 <button class="btn" onClick={() => setOther('less')}>⬇ Ik nam minder</button>
@@ -371,7 +391,7 @@ function ItemCard(props: { w: WorkoutState; i: number }) {
               <p class="muted small">Hoeveel nam je?</p>
               <div class="chips wrap">
                 {nearby(other).map((v) => (
-                  <button key={v} class="chip" onClick={() => { cancelBeep(); setOther(null); act((cur) => finishItem(cur, i, 'good', v)); }}>
+                  <button key={v} class="chip" onClick={() => { cancelBeep(); setOther(null); act((cur) => withRecord(finishItem(cur, i, 'good', v), i)); }}>
                     {formatLoad(ex, v)}
                   </button>
                 ))}
@@ -429,7 +449,7 @@ function ItemCard(props: { w: WorkoutState; i: number }) {
         onPick={(v) => {
           cancelBeep();
           setOther(null);
-          act((cur) => finishItem(cur, i, 'good', v));
+          act((cur) => withRecord(finishItem(cur, i, 'good', v), i));
         }}
         onClose={() => setWheel(false)}
       />
@@ -506,7 +526,7 @@ function Row(props: { w: WorkoutState; i: number }) {
   const unit = (n: number) => (ex.timed ? `${n} s` : `${n}`);
   const line =
     status === 'klaar'
-      ? `${done.length}×${unit(done[0]?.reps ?? p.targetReps)}${load}${itemMs(it, Date.now()) >= 1000 ? ` · ${minutesText(itemMs(it, Date.now()))}` : ''}`
+      ? `${done.length}×${unit(done[0]?.reps ?? p.targetReps)}${load}${itemMs(it, Date.now()) >= 1000 ? ` · ${minutesText(itemMs(it, Date.now()))}` : ''}${isRecord(it, store.sessions()) ? ' · 🏆' : ''}`
       : status === 'bezig'
         ? `${done.length}/${it.sets.length} sets${load}`
         : `${it.sets.length}×${unit(p.targetReps)}${ex.unilateral ? '/kant' : ''}${load}`;
@@ -613,6 +633,7 @@ export function Workout() {
       <div class="wprogress" aria-hidden="true">
         <div style={{ width: `${(doneN / Math.max(1, groups.length)) * 100}%` }} />
       </div>
+      <Toast w={w} />
 
       {warmup && <Warmup w={w} />}
 

@@ -168,6 +168,7 @@ export const DEFAULT_PREFS: Prefs = {
   minutes: 45,
   trainAtHome: false,
   rulesVersion: 2,
+  weekGoal: { sessions: 3, minutes: 30 },
 };
 
 /** Oude of onvolledige voorkeuren aanvullen (en naar de regels van nu brengen). */

@@ -6,7 +6,7 @@ import { paths } from '../../data/schema.ts';
 import { BarList, DataTable, fmt, LineChart, StatTile } from '../charts.tsx';
 import { useStore } from '../hooks.ts';
 import { Markdown } from '../markdown.tsx';
-import { InsightsCard, MilestonesList, StrengthCheckCard } from './CoachCards.tsx';
+import { GoalsCard, InsightsCard, MilestonesList, StrengthCheckCard } from './CoachCards.tsx';
 
 export function Report() {
   const s = useStore();
@@ -48,6 +48,7 @@ export function Report() {
         <p>{report.message}</p>
       </div>
 
+      {back === 0 && <GoalsCard />}
       {back === 0 && <InsightsCard insights={s.insights()} full />}
       {back === 0 && <MilestonesList />}
       {back === 0 && <StrengthCheckCard />}

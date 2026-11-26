@@ -1,3 +1,4 @@
+import type { Goal } from '../coach/goals.ts';
 import type {
   CoachAdjustments,
   DayAvailability,
@@ -29,6 +30,8 @@ export interface Profile {
   /** Uur voor de ochtendmelding (lokale tijd). */
   notifyHour: number;
   createdAt: string;
+  /** Persoonlijke doelen (de coach stelt ze voor, jij kiest met één tik). */
+  goals?: Goal[];
 }
 
 /** Aangevinkte beschikbaarheid per dag, één bestand per maand. */

@@ -155,6 +155,8 @@ export interface Prefs {
   trainAtHome: boolean;
   /** Versie van de regels waarmee deze voorkeuren bewaard zijn (2 = kracht en conditie apart). */
   rulesVersion?: number;
+  /** Je weekdoel: zoveel keer per week minstens zoveel minuten in Jims. */
+  weekGoal?: { sessions: number; minutes: number };
 }
 
 export type ProgressionChange =

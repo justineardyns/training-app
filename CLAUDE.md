@@ -58,6 +58,9 @@ Tests gebruiken verzonnen data (`e2e/seed.ts`, `FakeGitHub`).
   omhoog (geen sprong > 25%), anders +2 reps. Pijn in de training (`PainSheet`): zone + een beetje/scherp →
   `reportInjury` en een alternatief met `stressOn(zone) === 0` (zelfde beweging, anders rustigste voor dezelfde
   spieren). Terug na pauze (`src/coach/comeback.ts`): ≥ 10 dagen geen kracht → eerste 2 krachtdagen `comeback` (±10%).
+- Doelen (`src/coach/goals.ts`): weekdoel `prefs.weekGoal` (standaard 3× ≥ 30 min in Jims, kalenderweek, 5 min marge,
+  tennis/buiten tellen niet) als bolletjes bovenaan Vandaag; persoonlijke doelen `profile.goals` (max 3 lopend,
+  `suggestGoals` = één tik, gehaald → mijlpaal 🎯); `isRecord` → 🏆-melding in de training.
 - Timers (`src/coach/timer.ts`, UI in `src/ui/IntervalTimer.tsx`): cardio-opties en de afsluiter hebben `blocks`
   (opgeteld = de gekozen duur; groepsles: geen timer), `HoldTimer` voor `ex.timed` vinkt de set zelf af, `Elapsed`
   = oplopende trainingsklok. Piepjes worden vooruit gepland (`scheduleBeeps`), want iOS vertraagt JS-timers.
