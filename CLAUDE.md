@@ -65,6 +65,8 @@ Tests gebruiken verzonnen data (`e2e/seed.ts`, `FakeGitHub`).
   (`SessionLog.rowTest`, seconden voor 1 km roeien; `rowTests` in check.ts): in een krachtcheck-week één keer per 3 weken,
   vervangt de afsluiter. Blokken (`trainingBlock` = aantal deloadweken): vanaf `ROTATE_FROM_BLOCK` (2) roteren
   niet-hoofdoefeningen per blok in `pickForSlot`.
+- Toestelstand `profile.machineNotes[exerciseId]` (max 60 tekens) bij toestellen/kabels; `profile.dislikes` (👎) slaat
+  `pickForSlot` over zolang er een alternatief is; terugzetten in Meer.
 - Timers (`src/coach/timer.ts`, UI in `src/ui/IntervalTimer.tsx`): cardio-opties en de afsluiter hebben `blocks`
   (opgeteld = de gekozen duur; groepsles: geen timer), `HoldTimer` voor `ex.timed` vinkt de set zelf af, `Elapsed`
   = oplopende trainingsklok. Piepjes worden vooruit gepland (`scheduleBeeps`), want iOS vertraagt JS-timers.

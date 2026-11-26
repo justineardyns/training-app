@@ -124,6 +124,8 @@ export interface SessionContext {
   rowTest?: boolean;
   /** Trainingsblok (aantal lichtere weken achter de rug): vanaf blok 2 wisselen de hulpoefeningen per blok. */
   block?: number;
+  /** Oefeningen die je niet meer wil (👎). */
+  dislikes?: string[];
 }
 
 export interface PlannedExercise {
@@ -193,6 +195,7 @@ function pickForSlot(slot: Slot, ctx: SessionContext, used: Set<string>): Exerci
   const gym = ctx.gym ?? DEFAULT_GYM;
   const base = ctx.location === 'gym' && ctx.beginner && slot.beginnerGym ? slot.beginnerGym : slot[ctx.location];
   const rot = slot.role !== 'main' && (ctx.block ?? 0) >= ROTATE_FROM_BLOCK ? (ctx.block ?? 0) % base.length : 0;
+  const disliked = (id: string) => !!ctx.dislikes?.includes(id);
   const list = [...base.slice(rot), ...base.slice(0, rot)];
   for (const id of list) {
     let pick = id;
@@ -200,11 +203,11 @@ function pickForSlot(slot: Slot, ctx: SessionContext, used: Set<string>): Exerci
     if (swap && isAvailable(getExercise(swap.to), ctx.location, ctx.equipment, gym)) pick = swap.to;
     pick = currentVariant(pick, ctx);
     const ex = getExercise(pick);
-    if (!used.has(ex.id) && isAvailable(ex, ctx.location, ctx.equipment, gym)) return ex;
+    if (!used.has(ex.id) && !disliked(ex.id) && isAvailable(ex, ctx.location, ctx.equipment, gym)) return ex;
   }
-  return alternativesFor(slot[ctx.location][0] ?? slot.gym[0]!, ctx.location).find(
-    (e) => !used.has(e.id) && isAvailable(e, ctx.location, ctx.equipment, gym),
-  );
+  const alts = alternativesFor(slot[ctx.location][0] ?? slot.gym[0]!, ctx.location).filter((e) => !used.has(e.id) && isAvailable(e, ctx.location, ctx.equipment, gym));
+  // 👎 enkel als er echt niets anders is.
+  return alts.find((e) => !disliked(e.id)) ?? alts[0];
 }
 
 /** Schatting van de duur in seconden. */

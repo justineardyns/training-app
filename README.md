@@ -25,7 +25,9 @@ Werkt offline in de gym, draait puur op jouw tikken en kost **€ 0**.
   zijn ±10% lichter. **Opwarmsets op maat** bij je eerste hoofdoefening voor benen en voor bovenlijf
   (8× ±50% en 4× ±75% van je werkgewicht). **Conditietest** in de krachtcheck-week: 1 km roeien met een stopwatch,
   met het verschil t.o.v. vorige keer (Rapport). **Blokken van 6 weken:** na 2 lichtere weken wisselen de
-  hulpoefeningen per blok; je hoofdoefeningen blijven, zodat je vooruitgang zichtbaar blijft. "Toestel bezet",
+  hulpoefeningen per blok; je hoofdoefeningen blijven, zodat je vooruitgang zichtbaar blijft.
+  **Toestelstand** (zithoogte, rugleuning, pin): één keer intikken, daarna staat ze bij de oefening.
+  **👎** in *Toestel bezet*: meteen een alternatief en die oefening komt niet meer terug (in Meer met één tik ↺). "Toestel bezet",
   **foto's van elke oefening en elk toestel** (start- en eindpositie, ook offline), techniektips en uitlegvideo.
 - **Absolute beginner:** lichte start, de eerste 2 keer per oefening max 2 sets om de beweging te leren,
   in Jims eerst de toestellen.

@@ -187,3 +187,32 @@ test('pijn tijdens een oefening: 2 tikken, pijnvrij alternatief, en de klacht wo
   await page.getByRole('link', { name: /Vandaag/ }).click();
   await expect(page.getByText(/Knie/).first()).toBeVisible();
 });
+
+test('toestelstand onthouden en 👎 een oefening (met ↺ terug in Meer)', async ({ page }) => {
+  await quickSetup(page);
+  await preferStrengthToday(page);
+  await page.getByRole('link', { name: /Vandaag/ }).click();
+  await page.getByRole('button', { name: /Oké/ }).click();
+  await page.getByRole('button', { name: 'Start', exact: true }).click();
+  await page.getByRole('button', { name: 'Overslaan' }).click();
+  await page.getByRole('button', { name: 'Leg press starten' }).click();
+
+  // Stand: één keer intikken, daarna staat ze er.
+  await page.getByRole('button', { name: /Stand van het toestel onthouden/ }).click();
+  await page.getByPlaceholder('bv. stoel 4, rug 2').fill('rug 3, voeten midden');
+  await page.getByRole('button', { name: 'Bewaar' }).click();
+  await expect(page.locator('.stand')).toContainText('rug 3, voeten midden');
+
+  // 👎: meteen een alternatief, en voortaan niet meer voorgesteld.
+  await page.getByRole('button', { name: 'Toestel bezet' }).click();
+  await page.getByRole('button', { name: /👎 Leg press niet meer voorstellen/ }).click();
+  await expect(page.locator('.item-name')).not.toContainText('Leg press');
+  await page.getByRole('button', { name: 'Stop', exact: true }).click();
+  await page.getByRole('button', { name: /Weggooien/ }).click();
+  await expect(page.locator('.preview')).not.toContainText('Leg press');
+
+  // Spijt? In Meer met één tik terug.
+  await page.getByRole('link', { name: /Meer/ }).click();
+  await page.getByRole('button', { name: 'Leg press weer voorstellen' }).click();
+  await expect(page.getByRole('button', { name: 'Leg press weer voorstellen' })).toHaveCount(0);
+});

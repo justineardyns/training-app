@@ -56,3 +56,13 @@ describe('blokken van 6 weken', () => {
     expect(acc(b3)).not.toEqual(acc(b2));
   });
 });
+
+describe('👎 oefening', () => {
+  it('de coach stelt ze niet meer voor als er een alternatief is', () => {
+    const base = buildStrengthSession(ctx({ template: 'A' })).exercises.map((e) => e.exercise.id);
+    expect(base).toContain('leg-press');
+    const s = buildStrengthSession(ctx({ template: 'A', dislikes: ['leg-press'] })).exercises.map((e) => e.exercise.id);
+    expect(s).not.toContain('leg-press');
+    expect(s.length).toBe(base.length);
+  });
+});

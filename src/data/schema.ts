@@ -32,6 +32,10 @@ export interface Profile {
   createdAt: string;
   /** Persoonlijke doelen (de coach stelt ze voor, jij kiest met één tik). */
   goals?: Goal[];
+  /** Jouw stand per toestel (bv. "stoel 4, rug 2"), per oefening. */
+  machineNotes?: Record<string, string>;
+  /** Oefeningen die je niet meer wil (👎): de coach stelt een alternatief voor. */
+  dislikes?: string[];
 }
 
 /** Aangevinkte beschikbaarheid per dag, één bestand per maand. */

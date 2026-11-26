@@ -416,6 +416,33 @@ export class Store {
     await this.saveProfile({ ...p, goals: (p.goals ?? []).filter((g) => g.id !== id) });
   }
 
+  // ── Toestelstand en 👎 ───────────────────────────────────────────────
+  machineNote(exerciseId: string): string | undefined {
+    return this.profile()?.machineNotes?.[exerciseId];
+  }
+
+  async setMachineNote(exerciseId: string, note: string): Promise<void> {
+    const p = this.profile();
+    if (!p) return;
+    const notes = { ...(p.machineNotes ?? {}) };
+    if (note.trim()) notes[exerciseId] = note.trim().slice(0, 60);
+    else delete notes[exerciseId];
+    await this.saveProfile({ ...p, machineNotes: notes });
+  }
+
+  dislikes(): string[] {
+    return this.profile()?.dislikes ?? [];
+  }
+
+  async setDisliked(exerciseId: string, on: boolean): Promise<void> {
+    const p = this.profile();
+    if (!p) return;
+    const list = new Set(p.dislikes ?? []);
+    if (on) list.add(exerciseId);
+    else list.delete(exerciseId);
+    await this.saveProfile({ ...p, dislikes: [...list] });
+  }
+
   async setWeekGoal(goal: WeekGoal): Promise<void> {
     const p = this.profile();
     if (!p) return;
@@ -557,6 +584,7 @@ export class Store {
         // Conditietest: in de krachtcheck-week, één keer (niet als je er de laatste 3 weken al een deed).
         rowTest: !!day.check && !this.sessions().some((x) => x.rowTest && diffDays(day.date, x.date) < 21),
         block: trainingBlock(this.sessions()),
+        dislikes: this.profile()?.dislikes ?? [],
         deload: day.deload,
         injuries: this.injuries(),
         adjustments: activeAdjustments(this.adjustments(), day.date),

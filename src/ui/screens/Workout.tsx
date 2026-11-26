@@ -277,6 +277,11 @@ function ItemCard(props: { w: WorkoutState; i: number }) {
   const [wheel, setWheel] = useState(false);
   const [busy, setBusy] = useState(false);
   const [pain, setPain] = useState(false);
+  const [standEdit, setStandEdit] = useState(false);
+  const [standText, setStandText] = useState('');
+  // Toestel of kabel: je stand (zithoogte, rugleuning, pin) één keer intikken, daarna staat ze er altijd.
+  const hasStand = !!ex.setup || ex.load === 'machine' || ex.load === 'cable';
+  const stand = store.machineNote(ex.id);
   /** Set waarvan de afteltimer loopt (oefeningen op tijd). */
   const [hold, setHold] = useState<number | null>(null);
   const profile = store.profile() ?? defaultProfile();
@@ -342,6 +347,11 @@ function ItemCard(props: { w: WorkoutState; i: number }) {
         <p class="load-banner">
           <span class="muted small">{p.change === 'new' ? 'Startvoorstel' : 'Gewicht'}</span> {formatLoad(ex, it.sets[0]?.load ?? p.load)}
         </p>
+      )}
+      {hasStand && (
+        <button class={stand ? 'stand' : 'link stand-add'} onClick={() => { setStandText(stand ?? ''); setStandEdit(true); }}>
+          ⚙ {stand ?? 'Stand van het toestel onthouden'}
+        </button>
       )}
 
       {ramp.length > 0 && (
@@ -485,7 +495,37 @@ function ItemCard(props: { w: WorkoutState; i: number }) {
             </button>
           ))}
           {alternatives.length === 0 && <p>Geen alternatief beschikbaar hier.</p>}
+          <button
+            class="btn ghost small"
+            onClick={() => {
+              void store.setDisliked(ex.id, true);
+              const a = alternatives[0];
+              if (a) act((cur) => swapItem(cur, i, { ...a, role: it.role }));
+              setBusy(false);
+            }}
+          >
+            👎 {ex.name} niet meer voorstellen
+          </button>
         </div>
+      </Sheet>
+      <Sheet open={standEdit} onClose={() => setStandEdit(false)} title={`Jouw stand: ${ex.name}`}>
+        <label class="field">
+          <input
+            value={standText}
+            placeholder="bv. stoel 4, rug 2"
+            maxLength={60}
+            onInput={(e) => setStandText((e.target as HTMLInputElement).value)}
+          />
+        </label>
+        <button
+          class="btn primary"
+          onClick={() => {
+            void store.setMachineNote(ex.id, standText);
+            setStandEdit(false);
+          }}
+        >
+          Bewaar
+        </button>
       </Sheet>
     </section>
   );

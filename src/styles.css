@@ -559,3 +559,5 @@ p.why { font-size: 15px; margin: 4px 0 10px; }
 .toast { margin: 0 0 12px; padding: 12px 14px; border-radius: 14px; background: color-mix(in srgb, var(--accent) 18%, var(--surface)); border: 1px solid var(--accent); font-weight: 700; }
 .ramp { font-size: 16px; margin: 4px 0 8px; padding: 8px 12px; border-radius: 12px; background: var(--surface-2); }
 .rowtest h3 { margin-top: 0; }
+.stand { display: block; width: 100%; text-align: left; margin: 0 0 8px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); font-size: 16px; cursor: pointer; }
+.stand-add { display: block; margin: 0 0 8px; padding: 6px 0; }

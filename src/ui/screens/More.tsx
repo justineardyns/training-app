@@ -7,6 +7,7 @@ import { go } from '../router.ts';
 import { GymEditor, HomeEquipmentEditor } from './Equipment.tsx';
 import { SyncSettings } from './Connect.tsx';
 import { PrefsEditor } from './Prefs.tsx';
+import { getExercise } from '../../coach/catalog.ts';
 import { InjuryCard } from './Injury.tsx';
 import { NotificationSettings } from './Notifications.tsx';
 import { WeatherSettings } from './CoachCards.tsx';
@@ -89,6 +90,18 @@ export function More(props: { sub?: string }) {
 
       <h2>Voorkeuren</h2>
       <PrefsEditor value={s.prefs()} onChange={(prefs) => saveProfile({ ...profile, prefs })} full />
+      {s.dislikes().length > 0 && (
+        <div class="card">
+          <h3>👎 Niet meer voorstellen</h3>
+          <div class="chips wrap">
+            {s.dislikes().map((id) => (
+              <button key={id} class="chip" onClick={() => s.setDisliked(id, false)} aria-label={`${getExercise(id).name} weer voorstellen`}>
+                ↺ {getExercise(id).name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       <div class="card">
         <h3>Deload</h3>
         <Chips
